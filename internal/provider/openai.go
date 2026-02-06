@@ -1,15 +1,18 @@
-// Package openai provides an OpenAI-compatible provider implementation.
+// Package provider provides an OpenAI-compatible provider implementation.
 package provider
 
 import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
 
-	"github.com/sashabaranov/go-openai"
+	"github.com/openai/openai-go/v3"
+	"github.com/openai/openai-go/v3/option"
+	"github.com/openai/openai-go/v3/shared"
 	"github.com/shantoislamdev/kothaset/internal/config"
 )
 
@@ -27,24 +30,27 @@ func NewOpenAIProvider(cfg *config.ProviderConfig) (Provider, error) {
 		return nil, NewAuthError("API key is required")
 	}
 
-	clientConfig := openai.DefaultConfig(cfg.APIKey)
+	opts := []option.RequestOption{option.WithAPIKey(cfg.APIKey)}
 
 	// Custom base URL for compatible APIs (DeepSeek, vLLM, etc.)
 	if cfg.BaseURL != "" {
-		clientConfig.BaseURL = cfg.BaseURL
+		opts = append(opts, option.WithBaseURL(cfg.BaseURL))
 	}
 
-	// Custom timeout
+	// Custom timeout via HTTP client
 	if cfg.Timeout.Duration > 0 {
-		clientConfig.HTTPClient = &http.Client{
+		httpClient := &http.Client{
 			Timeout: cfg.Timeout.Duration,
 		}
+		opts = append(opts, option.WithHTTPClient(httpClient))
 	}
+
+	client := openai.NewClient(opts...)
 
 	return &OpenAIProvider{
 		name:   cfg.Name,
 		model:  cfg.Model,
-		client: openai.NewClientWithConfig(clientConfig),
+		client: &client,
 		config: cfg,
 	}, nil
 }
@@ -54,68 +60,60 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 	start := time.Now()
 
 	// Convert messages
-	messages := make([]openai.ChatCompletionMessage, 0, len(req.Messages)+1)
+	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(req.Messages)+1)
 
 	// Add system prompt if provided
 	if req.SystemPrompt != "" {
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleSystem,
-			Content: req.SystemPrompt,
-		})
+		messages = append(messages, openai.SystemMessage(req.SystemPrompt))
 	}
 
 	// Add conversation messages
 	for _, msg := range req.Messages {
-		role := msg.Role
-		// Normalize role names
-		switch strings.ToLower(role) {
+		role := strings.ToLower(msg.Role)
+		switch role {
 		case "system":
-			role = openai.ChatMessageRoleSystem
+			messages = append(messages, openai.SystemMessage(msg.Content))
 		case "user", "human":
-			role = openai.ChatMessageRoleUser
+			messages = append(messages, openai.UserMessage(msg.Content))
 		case "assistant", "ai", "bot":
-			role = openai.ChatMessageRoleAssistant
+			messages = append(messages, openai.AssistantMessage(msg.Content))
+		default:
+			messages = append(messages, openai.UserMessage(msg.Content))
 		}
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    role,
-			Content: msg.Content,
-			Name:    msg.Name,
-		})
 	}
 
-	// Build request
-	chatReq := openai.ChatCompletionRequest{
-		Model:       p.model,
+	// Build request parameters
+	params := openai.ChatCompletionNewParams{
+		Model:       openai.ChatModel(p.model),
 		Messages:    messages,
-		MaxTokens:   req.MaxTokens,
-		Temperature: float32(req.Temperature),
+		MaxTokens:   openai.Int(int64(req.MaxTokens)),
+		Temperature: openai.Float(req.Temperature),
 	}
 
 	// Optional parameters
 	if req.TopP > 0 {
-		chatReq.TopP = float32(req.TopP)
+		params.TopP = openai.Float(req.TopP)
 	}
 	if len(req.StopSequences) > 0 {
-		chatReq.Stop = req.StopSequences
+		params.Stop = openai.ChatCompletionNewParamsStopUnion{OfStringArray: req.StopSequences}
 	}
 	if req.Seed != nil {
-		seedInt := int(*req.Seed)
-		chatReq.Seed = &seedInt
+		params.Seed = openai.Int(*req.Seed)
 	}
 	if req.FrequencyPenalty != 0 {
-		chatReq.FrequencyPenalty = float32(req.FrequencyPenalty)
+		params.FrequencyPenalty = openai.Float(req.FrequencyPenalty)
 	}
 	if req.PresencePenalty != 0 {
-		chatReq.PresencePenalty = float32(req.PresencePenalty)
+		params.PresencePenalty = openai.Float(req.PresencePenalty)
 	}
 	if req.ResponseFormat == "json" {
-		chatReq.ResponseFormat = &openai.ChatCompletionResponseFormat{
-			Type: openai.ChatCompletionResponseFormatTypeJSONObject,
+		params.ResponseFormat = openai.ChatCompletionNewParamsResponseFormatUnion{
+			OfJSONObject: &shared.ResponseFormatJSONObjectParam{Type: "json_object"},
 		}
 	}
 
 	// Make request
-	resp, err := p.client.CreateChatCompletion(ctx, chatReq)
+	resp, err := p.client.Chat.Completions.New(ctx, params)
 	if err != nil {
 		return nil, p.convertError(err)
 	}
@@ -130,9 +128,9 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 		Content:      choice.Message.Content,
 		FinishReason: string(choice.FinishReason),
 		Usage: TokenUsage{
-			PromptTokens:     resp.Usage.PromptTokens,
-			CompletionTokens: resp.Usage.CompletionTokens,
-			TotalTokens:      resp.Usage.TotalTokens,
+			PromptTokens:     int(resp.Usage.PromptTokens),
+			CompletionTokens: int(resp.Usage.CompletionTokens),
+			TotalTokens:      int(resp.Usage.TotalTokens),
 		},
 		Model:     resp.Model,
 		RequestID: resp.ID,
@@ -143,62 +141,47 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 // GenerateStream implements Provider.GenerateStream
 func (p *OpenAIProvider) GenerateStream(ctx context.Context, req GenerationRequest) (<-chan StreamChunk, error) {
 	// Convert messages
-	messages := make([]openai.ChatCompletionMessage, 0, len(req.Messages)+1)
+	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(req.Messages)+1)
 
 	if req.SystemPrompt != "" {
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    openai.ChatMessageRoleSystem,
-			Content: req.SystemPrompt,
-		})
+		messages = append(messages, openai.SystemMessage(req.SystemPrompt))
 	}
 
 	for _, msg := range req.Messages {
-		messages = append(messages, openai.ChatCompletionMessage{
-			Role:    msg.Role,
-			Content: msg.Content,
-			Name:    msg.Name,
-		})
+		role := strings.ToLower(msg.Role)
+		switch role {
+		case "system":
+			messages = append(messages, openai.SystemMessage(msg.Content))
+		case "user", "human":
+			messages = append(messages, openai.UserMessage(msg.Content))
+		case "assistant", "ai", "bot":
+			messages = append(messages, openai.AssistantMessage(msg.Content))
+		default:
+			messages = append(messages, openai.UserMessage(msg.Content))
+		}
 	}
 
-	// Build request
-	chatReq := openai.ChatCompletionRequest{
-		Model:       p.model,
+	// Build request parameters
+	params := openai.ChatCompletionNewParams{
+		Model:       openai.ChatModel(p.model),
 		Messages:    messages,
-		MaxTokens:   req.MaxTokens,
-		Temperature: float32(req.Temperature),
-		Stream:      true,
+		MaxTokens:   openai.Int(int64(req.MaxTokens)),
+		Temperature: openai.Float(req.Temperature),
 	}
 
 	// Create stream
-	stream, err := p.client.CreateChatCompletionStream(ctx, chatReq)
-	if err != nil {
-		return nil, p.convertError(err)
-	}
+	stream := p.client.Chat.Completions.NewStreaming(ctx, params)
 
 	// Create output channel
 	out := make(chan StreamChunk, 100)
 
 	go func() {
 		defer close(out)
-		defer stream.Close()
 
-		for {
-			resp, err := stream.Recv()
-			if errors.Is(err, context.Canceled) {
-				out <- StreamChunk{Done: true, Error: err}
-				return
-			}
-			if err != nil {
-				if err.Error() == "EOF" {
-					out <- StreamChunk{Done: true, FinishReason: "stop"}
-					return
-				}
-				out <- StreamChunk{Done: true, Error: p.convertError(err)}
-				return
-			}
-
-			if len(resp.Choices) > 0 {
-				choice := resp.Choices[0]
+		for stream.Next() {
+			evt := stream.Current()
+			if len(evt.Choices) > 0 {
+				choice := evt.Choices[0]
 				chunk := StreamChunk{
 					Content: choice.Delta.Content,
 				}
@@ -208,6 +191,16 @@ func (p *OpenAIProvider) GenerateStream(ctx context.Context, req GenerationReque
 				}
 				out <- chunk
 			}
+		}
+
+		if err := stream.Err(); err != nil {
+			if errors.Is(err, io.EOF) || errors.Is(err, context.Canceled) {
+				out <- StreamChunk{Done: true, FinishReason: "stop"}
+			} else {
+				out <- StreamChunk{Done: true, Error: p.convertError(err)}
+			}
+		} else {
+			out <- StreamChunk{Done: true, FinishReason: "stop"}
 		}
 	}()
 
@@ -262,7 +255,7 @@ func (p *OpenAIProvider) Validate() error {
 // HealthCheck implements Provider.HealthCheck
 func (p *OpenAIProvider) HealthCheck(ctx context.Context) error {
 	// Make a minimal request to verify connectivity
-	_, err := p.client.ListModels(ctx)
+	_, err := p.client.Models.List(ctx)
 	if err != nil {
 		return p.convertError(err)
 	}
@@ -281,9 +274,9 @@ func (p *OpenAIProvider) convertError(err error) error {
 		return nil
 	}
 
-	var apiErr *openai.APIError
+	var apiErr *openai.Error
 	if errors.As(err, &apiErr) {
-		switch apiErr.HTTPStatusCode {
+		switch apiErr.StatusCode {
 		case http.StatusUnauthorized:
 			return NewAuthError(apiErr.Message)
 		case http.StatusTooManyRequests:
@@ -293,7 +286,7 @@ func (p *OpenAIProvider) convertError(err error) error {
 				return &ProviderError{
 					Kind:       ErrKindContextLength,
 					Message:    apiErr.Message,
-					StatusCode: apiErr.HTTPStatusCode,
+					StatusCode: apiErr.StatusCode,
 				}
 			}
 			return NewValidationError(apiErr.Message)
@@ -302,7 +295,7 @@ func (p *OpenAIProvider) convertError(err error) error {
 				Kind:       ErrKindServer,
 				Message:    apiErr.Message,
 				Retryable:  true,
-				StatusCode: apiErr.HTTPStatusCode,
+				StatusCode: apiErr.StatusCode,
 			}
 		}
 		return NewProviderError(ErrKindUnknown, apiErr.Message, nil)
