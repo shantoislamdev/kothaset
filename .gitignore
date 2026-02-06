@@ -1,0 +1,32 @@
+# Binaries
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+bin/
+kothaset
+
+# Output Data
+*.jsonl
+*.json
+*.txt
+*.parquet
+output/
+
+# Configuration
+.kothaset.yaml
+.env
+
+# Checkpoints
+*.checkpoint
+*.tmp
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
