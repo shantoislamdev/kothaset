@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
 )
@@ -116,7 +117,7 @@ type Generator struct {
 	onProgress ProgressCallback
 
 	// Output
-	outputFile *os.File
+	writer output.Writer
 }
 
 // New creates a new generator
@@ -139,6 +140,11 @@ func (g *Generator) SetSampler(s Sampler) {
 	g.sampler = s
 }
 
+// SetWriter sets the output writer
+func (g *Generator) SetWriter(w output.Writer) {
+	g.writer = w
+}
+
 // Run executes the generation process
 func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	startTime := time.Now()
@@ -155,19 +161,14 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		atomic.StoreInt32(&g.completed, int32(len(g.samples)))
 	}
 
-	// Open output file
-	var err error
-	flags := os.O_CREATE | os.O_WRONLY
-	if g.config.ResumeFrom != "" {
-		flags |= os.O_APPEND
-	} else {
-		flags |= os.O_TRUNC
+	// Open output writer if not already set
+	if g.writer == nil {
+		return nil, fmt.Errorf("output writer not set - call SetWriter() first")
 	}
-	g.outputFile, err = os.OpenFile(g.config.OutputPath, flags, 0644)
-	if err != nil {
-		return nil, fmt.Errorf("failed to open output file: %w", err)
+	if err := g.writer.Open(g.config.OutputPath); err != nil {
+		return nil, fmt.Errorf("failed to open output: %w", err)
 	}
-	defer g.outputFile.Close()
+	defer g.writer.Close()
 
 	// Calculate remaining samples
 	remaining := g.config.NumSamples - int(atomic.LoadInt32(&g.completed))
@@ -351,16 +352,9 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 }
 
 func (g *Generator) writeSample(sample *schema.Sample) error {
-	data, err := g.schema.ToJSONL(sample)
-	if err != nil {
-		return err
-	}
-
 	g.mu.Lock()
 	defer g.mu.Unlock()
-
-	_, err = g.outputFile.Write(data)
-	return err
+	return g.writer.Write(sample)
 }
 
 func (g *Generator) reportProgress(startTime time.Time) {

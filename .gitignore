@@ -12,7 +12,7 @@ kothaset
 *.json
 *.txt
 *.parquet
-output/
+/output/
 
 # Configuration
 .kothaset.yaml

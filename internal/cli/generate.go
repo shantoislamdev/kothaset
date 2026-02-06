@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/shantoislamdev/kothaset/internal/generator"
+	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
 )
@@ -156,6 +157,13 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 
 	// Create generator
 	gen := generator.New(genCfg, prov, sch)
+
+	// Create and set output writer
+	writer, err := output.NewWriter(genFormat, sch)
+	if err != nil {
+		return fmt.Errorf("failed to create output writer: %w", err)
+	}
+	gen.SetWriter(writer)
 
 	// Setup sampler if seed file provided
 	if genSeedFile != "" {
