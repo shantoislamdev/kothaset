@@ -73,6 +73,7 @@ homebrew_casks:
     repository:
       owner: shantoislamdev
       name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_GITHUB_TOKEN }}"
     directory: Casks
     homepage: "https://github.com/shantoislamdev/kothaset"
     description: "High-quality dataset generation CLI for LLM training"
