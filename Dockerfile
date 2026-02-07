@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.22-alpine AS builder
+FROM golang:1.25-alpine AS builder
 
 WORKDIR /app
 
@@ -17,8 +17,9 @@ COPY . .
 ARG VERSION=dev
 ARG COMMIT=unknown
 ARG BUILD_DATE=unknown
+ARG TARGETPLATFORM
 
-RUN CGO_ENABLED=0 GOOS=linux go build \
+RUN CGO_ENABLED=0 go build \
     -ldflags="-s -w -X github.com/shantoislamdev/kothaset/internal/cli.Version=${VERSION} -X github.com/shantoislamdev/kothaset/internal/cli.Commit=${COMMIT} -X github.com/shantoislamdev/kothaset/internal/cli.BuildDate=${BUILD_DATE}" \
     -o /kothaset ./cmd/kothaset
 
@@ -32,8 +33,9 @@ RUN apk add --no-cache ca-certificates tzdata
 RUN adduser -D -u 1000 kothaset
 USER kothaset
 
-# Copy binary
-COPY --from=builder /kothaset /usr/local/bin/kothaset
+# Copy binary - for dockers_v2, GoReleaser puts binaries in $TARGETPLATFORM/
+ARG TARGETPLATFORM
+COPY ${TARGETPLATFORM}/kothaset /usr/local/bin/kothaset
 
 # Default command
 ENTRYPOINT ["kothaset"]
