@@ -30,18 +30,6 @@ npm install -g kothaset
 brew install shantoislamdev/tap/kothaset
 ```
 
-### Scoop (Windows)
-```bash
-scoop bucket add kothaset https://github.com/shantoislamdev/scoop-bucket
-scoop install kothaset
-```
-
-### Docker
-```bash
-docker pull ghcr.io/shantoislamdev/kothaset:latest
-docker run ghcr.io/shantoislamdev/kothaset version
-```
-
 ### Binary Download
 Download from [GitHub Releases](https://github.com/shantoislamdev/kothaset/releases).
 
