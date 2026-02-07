@@ -42,35 +42,40 @@ func resolveSecrets(cfg *Config) error {
 }
 
 // resolveAPIKey resolves the API key for a provider
+// Supports formats:
+//   - Raw API key: "sk-..." (used as-is)
+//   - Environment variable: "env.OPENAI_API_KEY" (reads from env)
+//   - Legacy secret ref: "${env:MY_KEY}" (backwards compatible)
 func resolveAPIKey(p *ProviderConfig) (string, error) {
-	// Priority 1: Direct API key value
-	if p.APIKey != "" && !isSecretRef(p.APIKey) {
-		return p.APIKey, nil
+	apiKey := p.APIKey
+
+	// Check for env.VAR_NAME format
+	if strings.HasPrefix(apiKey, "env.") {
+		envVar := strings.TrimPrefix(apiKey, "env.")
+		if value := os.Getenv(envVar); value != "" {
+			return value, nil
+		}
+		return "", fmt.Errorf("environment variable not set: %s", envVar)
 	}
 
-	// Priority 2: Environment variable reference
-	if p.APIKeyEnv != "" {
+	// Check for legacy ${env:VAR_NAME} format
+	if isSecretRef(apiKey) {
+		return resolveSecretRef(apiKey)
+	}
+
+	// Check for legacy APIKeyEnv field (backwards compatibility)
+	if apiKey == "" && p.APIKeyEnv != "" {
 		if value := os.Getenv(p.APIKeyEnv); value != "" {
 			return value, nil
 		}
-		// Try common naming conventions
-		alternatives := []string{
-			strings.ToUpper(p.APIKeyEnv),
-			strings.ToUpper(p.Name) + "_API_KEY",
-		}
-		for _, alt := range alternatives {
-			if value := os.Getenv(alt); value != "" {
-				return value, nil
-			}
-		}
 	}
 
-	// Priority 3: Parse secret reference in APIKey field
-	if p.APIKey != "" && isSecretRef(p.APIKey) {
-		return resolveSecretRef(p.APIKey)
+	// Raw API key (used as-is)
+	if apiKey != "" {
+		return apiKey, nil
 	}
 
-	// Priority 4: Default environment variable based on provider type
+	// Fallback: Default environment variable based on provider type
 	defaultEnvVars := map[string]string{
 		"openai":    "OPENAI_API_KEY",
 		"anthropic": "ANTHROPIC_API_KEY",

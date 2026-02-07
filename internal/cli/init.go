@@ -6,9 +6,6 @@ import (
 	"path/filepath"
 
 	"github.com/spf13/cobra"
-	"gopkg.in/yaml.v3"
-
-	"github.com/shantoislamdev/kothaset/internal/config"
 )
 
 var initCmd = &cobra.Command{
@@ -39,32 +36,54 @@ func runInit(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("config file already exists: %s (use --force to overwrite)", configPath)
 	}
 
-	// Create default configuration
-	defaultConfig := config.DefaultConfig()
-
-	// Marshal to YAML
-	data, err := yaml.Marshal(defaultConfig)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
-	}
-
-	// Add header comment
-	header := `# KothaSet Configuration
+	// Config template with all fields visible
+	content := `# KothaSet Configuration
 # Documentation: https://github.com/shantoislamdev/kothaset
 
+version: "1.0"
+
+global:
+  default_provider: openai
+  default_schema: instruction
+  output_dir: ./output
+  cache_dir: ./.kothaset
+  concurrency: 4
+  timeout: 2m0s
+
+providers:
+  - name: openai
+    type: openai
+    base_url: https://api.openai.com/v1  # Change for OpenAI-compatible APIs
+    api_key: env.OPENAI_API_KEY  # Use env.VAR_NAME for environment variable or raw API key
+    model: gpt-4
+    max_retries: 3
+    timeout: 1m0s
+    rate_limit:
+      requests_per_minute: 60
+
+schemas:
+  - name: instruction
+    builtin: true
+  - name: chat
+    builtin: true
+  - name: preference
+    builtin: true
+  - name: classification
+    builtin: true
+
+logging:
+  level: info
+  format: text
 `
-	content := header + string(data)
 
 	// Write config file
 	if err := os.WriteFile(configPath, []byte(content), 0644); err != nil {
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
-	// Create output directory if specified
-	if defaultConfig.Global.OutputDir != "" {
-		if err := os.MkdirAll(defaultConfig.Global.OutputDir, 0755); err != nil {
-			return fmt.Errorf("failed to create output directory: %w", err)
-		}
+	// Create output directory
+	if err := os.MkdirAll("./output", 0755); err != nil {
+		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
 	absPath, _ := filepath.Abs(configPath)

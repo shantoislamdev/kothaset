@@ -1,0 +1,50 @@
+{
+  "name": "kothaset",
+  "version": "1.0.0",
+  "description": "High-quality dataset generation CLI for LLM training",
+  "author": "Shanto Islam <shantoislamdev@gmail.com>",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/shantoislamdev/kothaset.git"
+  },
+  "bugs": {
+    "url": "https://github.com/shantoislamdev/kothaset/issues"
+  },
+  "homepage": "https://github.com/shantoislamdev/kothaset#readme",
+  "keywords": [
+    "llm",
+    "dataset",
+    "ai",
+    "training",
+    "cli",
+    "machine-learning",
+    "synthetic-data",
+    "openai",
+    "gpt"
+  ],
+  "bin": {
+    "kothaset": "./bin/kothaset"
+  },
+  "scripts": {
+    "postinstall": "node scripts/postinstall.js"
+  },
+  "engines": {
+    "node": ">=14"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "cpu": [
+    "x64",
+    "arm64"
+  ],
+  "files": [
+    "bin/",
+    "scripts/",
+    "README.md",
+    "LICENSE"
+  ]
+}

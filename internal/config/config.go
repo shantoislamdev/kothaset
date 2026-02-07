@@ -195,6 +195,7 @@ func DefaultConfig() *Config {
 			{
 				Name:       "openai",
 				Type:       "openai",
+				BaseURL:    "", // Set custom base URL for OpenAI-compatible APIs
 				APIKeyEnv:  "OPENAI_API_KEY",
 				Model:      "gpt-4",
 				MaxRetries: 3,

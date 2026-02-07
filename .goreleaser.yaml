@@ -1,0 +1,110 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+
+project_name: kothaset
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: kothaset
+    main: ./cmd/kothaset
+    binary: kothaset
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -s -w
+      - -X github.com/shantoislamdev/kothaset/internal/cli.Version={{.Version}}
+      - -X github.com/shantoislamdev/kothaset/internal/cli.Commit={{.ShortCommit}}
+      - -X github.com/shantoislamdev/kothaset/internal/cli.BuildDate={{.Date}}
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ignore:
+      - goos: windows
+        goarch: arm64
+
+archives:
+  - id: default
+    format: tar.gz
+    format_overrides:
+      - goos: windows
+        format: zip
+    name_template: >-
+      {{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}
+    files:
+      - README.md
+      - LICENSE*
+
+checksum:
+  name_template: 'checksums.txt'
+  algorithm: sha256
+
+changelog:
+  sort: asc
+  use: github
+  filters:
+    exclude:
+      - '^docs:'
+      - '^test:'
+      - '^chore:'
+      - '^ci:'
+      - Merge pull request
+      - Merge branch
+
+release:
+  github:
+    owner: shantoislamdev
+    name: kothaset
+  draft: false
+  prerelease: auto
+  name_template: "v{{.Version}}"
+
+# Homebrew tap
+brews:
+  - name: kothaset
+    repository:
+      owner: shantoislamdev
+      name: homebrew-tap
+    directory: Formula
+    homepage: "https://github.com/shantoislamdev/kothaset"
+    description: "High-quality dataset generation CLI for LLM training"
+    license: "Apache-2.0"
+    install: |
+      bin.install "kothaset"
+    test: |
+      system "#{bin}/kothaset", "version"
+
+# Scoop manifest
+scoops:
+  - name: kothaset
+    repository:
+      owner: shantoislamdev
+      name: scoop-bucket
+    homepage: "https://github.com/shantoislamdev/kothaset"
+    description: "High-quality dataset generation CLI for LLM training"
+    license: Apache-2.0
+
+# Docker images
+dockers:
+  - image_templates:
+      - "ghcr.io/shantoislamdev/kothaset:{{ .Tag }}"
+      - "ghcr.io/shantoislamdev/kothaset:v{{ .Major }}"
+      - "ghcr.io/shantoislamdev/kothaset:v{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/shantoislamdev/kothaset:latest"
+    dockerfile: Dockerfile
+    build_flag_templates:
+      - "--label=org.opencontainers.image.created={{.Date}}"
+      - "--label=org.opencontainers.image.title={{.ProjectName}}"
+      - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+      - "--label=org.opencontainers.image.version={{.Version}}"
+      - "--platform=linux/amd64"
+
+# Announce release
+announce:
+  skip: true

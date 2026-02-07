@@ -9,8 +9,6 @@ kothaset
 
 # Output Data
 *.jsonl
-*.json
-*.txt
 *.parquet
 /output/
 
@@ -30,3 +28,10 @@ kothaset
 # OS
 .DS_Store
 Thumbs.db
+
+# GoReleaser
+dist/
+
+# npm
+npm/bin/
+npm/node_modules/

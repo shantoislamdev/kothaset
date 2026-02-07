@@ -1,133 +1,173 @@
 # KothaSet
 
-KothaSet is a powerful CLI tool for generating high-quality datasets using Large Language Models (LLMs) as teacher models. It allows you to create diverse training data for fine-tuning smaller models (0.6B-32B parameters).
+[![CI](https://github.com/shantoislamdev/kothaset/actions/workflows/ci.yml/badge.svg)](https://github.com/shantoislamdev/kothaset/actions/workflows/ci.yml)
+[![npm version](https://badge.fury.io/js/kothaset.svg)](https://www.npmjs.com/package/kothaset)
+[![Go Report Card](https://goreportcard.com/badge/github.com/shantoislamdev/kothaset)](https://goreportcard.com/report/github.com/shantoislamdev/kothaset)
+[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
+
+**KothaSet** is a powerful CLI tool for generating high-quality datasets using Large Language Models (LLMs) as teacher models. Create diverse training data for fine-tuning smaller models (0.6B-32B parameters).
 
 ## Features
 
-- 🔌 **Multiple Providers**: Support for OpenAI, and OpenAI-compatible APIs (DeepSeek, vLLM, Ollama, etc.)
-- 📋 **Flexible Schemas**: Built-in support for Instruction (Alpaca), Chat (ShareGPT), Preference (DPO), and Classification datasets.
-- 🌊 **Stream Processing**: Real-time generation with progress tracking.
-- 💾 **Resumable**: Atomic checkpointing ensures you never lose progress.
-- 🎲 **Diversity**: Seed file support to ensure diverse topic coverage.
+- 🔌 **Multi-Provider** — OpenAI, and OpenAI-compatible APIs (DeepSeek, vLLM, Ollama)
+- 📋 **Flexible Schemas** — Instruction (Alpaca), Chat (ShareGPT), Preference (DPO), Classification
+- 🌊 **Streaming Output** — Real-time generation with progress tracking
+- 💾 **Resumable** — Atomic checkpointing, never lose progress
+- 📦 **Multiple Formats** — JSONL, Parquet, HuggingFace datasets
+- 🎲 **Diversity Control** — Seed files for topic coverage
+
+---
 
 ## Installation
 
-### From Source
-
+### npm (Recommended)
 ```bash
-git clone https://github.com/shantoislamdev/kothaset.git
-cd kothaset
-go build -o kothaset.exe ./cmd/kothaset
+npm install -g kothaset
 ```
+
+### Homebrew (macOS/Linux)
+```bash
+brew install shantoislamdev/tap/kothaset
+```
+
+### Scoop (Windows)
+```bash
+scoop bucket add kothaset https://github.com/shantoislamdev/scoop-bucket
+scoop install kothaset
+```
+
+### Docker
+```bash
+docker pull ghcr.io/shantoislamdev/kothaset:latest
+docker run ghcr.io/shantoislamdev/kothaset version
+```
+
+### Binary Download
+Download from [GitHub Releases](https://github.com/shantoislamdev/kothaset/releases).
+
+### From Source
+```bash
+go install github.com/shantoislamdev/kothaset/cmd/kothaset@latest
+```
+
+---
 
 ## Quick Start
 
-1. **Initialize Configuration**:
+1. **Initialize configuration:**
    ```bash
-   ./kothaset init
+   kothaset init
    ```
-   This creates a `.kothaset.yaml` file in the current directory.
 
-2. **Set API Key**:
-   Set your API key as an environment variable (recommended):
+2. **Set your API key:**
    ```bash
    # Windows PowerShell
-   $env:OPENAI_API_KEY="sk-..."
+   $env:OPENAI_API_KEY = "sk-..."
    
-   # Linux/Mac
+   # Linux/macOS
    export OPENAI_API_KEY="sk-..."
    ```
 
-3. **Generate Data**:
+3. **Generate a dataset:**
    ```bash
-   ./kothaset generate -n 10 -o output.jsonl
+   kothaset generate -n 100 -s instruction -o dataset.jsonl
    ```
+
+---
 
 ## Configuration
 
-KothaSet uses a layered configuration system. It looks for config files in:
-1. `./.kothaset.yaml` (Project directory)
-2. `~/.config/kothaset/config.yaml` (User directory)
+Edit `.kothaset.yaml` in your project directory:
 
-### setting up Providers
-
-You can configure providers in the `.kothaset.yaml` file.
-
-#### OpenAI (Default)
 ```yaml
+version: "1.0"
+global:
+  default_provider: openai
+  default_schema: instruction
+
 providers:
   - name: openai
     type: openai
-    api_key_env: OPENAI_API_KEY  # Reads from env var
+    base_url: https://api.openai.com/v1
+    api_key: env.OPENAI_API_KEY  # or raw key: sk-...
     model: gpt-4
-```
-
-#### Custom Endpoint (e.g., DeepSeek, LocalAI, vLLM)
-To use a custom API URL (Base URL), configure a provider with `base_url`:
-
-```yaml
-providers:
-  - name: local-model
+    
+  # Custom endpoint (DeepSeek, vLLM, etc.)
+  - name: local
     type: openai
-    base_url: "http://localhost:8000/v1"  # Your API base URL
-    api_key: "not-needed"                 # Or use api_key_env
+    base_url: http://localhost:8000/v1
+    api_key: not-needed
     model: meta-llama/Llama-2-7b-chat-hf
 ```
 
-To use this provider:
-```bash
-./kothaset generate --provider local-model ...
-```
+---
 
 ## Usage
 
 ### Selecting a Schema
 
-Use the `-s` or `--schema` flag to select the dataset format.
-
-**Available Schemas:**
-- `instruction`: (Default) Alpaca-style `{instruction, input, output}`
-- `chat`: ShareGPT-style `{conversations: [{role, content}, ...]}`
-- `preference`: DPO style `{prompt, chosen, rejected}`
-- `classification`: Text classification `{text, label}`
-
-**Examples:**
+| Schema | Description | Use Case |
+|--------|-------------|----------|
+| `instruction` | Alpaca-style {instruction, input, output} | SFT |
+| `chat` | ShareGPT multi-turn conversations | Chat fine-tuning |
+| `preference` | {prompt, chosen, rejected} pairs | DPO/RLHF |
+| `classification` | {text, label} pairs | Classifiers |
 
 ```bash
-# Generate Instruction Dataset (Default)
-./kothaset generate -n 50 -s instruction -o instructions.jsonl
+# Instruction dataset
+kothaset generate -n 1000 -s instruction -o instructions.jsonl
 
-# Generate Chat/Conversation Dataset
-./kothaset generate -n 50 -s chat -o conversation.jsonl
+# Chat conversations
+kothaset generate -n 500 -s chat -o conversations.jsonl
 
-# Generate Preference/DPO Dataset
-./kothaset generate -n 50 -s preference -o dpo_data.jsonl
+# Preference pairs for DPO  
+kothaset generate -n 500 -s preference -o dpo_data.jsonl
 ```
 
-### Controlling Diversity with Seeds
-
-To ensure your dataset covers specific topics, verify you can use a seed file:
-
-1. Create a text file `topics.txt` with one topic per line:
-   ```text
-   Python programming best practices
-   History of the Roman Empire
-   Quantum mechanics for beginners
-   Healthy cooking recipes
-   ```
-
-2. Run generation with `--seeds`:
-   ```bash
-   ./kothaset generate -n 100 --seeds topics.txt -o diversity.jsonl
-   ```
-
-### Other Useful Flags
-
-- `--dry-run`: Validate configuration without making API calls.
-- `-w, --workers`: Number of concurrent generation workers (default: 4).
-- `--resume`: Resume from a checkpoint file if generation was interrupted.
+### Output Formats
 
 ```bash
-# Resume generation
-./kothaset generate --resume output.jsonl.checkpoint
+# JSONL (default)
+kothaset generate -n 100 -f jsonl -o dataset.jsonl
+
+# Parquet
+kothaset generate -n 100 -f parquet -o dataset.parquet
+
+# HuggingFace datasets format
+kothaset generate -n 100 -f hf -o ./my_dataset
 ```
+
+### Advanced Options
+
+```bash
+# Use custom provider
+kothaset generate -n 100 -p local -o dataset.jsonl
+
+# Control diversity with seed file
+kothaset generate -n 1000 --seeds topics.txt -o diverse.jsonl
+
+# Resume interrupted generation
+kothaset generate --resume dataset.jsonl.checkpoint
+
+# Dry run (validate config)
+kothaset generate --dry-run -n 100
+```
+
+---
+
+## Documentation
+
+- [Configuration Reference](docs/configuration.md)
+- [Schema Guide](docs/schemas.md)
+- [Provider Setup](docs/providers.md)
+- [API Reference](docs/api.md)
+
+---
+
+## Contributing
+
+Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md).
+
+## License
+
+Apache 2.0 License. See [LICENSE](LICENSE).
