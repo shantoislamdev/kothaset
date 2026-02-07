@@ -78,16 +78,6 @@ homebrew_casks:
     description: "High-quality dataset generation CLI for LLM training"
     license: "Apache-2.0"
 
-# Scoop manifest
-scoops:
-  - name: kothaset
-    repository:
-      owner: shantoislamdev
-      name: scoop-bucket
-    homepage: "https://github.com/shantoislamdev/kothaset"
-    description: "High-quality dataset generation CLI for LLM training"
-    license: Apache-2.0
-
 # Announce release
 announce:
   skip: true
