@@ -5,7 +5,7 @@
 *.so
 *.dylib
 bin/
-kothaset
+/kothaset
 
 # Output Data
 *.jsonl
