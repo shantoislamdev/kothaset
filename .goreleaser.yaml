@@ -67,7 +67,7 @@ release:
   prerelease: auto
   name_template: "v{{.Version}}"
 
-# Homebrew casks (replaces brews)
+# Homebrew casks
 homebrew_casks:
   - name: kothaset
     repository:
@@ -87,22 +87,6 @@ scoops:
     homepage: "https://github.com/shantoislamdev/kothaset"
     description: "High-quality dataset generation CLI for LLM training"
     license: Apache-2.0
-
-# Docker images (v2 format)
-dockers_v2:
-  - images:
-      - "ghcr.io/shantoislamdev/kothaset"
-    tags:
-      - "{{ .Tag }}"
-      - "v{{ .Major }}"
-      - "v{{ .Major }}.{{ .Minor }}"
-      - "{{ if not .IsNightly }}latest{{ end }}"
-    labels:
-      org.opencontainers.image.created: "{{.Date}}"
-      org.opencontainers.image.title: "{{.ProjectName}}"
-      org.opencontainers.image.revision: "{{.FullCommit}}"
-      org.opencontainers.image.version: "{{.Version}}"
-      org.opencontainers.image.source: "{{.GitURL}}"
 
 # Announce release
 announce:
