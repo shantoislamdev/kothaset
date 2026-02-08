@@ -299,6 +299,7 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 		Temperature:  g.config.Temperature,
 		MaxTokens:    g.config.MaxTokens,
 		TopP:         g.config.TopP,
+		Seed:         g.config.Seed,
 	}
 
 	// Execute with retries

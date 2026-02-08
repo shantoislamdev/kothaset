@@ -3,7 +3,7 @@ package generator
 import (
 	"bufio"
 	"context"
-	"math/rand"
+
 	"os"
 	"strings"
 	"sync"
@@ -19,7 +19,6 @@ type Sampler interface {
 type FileSampler struct {
 	topics []string
 	mu     sync.Mutex
-	rand   *rand.Rand
 }
 
 // NewFileSampler creates a sampler from a file
@@ -45,7 +44,6 @@ func NewFileSampler(path string) (*FileSampler, error) {
 
 	return &FileSampler{
 		topics: topics,
-		rand:   rand.New(rand.NewSource(rand.Int63())),
 	}, nil
 }
 

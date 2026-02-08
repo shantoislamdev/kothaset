@@ -13,8 +13,8 @@
 - **Streaming Output** — Real-time generation with progress tracking
 - **Resumable** — Atomic checkpointing, never lose progress
 - **Multiple Formats** — JSONL, Parquet, HuggingFace datasets
-- **Reproducible** — Required seed for deterministic generation
-- **Diversity Control** — Seed files for topic coverage
+- **Reproducible** — Required seed for deterministic LLM generation
+- **Diversity Control** — Input files for sequential topic coverage
 
 ---
 
@@ -131,7 +131,7 @@ kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./my_dataset
 # Use custom provider
 kothaset generate -n 100 --seed 42 -i topics.txt -p local -o dataset.jsonl
 
-# Control diversity with seed file
+# Control diversity with input file
 kothaset generate -n 1000 --seed 42 -i topics.txt -o diverse.jsonl
 
 # Resume interrupted generation
