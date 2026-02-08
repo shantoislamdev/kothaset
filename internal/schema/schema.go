@@ -90,6 +90,12 @@ type PromptOptions struct {
 
 	// Custom system prompt override
 	SystemPrompt string
+
+	// UserContext is the free-form context paragraph from context.yaml
+	UserContext string
+
+	// UserInstruction is the free-form instruction paragraph from context.yaml
+	UserInstruction string
 }
 
 // Sample represents a single dataset sample

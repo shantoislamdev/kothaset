@@ -53,6 +53,10 @@ type Config struct {
 
 	// Variables for prompt templates
 	Variables map[string]any `yaml:"variables,omitempty" json:"variables,omitempty"`
+
+	// Context from context.yaml (free-form paragraphs)
+	UserContext     string `yaml:"user_context,omitempty" json:"user_context,omitempty"`
+	UserInstruction string `yaml:"user_instruction,omitempty" json:"user_instruction,omitempty"`
 }
 
 // DefaultConfig returns sensible defaults
@@ -273,7 +277,9 @@ type workerResult struct {
 func (g *Generator) generateSample(ctx context.Context, index int) *workerResult {
 	// Build prompt options
 	opts := schema.PromptOptions{
-		Variables: g.config.Variables,
+		Variables:       g.config.Variables,
+		UserContext:     g.config.UserContext,
+		UserInstruction: g.config.UserInstruction,
 	}
 
 	// Get topic from sampler if available

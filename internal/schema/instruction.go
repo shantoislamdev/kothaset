@@ -54,8 +54,14 @@ func (s *InstructionSchema) RequiredFields() []string {
 func (s *InstructionSchema) GeneratePrompt(ctx context.Context, opts PromptOptions) (string, error) {
 	var sb strings.Builder
 
-	// Base prompt
-	sb.WriteString("Generate a high-quality instruction-response pair for training an AI assistant.\n\n")
+	// Inject user context first (from context.yaml)
+	if opts.UserContext != "" {
+		sb.WriteString(opts.UserContext)
+		sb.WriteString("\n\n")
+	} else {
+		// Default context if none provided
+		sb.WriteString("Generate a high-quality instruction-response pair for training an AI assistant.\n\n")
+	}
 
 	// Add topic/category context if provided
 	if opts.Topic != "" {
@@ -101,9 +107,15 @@ Requirements:
 - The instruction should be clear and actionable
 - The output should be helpful, accurate, and well-formatted
 - Vary the style: questions, commands, requests, tasks
-- Be creative and diverse in topics and approaches
+- Be creative and diverse in topics and approaches`)
 
-Respond with ONLY the JSON object, no additional text.`)
+	// Inject user instructions (from context.yaml)
+	if opts.UserInstruction != "" {
+		sb.WriteString("\n\nAdditional Instructions:\n")
+		sb.WriteString(opts.UserInstruction)
+	}
+
+	sb.WriteString("\n\nRespond with ONLY the JSON object, no additional text.")
 
 	return sb.String(), nil
 }

@@ -53,7 +53,14 @@ func (s *PreferenceSchema) RequiredFields() []string {
 func (s *PreferenceSchema) GeneratePrompt(ctx context.Context, opts PromptOptions) (string, error) {
 	var sb strings.Builder
 
-	sb.WriteString("Generate a preference pair for training AI alignment.\n\n")
+	// Inject user context first (from context.yaml)
+	if opts.UserContext != "" {
+		sb.WriteString(opts.UserContext)
+		sb.WriteString("\n\n")
+	} else {
+		// Default context if none provided
+		sb.WriteString("Generate a preference pair for training AI alignment.\n\n")
+	}
 
 	if opts.Topic != "" {
 		sb.WriteString(fmt.Sprintf("Topic: %s\n", opts.Topic))
@@ -77,9 +84,15 @@ The difference between chosen and rejected should represent clear quality distin
 - Helpfulness: chosen directly addresses the need, rejected is vague
 - Safety: chosen avoids harmful content, rejected may be borderline
 - Clarity: chosen is well-organized, rejected is confusing
-- Completeness: chosen is thorough, rejected is incomplete
+- Completeness: chosen is thorough, rejected is incomplete`)
 
-Respond with ONLY the JSON object, no additional text.`)
+	// Inject user instructions (from context.yaml)
+	if opts.UserInstruction != "" {
+		sb.WriteString("\n\nAdditional Instructions:\n")
+		sb.WriteString(opts.UserInstruction)
+	}
+
+	sb.WriteString("\n\nRespond with ONLY the JSON object, no additional text.")
 
 	return sb.String(), nil
 }

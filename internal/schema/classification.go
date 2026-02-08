@@ -59,7 +59,14 @@ func (s *ClassificationSchema) RequiredFields() []string {
 func (s *ClassificationSchema) GeneratePrompt(ctx context.Context, opts PromptOptions) (string, error) {
 	var sb strings.Builder
 
-	sb.WriteString("Generate a text classification example.\n\n")
+	// Inject user context first (from context.yaml)
+	if opts.UserContext != "" {
+		sb.WriteString(opts.UserContext)
+		sb.WriteString("\n\n")
+	} else {
+		// Default context if none provided
+		sb.WriteString("Generate a text classification example.\n\n")
+	}
 
 	if opts.Topic != "" {
 		sb.WriteString(fmt.Sprintf("Category/Domain: %s\n", opts.Topic))
@@ -97,6 +104,12 @@ Common classification types:
 - Intent: question, request, complaint, feedback, etc.
 - Toxicity: toxic, non-toxic
 - Language: en, es, fr, de, etc.`)
+	}
+
+	// Inject user instructions (from context.yaml)
+	if opts.UserInstruction != "" {
+		sb.WriteString("\n\nAdditional Instructions:\n")
+		sb.WriteString(opts.UserInstruction)
 	}
 
 	sb.WriteString("\n\nRespond with ONLY the JSON object, no additional text.")

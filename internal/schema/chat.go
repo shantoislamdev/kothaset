@@ -53,7 +53,14 @@ func (s *ChatSchema) RequiredFields() []string {
 func (s *ChatSchema) GeneratePrompt(ctx context.Context, opts PromptOptions) (string, error) {
 	var sb strings.Builder
 
-	sb.WriteString("Generate a high-quality multi-turn conversation between a user and an AI assistant.\n\n")
+	// Inject user context first (from context.yaml)
+	if opts.UserContext != "" {
+		sb.WriteString(opts.UserContext)
+		sb.WriteString("\n\n")
+	} else {
+		// Default context if none provided
+		sb.WriteString("Generate a high-quality multi-turn conversation between a user and an AI assistant.\n\n")
+	}
 
 	if opts.Topic != "" {
 		sb.WriteString(fmt.Sprintf("Topic/Context: %s\n", opts.Topic))
@@ -83,9 +90,15 @@ Requirements:
 - The conversation should be coherent and natural
 - Assistant responses should be helpful, accurate, and engaging
 - User messages can include questions, requests, or follow-ups
-- Vary the conversation style and complexity
+- Vary the conversation style and complexity`)
 
-Respond with ONLY the JSON object, no additional text.`)
+	// Inject user instructions (from context.yaml)
+	if opts.UserInstruction != "" {
+		sb.WriteString("\n\nAdditional Instructions:\n")
+		sb.WriteString(opts.UserInstruction)
+	}
+
+	sb.WriteString("\n\nRespond with ONLY the JSON object, no additional text.")
 
 	return sb.String(), nil
 }

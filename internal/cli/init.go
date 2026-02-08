@@ -81,6 +81,26 @@ logging:
 		return fmt.Errorf("failed to write config: %w", err)
 	}
 
+	// Create example context.yaml
+	contextPath := "context.yaml"
+	contextContent := `# KothaSet Context Configuration
+# This file defines the purpose and instructions for your dataset.
+# Both fields are free-form paragraphs - write whatever you need.
+
+context: |
+  Generate high-quality training data for an AI assistant.
+  The data should be helpful, accurate, and well-formatted.
+
+instruction: |
+  Be creative and diverse in topics and approaches.
+  Vary the style and complexity of responses.
+`
+	if _, err := os.Stat(contextPath); os.IsNotExist(err) {
+		if err := os.WriteFile(contextPath, []byte(contextContent), 0644); err != nil {
+			return fmt.Errorf("failed to write context.yaml: %w", err)
+		}
+	}
+
 	// Create output directory
 	if err := os.MkdirAll("./output", 0755); err != nil {
 		return fmt.Errorf("failed to create output directory: %w", err)
@@ -88,10 +108,11 @@ logging:
 
 	absPath, _ := filepath.Abs(configPath)
 	fmt.Printf("✓ Created configuration file: %s\n", absPath)
+	fmt.Println("✓ Created context.yaml (customize for your dataset)")
 	fmt.Println("\nNext steps:")
-	fmt.Println("  1. Add your API key to the config or set OPENAI_API_KEY environment variable")
-	fmt.Println("  2. Run 'kothaset generate --help' to see generation options")
-	fmt.Println("  3. Generate your first dataset: kothaset generate -n 10 -o dataset.jsonl")
+	fmt.Println("  1. Add your API key to .kothaset.yaml or set OPENAI_API_KEY")
+	fmt.Println("  2. Edit context.yaml to define your dataset purpose and instructions")
+	fmt.Println("  3. Generate: kothaset generate -n 10 -i topics.txt -o dataset.jsonl --seed 42")
 
 	return nil
 }

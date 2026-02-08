@@ -10,6 +10,7 @@ import (
 
 	"github.com/spf13/cobra"
 
+	ctxconfig "github.com/shantoislamdev/kothaset/internal/context"
 	"github.com/shantoislamdev/kothaset/internal/generator"
 	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
@@ -137,6 +138,15 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to create provider: %w", err)
 	}
 
+	// Load context.yaml (auto-loaded from current directory)
+	ctxCfg, err := ctxconfig.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load context.yaml: %w", err)
+	}
+	if !ctxCfg.IsEmpty() {
+		fmt.Println("Loaded context.yaml")
+	}
+
 	// Build generator config
 	genCfg := generator.Config{
 		NumSamples:      genCount,
@@ -155,6 +165,8 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		CheckpointEvery: 50,
 		ResumeFrom:      genResume,
 		InputFile:       genInputFile,
+		UserContext:     ctxCfg.Context,
+		UserInstruction: ctxCfg.Instruction,
 	}
 
 	// Create generator
