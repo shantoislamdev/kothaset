@@ -1,0 +1,20 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle - light/white -->
+  <circle cx="32" cy="32" r="30" fill="#FFFFFF" stroke="#1a1815" stroke-width="3"/>
+  
+  <!-- Simplified bold "K" for small sizes -->
+  <g>
+    <!-- Vertical stem of K - thicker -->
+    <rect x="18" y="14" width="7" height="36" rx="3" fill="#1a1815"/>
+    
+    <!-- Upper diagonal - bolder stroke -->
+    <path d="M25 32 L42 16" stroke="#1a1815" stroke-width="7" stroke-linecap="round"/>
+    
+    <!-- Lower diagonal - bolder stroke -->
+    <path d="M25 32 L42 48" stroke="#1a1815" stroke-width="7" stroke-linecap="round"/>
+    
+    <!-- Data flow nodes - larger for visibility -->
+    <circle cx="44" cy="14" r="6" fill="#1a1815"/>
+    <circle cx="44" cy="50" r="6" fill="#1a1815"/>
+  </g>
+</svg>

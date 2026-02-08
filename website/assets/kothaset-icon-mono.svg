@@ -1,0 +1,26 @@
+<svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Outer ring -->
+  <circle cx="32" cy="32" r="30" stroke="currentColor" stroke-width="3" fill="none"/>
+  
+  <!-- Central "K" stylized as data flow -->
+  <g>
+    <!-- Vertical stem of K -->
+    <rect x="20" y="16" width="4" height="32" rx="2" fill="currentColor"/>
+    
+    <!-- Upper diagonal -->
+    <path d="M24 32 L38 18" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Lower diagonal -->
+    <path d="M24 32 L38 46" stroke="currentColor" stroke-width="4" stroke-linecap="round"/>
+    
+    <!-- Data flow nodes -->
+    <circle cx="40" cy="17" r="4" fill="currentColor"/>
+    <circle cx="40" cy="47" r="4" fill="currentColor"/>
+    
+    <!-- Small data dots (solid for monochrome clarity) -->
+    <circle cx="46" cy="20" r="2" fill="currentColor"/>
+    <circle cx="48" cy="26" r="1.5" fill="currentColor"/>
+    <circle cx="46" cy="44" r="2" fill="currentColor"/>
+    <circle cx="48" cy="38" r="1.5" fill="currentColor"/>
+  </g>
+</svg>

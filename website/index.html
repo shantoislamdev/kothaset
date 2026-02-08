@@ -3,7 +3,16 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>KothaSet - High-Quality Synthetic Data Generation</title>
+    <title>KothaSet - Synthetic Dataset Generation for AI Training</title>
+    <meta name="description" content="Generate high-quality synthetic datasets for fine-tuning AI models. KothaSet is an open-source CLI that uses LLMs like GPT-4 to create instruction, chat, preference, and classification datasets.">
+    <meta name="keywords" content="synthetic data generation, dataset generator, LLM fine-tuning, Alpaca dataset, ShareGPT format, DPO training data">
+    <meta property="og:title" content="KothaSet - Synthetic Dataset Generation for AI Training">
+    <meta property="og:description" content="Create high-quality training data using LLMs as teachers. Open source CLI for generating instruction, chat, and preference datasets.">
+    <meta property="og:type" content="website">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="KothaSet - Synthetic Dataset Generation">
+    <meta name="twitter:description" content="Open-source CLI for generating training datasets using LLMs as teacher models.">
+    <link rel="icon" type="image/svg+xml" href="assets/kothaset-icon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -16,9 +25,7 @@
     <header id="main-header">
         <div class="container header-content">
             <a href="/" class="logo group">
-                <div class="logo-icon">
-                    <i data-lucide="database" width="18" height="18"></i>
-                </div>
+                <img src="assets/kothaset-icon-dark.svg" alt="KothaSet" width="32" height="32" class="logo-icon-img">
                 <span class="logo-text">KothaSet</span>
             </a>
 
@@ -70,7 +77,7 @@
                     </h1>
                     
                     <p class="hero-text">
-                        KothaSet fuels the next generation of SLMs. Leverage SOTA teacher models to generate high-quality, validated datasets for fine-tuning.
+                        Use GPT-4, DeepSeek, or any OpenAI-compatible model to generate training data. Build instruction pairs, multi-turn chats, or preference datasets—all validated and ready for fine-tuning.
                     </p>
                     
                     <!-- Install Tabs Component -->
@@ -177,9 +184,9 @@
         <section class="features-section">
             <div class="container">
                 <div class="section-header">
-                    <h2 class="section-title">Engineered for Reliability</h2>
+                    <h2 class="section-title">Built to Run All Night</h2>
                     <p class="section-desc">
-                        Generating millions of tokens requires more than a simple script. KothaSet is built to handle the chaos of large-scale API consumption.
+                        Generating 100k samples means thousands of API calls. KothaSet handles rate limits, retries, and failures so you don't have to babysit a script.
                     </p>
                 </div>
 
@@ -194,8 +201,7 @@
                             </div>
                             <h3 class="feature-title">High-Concurrency Engine</h3>
                             <p class="feature-text max-w-md">
-                                Built on Go's goroutines, the parallel worker pool maximizes throughput while strictly respecting API rate limits. 
-                                Generate datasets 10x faster than standard Python scripts.
+                                Runs parallel requests using Go's goroutines. Set your concurrency level and rate limits—KothaSet keeps you under the API quota.
                             </p>
                         </div>
                     </div>
@@ -208,7 +214,7 @@
                             </div>
                             <h3 class="feature-title">Atomic Checkpointing</h3>
                             <p class="feature-text mb-8">
-                                Never lose a token. KothaSet writes to disk atomically. Resume interrupted runs exactly where they left off.
+                                Progress saves to disk after every batch. If your run crashes at 85%, just run it again—it picks up where it stopped.
                             </p>
                          </div>
                          <div class="feature-terminal">
@@ -225,7 +231,7 @@
                          </div>
                          <h3 class="feature-title">Provider Agnostic</h3>
                          <p class="feature-text text-sm">
-                             Native support for OpenAI, DeepSeek, vLLM, and Ollama.
+                             Works with OpenAI, DeepSeek, vLLM, Ollama—any OpenAI-compatible API.
                          </p>
                     </div>
 
@@ -236,10 +242,64 @@
                          </div>
                          <h3 class="feature-title">Strict Schemas</h3>
                          <p class="feature-text text-sm">
-                             Built-in validation for Instruction, Chat, and Preference datasets.
+                             Built-in validation for 4 dataset types. Every sample is checked before it's written.
                          </p>
                     </div>
 
+                </div>
+            </div>
+        </section>
+
+        <!-- Schemas Section -->
+        <section class="schemas-section">
+            <div class="container">
+                <div class="section-header">
+                    <h2 class="section-title">Four Training Formats, One Command</h2>
+                    <p class="section-desc">
+                        Generate datasets in the formats you need. Each schema includes built-in validation and output formatting.
+                    </p>
+                </div>
+
+                <div class="schemas-grid">
+                    <!-- Instruction Schema -->
+                    <div class="schema-card">
+                        <div class="schema-icon">
+                            <i data-lucide="file-text" width="24" height="24"></i>
+                        </div>
+                        <h3 class="schema-title">Instruction</h3>
+                        <p class="schema-style">Alpaca-style</p>
+                        <p class="schema-desc">Instruction, input, and output pairs for supervised fine-tuning (SFT).</p>
+                    </div>
+
+                    <!-- Chat Schema -->
+                    <div class="schema-card">
+                        <div class="schema-icon">
+                            <i data-lucide="messages-square" width="24" height="24"></i>
+                        </div>
+                        <h3 class="schema-title">Chat</h3>
+                        <p class="schema-style">ShareGPT format</p>
+                        <p class="schema-desc">Multi-turn conversations between human and assistant for dialogue models.</p>
+                    </div>
+
+                    <!-- Preference Schema -->
+                    <div class="schema-card">
+                        <div class="schema-icon">
+                            <i data-lucide="scale" width="24" height="24"></i>
+                        </div>
+                        <h3 class="schema-title">Preference</h3>
+                        <p class="schema-style">DPO / RLHF</p>
+                        <p class="schema-desc">Chosen and rejected response pairs for preference learning.</p>
+                    </div>
+
+                    <!-- Classification Schema -->
+                    <div class="schema-card">
+                        <div class="schema-icon">
+                            <i data-lucide="tags" width="24" height="24"></i>
+                        </div>
+                        <h3 class="schema-title">Classification</h3>
+                        <p class="schema-style">Text + Label</p>
+                        <p class="schema-desc">Labeled text samples for training classifiers.</p>
+                    </div>
                 </div>
             </div>
         </section>
@@ -263,7 +323,7 @@
                             <div class="step-number">2</div>
                             <div>
                                 <h3 class="step-title">Seed</h3>
-                                <p class="step-desc">Provide a list of topics or seed prompts to ensure diversity and coverage across your domain.</p>
+                                <p class="step-desc">Optionally add a list of topics to spread your dataset across different subjects.</p>
                             </div>
                         </div>
                         
@@ -310,7 +370,7 @@
             <div class="cta-curve-bg"></div>
             <div class="container">
                 <h2 class="cta-title">Ready to build your dataset?</h2>
-                <p class="cta-desc">Open source, free to use, and ready for your next fine-tuning project.</p>
+                <p class="cta-desc">Free and open source. Install it, run it, train your model.</p>
                 <div class="cta-buttons">
                     <a href="https://github.com/shantoislamdev/kothaset/blob/main/docs/quickstart.md" target="_blank" rel="noopener noreferrer" class="btn btn-white">Get Started</a>
                     <a href="https://github.com/shantoislamdev/kothaset" class="btn btn-outline-white">
@@ -329,7 +389,7 @@
                 <div class="footer-col-2">
                     <h3 class="font-serif text-lg font-medium mb-4">KothaSet</h3>
                     <p class="text-text-secondary text-sm max-w-sm leading-relaxed">
-                        An advanced CLI tool engineered to generate high-quality, large-scale synthetic datasets.
+                        A CLI tool for generating training datasets using LLMs as teachers. Built for ML engineers.
                     </p>
                 </div>
                 
