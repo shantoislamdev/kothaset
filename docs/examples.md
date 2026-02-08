@@ -45,6 +45,11 @@ Output:
 kothaset generate -n 10000 -s classification --seed 789 -o labels.jsonl
 ```
 
+Output:
+```json
+{"text": "I loved this product!", "label": "positive"}
+```
+
 ---
 
 ## Topic Diversity

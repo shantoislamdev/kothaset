@@ -87,6 +87,25 @@ providers:
     model: llama2
 ```
 
+### Rate Limit Settings
+
+| Field | Description |
+|-------|-------------|
+| `requests_per_minute` | Max requests per minute |
+| `tokens_per_minute` | Max tokens per minute |
+
+---
+
+## Schema Config
+
+```yaml
+schemas:
+  - name: instruction
+    builtin: true
+  - name: custom-qa
+    path: ./schemas/qa.yaml
+```
+
 ---
 
 ## Generation Settings
