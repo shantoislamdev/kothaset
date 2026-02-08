@@ -74,7 +74,7 @@ Get-Content my_dataset.jsonl -Head 3
 |------|---------|
 | Generate more samples | `kothaset generate -n 1000 --seed 42 -o dataset.jsonl` |
 | Use chat format | `kothaset generate -s chat --seed 42 -o chats.jsonl` |
-| Use different model | `kothaset generate -m gpt-4o-mini --seed 42 -o dataset.jsonl` |
+| Use different model | `kothaset generate -m gpt-5.2 --seed 42 -o dataset.jsonl` |
 | Add topic diversity | `kothaset generate --seeds topics.txt --seed 42 -o diverse.jsonl` |
 
 ---

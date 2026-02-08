@@ -78,7 +78,7 @@ providers:
     type: openai
     base_url: https://api.openai.com/v1
     api_key: env.OPENAI_API_KEY  # or raw key: sk-...
-    model: gpt-5
+    model: gpt-5.2.2
     
   # Custom endpoint (DeepSeek, vLLM, etc.)
   - name: local

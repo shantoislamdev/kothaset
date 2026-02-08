@@ -37,20 +37,11 @@ KothaSet supports OpenAI and OpenAI-compatible APIs. This guide covers setting u
      - name: openai
        type: openai
        api_key_env: OPENAI_API_KEY
-       model: gpt-4o
+       model: gpt-5.2
        max_retries: 3
        rate_limit:
          requests_per_minute: 60
    ```
-
-### Available Models
-
-| Model | Cost (per 1K tokens) | Notes |
-|-------|---------------------|-------|
-| `gpt-4o` | $0.005 / $0.015 | Recommended for quality |
-| `gpt-4o-mini` | $0.00015 / $0.0006 | Best value |
-| `gpt-4-turbo` | $0.01 / $0.03 | Previous generation |
-| `gpt-3.5-turbo` | $0.0005 / $0.0015 | Budget option |
 
 ### Usage
 
@@ -80,7 +71,7 @@ DeepSeek provides cost-effective models via an OpenAI-compatible API.
        type: openai
        base_url: https://api.deepseek.com/v1
        api_key_env: DEEPSEEK_API_KEY
-       model: deepseek-chat
+       model: deepseek-chat-3.2
        max_retries: 3
    ```
 
@@ -88,8 +79,8 @@ DeepSeek provides cost-effective models via an OpenAI-compatible API.
 
 | Model | Cost (per 1K tokens) | Notes |
 |-------|---------------------|-------|
-| `deepseek-chat` | $0.00014 / $0.00028 | General purpose |
-| `deepseek-reasoner` | $0.00055 / $0.00219 | Advanced reasoning |
+| `deepseek-chat-3.2` | $0.00014 / $0.00028 | General purpose |
+| `deepseek-reasoner-3.2` | $0.00055 / $0.00219 | Advanced reasoning |
 
 ### Usage
 
@@ -177,7 +168,7 @@ providers:
     api_key_env: MY_API_KEY      # Environment variable
     
     # Model
-    model: gpt-4o
+    model: gpt-5.2
     
     # Additional headers (optional)
     headers:
@@ -253,16 +244,15 @@ KothaSet estimates costs based on token usage:
 
 | Model | Input (per 1K) | Output (per 1K) |
 |-------|----------------|-----------------|
-| gpt-4 | $0.03 | $0.06 |
-| gpt-4-turbo | $0.01 | $0.03 |
-| gpt-4o | $0.005 | $0.015 |
+| gpt-5.2 | $0.05 | $0.15 |
+| gemini-3 | $0.01 | $0.03 |
+| gpt-4o | $0.0025 | $0.01 |
 | gpt-4o-mini | $0.00015 | $0.0006 |
-| gpt-3.5-turbo | $0.0005 | $0.0015 |
 | claude-3-opus | $0.015 | $0.075 |
 | claude-3-sonnet | $0.003 | $0.015 |
 | claude-3-haiku | $0.00025 | $0.00125 |
-| deepseek-chat | $0.00014 | $0.00028 |
-| deepseek-reasoner | $0.00055 | $0.00219 |
+| deepseek-chat-3.2 | $0.00014 | $0.00028 |
+| deepseek-reasoner-3.2 | $0.00055 | $0.00219 |
 
 Costs are displayed during generation:
 

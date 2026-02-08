@@ -158,7 +158,7 @@ Each generated sample includes metadata:
   "metadata": {
     "generated_at": "2026-02-08T12:00:00Z",
     "provider": "openai",
-    "model": "gpt-4o",
+    "model": "gpt-5.2",
     "temperature": 0.7,
     "seed": 42,
     "tokens_used": 256,

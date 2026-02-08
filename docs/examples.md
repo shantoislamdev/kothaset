@@ -74,7 +74,7 @@ kothaset generate -n 1000 --seed 42 --seeds topics.txt -o diverse.jsonl
 providers:
   - name: quality
     type: openai
-    model: gpt-4o
+    model: gpt-5.2
   - name: fast
     type: openai
     model: gpt-4o-mini

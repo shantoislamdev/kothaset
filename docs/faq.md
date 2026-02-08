@@ -31,7 +31,7 @@ Ensures reproducibility—same seed = same dataset.
 
 ### How do I use a different model?
 ```bash
-kothaset generate -m gpt-4o-mini --seed 42 -n 100 -o dataset.jsonl
+kothaset generate -m gpt-5.2 --seed 42 -o dataset.jsonl
 ```
 
 ### Can I resume interrupted generation?
@@ -66,9 +66,9 @@ dataset = load_from_disk("./my_dataset")
 
 | Model | Cost |
 |-------|------|
-| gpt-4o | $2-5 |
-| gpt-4o-mini | $0.10-0.30 |
-| deepseek-chat | $0.05-0.15 |
+| gpt-5.2 | $2-5 |
+| gemini-3 | $0.50-1.00 |
+| deepseek-3.2 | $0.05-0.15 |
 
 ### How to reduce costs?
 1. Use cheaper models (`gpt-4o-mini`, `deepseek-chat`)
