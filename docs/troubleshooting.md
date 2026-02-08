@@ -54,6 +54,11 @@ python -m vllm.entrypoints.openai.api_server --model llama2 --port 8000
 ollama serve
 ```
 
+### "Network error" / "DNS resolution failed"
+1. Check internet connection
+2. Try `ping api.openai.com`
+3. Check firewall/proxy settings
+
 ### "Request timed out"
 Increase timeout in config:
 ```yaml
@@ -72,6 +77,12 @@ Valid schemas: `instruction`, `chat`, `preference`, `classification`
 ### "Provider not configured"
 Ensure provider name in config matches `-p` flag.
 
+### "Failed to parse response"
+LLM returned unexpected format. Lower temperature for consistency:
+```bash
+kothaset generate --temperature 0.5 --seed 42 -o dataset.jsonl
+```
+
 ### Slow generation
 
 | Cause | Fix |
@@ -82,9 +93,26 @@ Ensure provider name in config matches `-p` flag.
 
 ---
 
+## Output Issues
+
+### Empty output file
+All samples failed. Check error messages, verify API key, try `-n 1` to debug.
+
+### Incomplete samples
+`max_tokens` too low:
+```bash
+kothaset generate --max-tokens 2048 --seed 42 -o dataset.jsonl
+```
+
+---
+
 ## Checkpoints
 
-### Can't resume
+### "Failed to load checkpoint"
+1. Verify file exists: `ls dataset.jsonl.checkpoint`
+2. If corrupted, start fresh (existing output is preserved)
+
+### Can't find checkpoint
 Checkpoints saved as `<output>.checkpoint`:
 ```bash
 kothaset generate --resume dataset.jsonl.checkpoint
@@ -98,6 +126,11 @@ kothaset generate --resume dataset.jsonl.checkpoint
 ```bash
 kothaset init
 ```
+
+### YAML parsing error
+- Use 2-space indentation
+- Quote strings with special chars
+- Check for missing colons
 
 ---
 
@@ -114,4 +147,6 @@ logging:
 kothaset generate --dry-run -n 100 --seed 42
 ```
 
-**Report bugs:** [GitHub Issues](https://github.com/shantoislamdev/kothaset/issues)
+**Report bugs:** Include error message, command, config (redact keys), OS/version.
+
+[GitHub Issues](https://github.com/shantoislamdev/kothaset/issues)
