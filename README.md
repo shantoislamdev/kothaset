@@ -145,10 +145,19 @@ kothaset generate --dry-run -n 100 --seed 42
 
 ## Documentation
 
+**Getting Started**
+- [Quick Start Guide](docs/quickstart.md)
+- [Examples](docs/examples.md)
+
+**Reference**
 - [Configuration Reference](docs/configuration.md)
 - [Schema Guide](docs/schemas.md)
 - [Provider Setup](docs/providers.md)
-- [API Reference](docs/api.md)
+- [CLI Reference](docs/api.md)
+
+**Help**
+- [FAQ](docs/faq.md)
+- [Troubleshooting](docs/troubleshooting.md)
 
 ---
 
