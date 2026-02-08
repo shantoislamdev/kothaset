@@ -31,8 +31,11 @@ export OPENAI_API_KEY="sk-..."
 ```bash
 kothaset init
 ```
+This creates:
+- `kothaset.yaml`: Public config (commit to git)
+- `.secrets.yaml`: Private config (add to .gitignore)
 
-This creates `.kothaset.yaml` with default settings.
+Edit `kothaset.yaml` to customize your dataset generation settings.
 
 ---
 

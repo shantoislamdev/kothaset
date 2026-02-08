@@ -62,27 +62,35 @@ databases
 ```
 
 ```bash
-kothaset generate -n 1000 --seed 42 --seeds topics.txt -o diverse.jsonl
+kothaset generate -n 1000 --seed 42 -i topics.txt -o diverse.jsonl
 ```
 
 ---
 
 ## Multi-Provider Setup
 
+Define providers in `.secrets.yaml`:
+
 ```yaml
-# .kothaset.yaml
 providers:
   - name: quality
     type: openai
-    model: gpt-5.2
+    api_key: env.OPENAI_API_KEY
+    timeout: 3m
   - name: fast
     type: openai
-    model: gpt-4o-mini
+    api_key: env.OPENAI_API_KEY
+    timeout: 1m
 ```
 
+Generate using specific providers and models:
+
 ```bash
+# Use quality provider with GPT-5.2 (default model)
 kothaset generate -p quality -n 100 --seed 42 -o premium.jsonl
-kothaset generate -p fast -n 5000 --seed 42 -o bulk.jsonl
+
+# Use fast provider with cheaper model
+kothaset generate -p fast -m gpt-4o-mini -n 5000 --seed 42 -o bulk.jsonl
 ```
 
 ---

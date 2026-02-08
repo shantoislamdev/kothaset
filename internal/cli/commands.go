@@ -122,7 +122,7 @@ var providerListCmd = &cobra.Command{
 		if secrets != nil && len(secrets.Providers) > 0 {
 			for _, p := range secrets.Providers {
 				status := "configured"
-				if p.APIKey == "" && p.APIKeyEnv == "" {
+				if p.APIKey == "" {
 					status = "no api key"
 				}
 				fmt.Fprintf(w, "%s\t%s\t%s\n", p.Name, p.Type, status)

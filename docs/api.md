@@ -10,6 +10,9 @@ Complete reference for all KothaSet commands and options.
 |---------|-------------|
 | `kothaset init` | Initialize configuration file |
 | `kothaset generate` | Generate dataset samples |
+| `kothaset validate` | Validate configuration or setup |
+| `kothaset schema` | Manage and view schemas |
+| `kothaset provider` | Manage and test providers |
 | `kothaset version` | Show version information |
 
 ---
@@ -121,7 +124,7 @@ kothaset init [flags]
 kothaset init
 ```
 
-Creates `.kothaset.yaml` with default configuration.
+Creates `kothaset.yaml` (public) and `.secrets.yaml` (private) with default configuration.
 
 ---
 
@@ -131,7 +134,9 @@ These flags work with all commands:
 
 | Flag | Type | Description |
 |------|------|-------------|
-| `--config` | string | Config file path (default: `.kothaset.yaml`) |
+| `--config` | string | Config file path (default: `kothaset.yaml`) |
+| `--verbose`, `-v` | bool | Enable verbose output |
+| `--quiet`, `-q` | bool | Suppress non-essential output |
 | `--help` | bool | Show help |
 | `--version` | bool | Show version |
 
@@ -192,7 +197,87 @@ KothaSet automatically saves checkpoints during generation:
 When interrupted:
 
 ```
-⚠ Interrupted - saving checkpoint...
-Checkpoint saved to dataset.jsonl.checkpoint
 Resume with: kothaset generate --resume dataset.jsonl.checkpoint
+```
+
+---
+
+## validate
+
+Validate configuration and setup.
+
+### Synopsis
+
+```bash
+kothaset validate [command]
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `config` | Validate configuration file structure |
+| `schema` | Validate a schema definition (Phase 3) |
+| `dataset` | Validate an existing dataset (Phase 3) |
+
+### Examples
+
+```bash
+# Validate config file
+kothaset validate config
+
+# Validate specific config
+kothaset validate config --config my-config.yaml
+```
+
+---
+
+## schema
+
+Manage dataset schemas.
+
+### Synopsis
+
+```bash
+kothaset schema [command]
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List available built-in schemas |
+| `show` | Show schema details (Phase 3) |
+
+### Examples
+
+```bash
+# List all schemas
+kothaset schema list
+```
+
+---
+
+## provider
+
+Manage LLM providers.
+
+### Synopsis
+
+```bash
+kothaset provider [command]
+```
+
+### Subcommands
+
+| Command | Description |
+|---------|-------------|
+| `list` | List configured providers and their status |
+| `test` | Test provider connection (Phase 2) |
+
+### Examples
+
+```bash
+# List configured providers
+kothaset provider list
 ```

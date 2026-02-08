@@ -79,7 +79,8 @@ logging:
 providers:
   - name: openai
     type: openai
-    api_key_env: OPENAI_API_KEY  # or use: api_key: sk-...
+    api_key: env.OPENAI_API_KEY  # Reads from environment variable
+    # api_key: sk-...            # Or hardcode key directly
     max_retries: 3
     timeout: 1m
     rate_limit:
@@ -89,7 +90,7 @@ providers:
   # - name: deepseek
   #   type: openai
   #   base_url: https://api.deepseek.com/v1
-  #   api_key_env: DEEPSEEK_API_KEY
+  #   api_key: env.DEEPSEEK_API_KEY
   #   max_retries: 3
 `
 

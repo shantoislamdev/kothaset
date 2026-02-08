@@ -141,11 +141,6 @@ func resolveProviderSecrets(secrets *SecretsConfig) error {
 	for i := range secrets.Providers {
 		p := &secrets.Providers[i]
 
-		// Resolve API key from env if specified
-		if p.APIKeyEnv != "" && p.APIKey == "" {
-			p.APIKey = os.Getenv(p.APIKeyEnv)
-		}
-
 		// Handle env.VAR_NAME syntax in api_key field
 		if strings.HasPrefix(p.APIKey, "env.") {
 			envVar := strings.TrimPrefix(p.APIKey, "env.")

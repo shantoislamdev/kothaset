@@ -1,151 +1,96 @@
-# Configuration Reference
+# Configuration
 
-## Quick Start
+KothaSet uses a **two-file configuration system** to separate public settings from private credentials.
 
-```bash
-kothaset init
-```
+## Files
+
+| File | Visibility | Purpose |
+|------|------------|---------|
+| **`kothaset.yaml`** | PUBLIC | Shared settings, context, instructions. **Commit to git.** |
+| **`.secrets.yaml`** | PRIVATE | Provider credentials and API keys. **Add to `.gitignore`.** |
 
 ---
 
-## Full Config Example
+## 1. `kothaset.yaml` (Public)
+
+This file controls *what* you generate.
 
 ```yaml
 version: "1.0"
 
 global:
-  default_provider: openai
-  default_schema: instruction
-  concurrency: 4
-  timeout: 2m
+  provider: openai      # Default provider to use
+  schema: instruction   # Default schema (instruction, chat, preference, classification)
+  model: gpt-5.2        # Model to use (moved from provider config)
+  concurrency: 4        # Number of concurrent workers
+  output_dir: ./output  # Default output directory
+  cache_dir: .kothaset  # Cache directory (optional)
+  # timeout: 2m         # Request timeout (optional)
 
+# Context: Background info or persona injected into every prompt
+context: |
+  Generate high-quality training data for an AI assistant.
+  The data should be helpful, accurate, and well-formatted.
+
+# Instructions: Specific rules and guidelines for generation
+instructions:
+  - Be creative and diverse in topics and approaches
+  - Vary the style and complexity of responses
+  - Use clear and concise language
+
+logging:
+  level: info           # debug, info, warn, error
+  format: text          # text, json
+  file: kothaset.log    # Optional log file path
+
+
+
+```
+
+---
+
+## 2. `.secrets.yaml` (Private)
+
+This file controls *how* you access LLMs.
+
+```yaml
 providers:
   - name: openai
     type: openai
-    api_key_env: OPENAI_API_KEY
-    model: gpt-4o
-    max_retries: 3
+    api_key: env.OPENAI_API_KEY  # Reads from environment variable
+    # api_key: sk-...            # Or hardcode key directly
+    timeout: 1m
     rate_limit:
       requests_per_minute: 60
 
-schemas:
-  - name: instruction
-    builtin: true
-
-logging:
-  level: info
-  format: text
-```
-
----
-
-## Global Settings
-
-| Field | Default | Description |
-|-------|---------|-------------|
-| `default_provider` | `openai` | Default LLM provider |
-| `default_schema` | `instruction` | Default schema |
-| `concurrency` | `4` | Concurrent workers |
-| `timeout` | `2m` | Request timeout |
-
----
-
-## Provider Config
-
-| Field | Required | Description |
-|-------|----------|-------------|
-| `name` | ✓ | Provider identifier |
-| `type` | ✓ | Provider type (`openai`) |
-| `base_url` | | Custom API endpoint |
-| `api_key_env` | | Env var for API key |
-| `model` | ✓ | Model to use |
-| `max_retries` | | Retry attempts |
-| `rate_limit` | | Rate limiting |
-
-### Example Providers
-
-```yaml
-providers:
-  # OpenAI
-  - name: openai
-    type: openai
-    api_key_env: OPENAI_API_KEY
-    model: gpt-4o
-
-  # DeepSeek
-  - name: deepseek
-    type: openai
-    base_url: https://api.deepseek.com/v1
-    api_key_env: DEEPSEEK_API_KEY
-    model: deepseek-chat
-
-  # Local vLLM
+  # Custom endpoint example (DeepSeek, vLLM, Ollama)
   - name: local
     type: openai
     base_url: http://localhost:8000/v1
-    api_key: not-needed
-    model: llama2
+    api_key: not-needed          # Use 'api_key' for non-sensitive values
 ```
 
-### Rate Limit Settings
+### API Key Resolution Logic
 
-| Field | Description |
-|-------|-------------|
-| `requests_per_minute` | Max requests per minute |
-| `tokens_per_minute` | Max tokens per minute |
+KothaSet resolves API keys in the following order:
 
----
+1.  **`api_key: env.VAR_NAME`**: If `api_key` starts with `env.`, the value is read from the specified environment variable (e.g., `env.OPENAI_API_KEY`).
+2.  **`api_key` (Raw Value)**: Otherwise, the string is used directly (e.g., `sk-...`).
 
-## Schema Config
-
-```yaml
-schemas:
-  - name: instruction
-    builtin: true
-  - name: custom-qa
-    path: ./schemas/qa.yaml
-```
-
----
-
-## Generation Settings
-
-| Field | Description |
-|-------|-------------|
-| `temperature` | Sampling temperature (0-2) |
-| `max_tokens` | Max tokens per response |
-| `seed` | **Required.** Reproducibility seed |
-| `workers` | Concurrent workers |
-| `checkpoint_every` | Checkpoint frequency |
-
----
-
-## Logging
-
-```yaml
-logging:
-  level: info    # debug, info, warn, error
-  format: text   # text, json
-  file: ./log    # optional
-```
+**Recommendation:** Use `env.VAR_NAME` for security.
 
 ---
 
 ## Environment Variables
 
-```bash
-# Windows
-$env:OPENAI_API_KEY = "sk-..."
+You can also use environment variables for API keys, which is recommended for CI/CD environments.
 
-# Linux/macOS
-export OPENAI_API_KEY="sk-..."
-```
+- `OPENAI_API_KEY`
+- `ANTHROPIC_API_KEY`
+- `DEEPSEEK_API_KEY`
 
----
-
-## Precedence
-
-1. CLI flags (highest)
-2. Environment variables
-3. Config file
-4. Defaults (lowest)
+77- In `.secrets.yaml`, reference them using the `env.` prefix:
+78- 
+79- ```yaml
+80- api_key: env.OPENAI_API_KEY
+81- ```

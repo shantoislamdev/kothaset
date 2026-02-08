@@ -65,27 +65,52 @@ go install github.com/shantoislamdev/kothaset/cmd/kothaset@latest
 
 ## Configuration
 
-Edit `.kothaset.yaml` in your project directory:
+## Configuration
+
+KothaSet uses a **two-file configuration system** for better security and organization:
+
+### 1. `kothaset.yaml` (Public)
+Contains shared settings, context, and instructions. Safe to commit to git.
 
 ```yaml
 version: "1.0"
 global:
-  default_provider: openai
-  default_schema: instruction
+  provider: openai
+  schema: instruction
+  model: gpt-5.2
+  concurrency: 4
+  output_dir: ./output
 
+# Context: Background info or persona injected into every prompt
+context: |
+  Generate high-quality training data for an AI assistant.
+  The data should be helpful, accurate, and well-formatted.
+
+# Instructions: Specific rules and guidelines for generation
+instructions:
+  - Be creative and diverse in topics and approaches
+  - Vary the style and complexity of responses
+  - Use clear and concise language
+```
+
+### 2. `.secrets.yaml` (Private)
+Contains sensitive provider credentials. **Add this to your `.gitignore`!**
+
+```yaml
 providers:
   - name: openai
     type: openai
-    base_url: https://api.openai.com/v1
-    api_key: env.OPENAI_API_KEY  # or raw key: sk-...
-    model: gpt-5.2
-    
-  # Custom endpoint (DeepSeek, vLLM, etc.)
+    api_key: env.OPENAI_API_KEY  # Reads from environment variable
+    # api_key: sk-...            # Or hardcode key directly
+    timeout: 1m
+    rate_limit:
+      requests_per_minute: 60
+
+  # Custom endpoint example (DeepSeek, vLLM)
   - name: local
     type: openai
     base_url: http://localhost:8000/v1
     api_key: not-needed
-    model: meta-llama/Llama-2-7b-chat-hf
 ```
 
 ---

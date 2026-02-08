@@ -63,13 +63,6 @@ func resolveAPIKey(p *ProviderConfig) (string, error) {
 		return resolveSecretRef(apiKey)
 	}
 
-	// Check for legacy APIKeyEnv field (backwards compatibility)
-	if apiKey == "" && p.APIKeyEnv != "" {
-		if value := os.Getenv(p.APIKeyEnv); value != "" {
-			return value, nil
-		}
-	}
-
 	// Raw API key (used as-is)
 	if apiKey != "" {
 		return apiKey, nil

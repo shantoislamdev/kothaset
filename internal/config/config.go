@@ -70,9 +70,6 @@ type ProviderConfig struct {
 	// APIKey is the API key (can be a secret reference)
 	APIKey string `yaml:"api_key,omitempty" json:"api_key,omitempty"`
 
-	// APIKeyEnv is the environment variable containing the API key
-	APIKeyEnv string `yaml:"api_key_env,omitempty" json:"api_key_env,omitempty"`
-
 	// Headers are additional HTTP headers
 	Headers map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`
 
@@ -200,7 +197,7 @@ func DefaultSecretsConfig() *SecretsConfig {
 			{
 				Name:       "openai",
 				Type:       "openai",
-				APIKeyEnv:  "OPENAI_API_KEY",
+				APIKey:     "env.OPENAI_API_KEY",
 				MaxRetries: 3,
 				Timeout:    Duration{time.Minute},
 				RateLimit: RateLimitConfig{
