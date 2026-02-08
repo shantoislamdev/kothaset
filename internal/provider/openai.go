@@ -97,9 +97,7 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 	if len(req.StopSequences) > 0 {
 		params.Stop = openai.ChatCompletionNewParamsStopUnion{OfStringArray: req.StopSequences}
 	}
-	if req.Seed != nil {
-		params.Seed = openai.Int(*req.Seed)
-	}
+	params.Seed = openai.Int(req.Seed)
 	if req.FrequencyPenalty != 0 {
 		params.FrequencyPenalty = openai.Float(req.FrequencyPenalty)
 	}

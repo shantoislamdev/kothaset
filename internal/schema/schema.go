@@ -119,7 +119,7 @@ type SampleMetadata struct {
 	Temperature float64 `json:"temperature"`
 
 	// Seed for reproducibility
-	Seed int64 `json:"seed,omitempty"`
+	Seed int64 `json:"seed"`
 
 	// TokensUsed in generation
 	TokensUsed int `json:"tokens_used"`

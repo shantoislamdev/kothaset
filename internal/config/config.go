@@ -127,8 +127,8 @@ type GenerationConfig struct {
 	// TopP nucleus sampling parameter
 	TopP float64 `yaml:"top_p,omitempty" json:"top_p,omitempty"`
 
-	// Seed for reproducibility (0 = random)
-	Seed int64 `yaml:"seed,omitempty" json:"seed,omitempty"`
+	// Seed for reproducibility
+	Seed int64 `yaml:"seed" json:"seed"`
 
 	// Workers for concurrent generation
 	Workers int `yaml:"workers" json:"workers"`

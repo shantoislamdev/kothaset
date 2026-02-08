@@ -26,10 +26,10 @@ writes them to the output file in the chosen format.
 
 Examples:
   # Generate 100 instruction-response pairs
-  kothaset generate -n 100 -s instruction -o dataset.jsonl
+  kothaset generate -n 100 -s instruction --seed 42 -o dataset.jsonl
 
   # Generate with custom provider and seed file
-  kothaset generate -n 1000 -p openai -s chat --seeds topics.txt -o chat_data.jsonl
+  kothaset generate -n 1000 -p openai -s chat --seed 123 --seeds topics.txt -o chat_data.jsonl
 
   # Resume interrupted generation
   kothaset generate --resume checkpoint.json`,
@@ -77,7 +77,8 @@ func init() {
 	generateCmd.Flags().IntVarP(&genWorkers, "workers", "w", 4, "number of concurrent workers")
 
 	// Reproducibility
-	generateCmd.Flags().Int64Var(&genSeed, "seed", 0, "random seed for reproducibility (0 = random)")
+	generateCmd.Flags().Int64Var(&genSeed, "seed", 0, "random seed for reproducibility (required)")
+	generateCmd.MarkFlagRequired("seed")
 	generateCmd.Flags().StringVar(&genSeedFile, "seeds", "", "path to seed/topic file for diversity")
 
 	// Resumability
