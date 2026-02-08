@@ -85,7 +85,7 @@ During generation, progress is displayed:
 Generating 1000 samples using openai (gpt-4o)
 Schema: instruction | Output: dataset.jsonl
 
-[45%] 450/1000 samples | 125000 tokens | $1.2500 | 15.2/min | ETA: 2m30s
+[45%] 450/1000 samples | 125000 tokens | 15.2/min | ETA: 2m30s
 ```
 
 On completion:
@@ -94,7 +94,6 @@ On completion:
 ✓ Generation complete!
   Samples:      1000 successful, 0 failed
   Tokens:       278000
-  Est. cost:    $2.7800
   Duration:     6m32s
   Output:       dataset.jsonl
 ```

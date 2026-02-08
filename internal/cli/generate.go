@@ -184,12 +184,11 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	gen.SetProgressCallback(func(p generator.Progress) {
 		elapsed := time.Since(startTime)
 		_ = elapsed // suppress unused warning
-		fmt.Printf("\r[%3.0f%%] %d/%d samples | %d tokens | $%.4f | %.1f/min | ETA: %s    ",
+		fmt.Printf("\r[%3.0f%%] %d/%d samples | %d tokens | %.1f/min | ETA: %s    ",
 			p.Percentage,
 			p.Completed,
 			p.Total,
 			p.TokensUsed,
-			p.EstCost,
 			p.SamplesPS*60,
 			formatDuration(p.ETA),
 		)
@@ -224,7 +223,6 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	fmt.Println("\n✓ Generation complete!")
 	fmt.Printf("  Samples:      %d successful, %d failed\n", result.SuccessCount, result.FailedCount)
 	fmt.Printf("  Tokens:       %d\n", result.TotalTokens)
-	fmt.Printf("  Est. cost:    $%.4f\n", result.EstimatedCost)
 	fmt.Printf("  Duration:     %s\n", formatDuration(result.Duration))
 	fmt.Printf("  Output:       %s\n", result.OutputPath)
 

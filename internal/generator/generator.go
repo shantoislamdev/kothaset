@@ -72,28 +72,28 @@ func DefaultConfig() Config {
 
 // Result contains the outcome of a generation run
 type Result struct {
-	TotalSamples    int           `json:"total_samples"`
-	SuccessCount    int           `json:"success_count"`
-	FailedCount     int           `json:"failed_count"`
-	DuplicatesFound int           `json:"duplicates_found"`
-	TotalTokens     int           `json:"total_tokens"`
-	EstimatedCost   float64       `json:"estimated_cost"`
-	Duration        time.Duration `json:"duration"`
-	OutputPath      string        `json:"output_path"`
-	CheckpointPath  string        `json:"checkpoint_path,omitempty"`
+	TotalSamples    int `json:"total_samples"`
+	SuccessCount    int `json:"success_count"`
+	FailedCount     int `json:"failed_count"`
+	DuplicatesFound int `json:"duplicates_found"`
+	TotalTokens     int `json:"total_tokens"`
+
+	Duration       time.Duration `json:"duration"`
+	OutputPath     string        `json:"output_path"`
+	CheckpointPath string        `json:"checkpoint_path,omitempty"`
 }
 
 // Progress represents the current generation progress
 type Progress struct {
-	Total      int           `json:"total"`
-	Completed  int           `json:"completed"`
-	Failed     int           `json:"failed"`
-	InProgress int           `json:"in_progress"`
-	Percentage float64       `json:"percentage"`
-	TokensUsed int           `json:"tokens_used"`
-	EstCost    float64       `json:"estimated_cost"`
-	ETA        time.Duration `json:"eta"`
-	SamplesPS  float64       `json:"samples_per_second"`
+	Total      int     `json:"total"`
+	Completed  int     `json:"completed"`
+	Failed     int     `json:"failed"`
+	InProgress int     `json:"in_progress"`
+	Percentage float64 `json:"percentage"`
+	TokensUsed int     `json:"tokens_used"`
+
+	ETA       time.Duration `json:"eta"`
+	SamplesPS float64       `json:"samples_per_second"`
 }
 
 // ProgressCallback is called with progress updates
@@ -249,13 +249,13 @@ cleanup:
 	tokens := int(atomic.LoadInt64(&g.tokensUsed))
 
 	return &Result{
-		TotalSamples:  g.config.NumSamples,
-		SuccessCount:  int(atomic.LoadInt32(&g.completed)),
-		FailedCount:   int(atomic.LoadInt32(&g.failed)),
-		TotalTokens:   tokens,
-		EstimatedCost: provider.EstimateCost(g.config.Model, provider.TokenUsage{TotalTokens: tokens}),
-		Duration:      duration,
-		OutputPath:    g.config.OutputPath,
+		TotalSamples: g.config.NumSamples,
+		SuccessCount: int(atomic.LoadInt32(&g.completed)),
+		FailedCount:  int(atomic.LoadInt32(&g.failed)),
+		TotalTokens:  tokens,
+
+		Duration:   duration,
+		OutputPath: g.config.OutputPath,
 	}, nil
 }
 
@@ -381,9 +381,9 @@ func (g *Generator) reportProgress(startTime time.Time) {
 		Failed:     failed,
 		Percentage: float64(completed) / float64(g.config.NumSamples) * 100,
 		TokensUsed: tokens,
-		EstCost:    provider.EstimateCost(g.config.Model, provider.TokenUsage{TotalTokens: tokens}),
-		ETA:        eta,
-		SamplesPS:  samplesPS,
+
+		ETA:       eta,
+		SamplesPS: samplesPS,
 	})
 }
 

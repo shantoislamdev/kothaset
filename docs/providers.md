@@ -77,10 +77,10 @@ DeepSeek provides cost-effective models via an OpenAI-compatible API.
 
 ### Available Models
 
-| Model | Cost (per 1K tokens) | Notes |
-|-------|---------------------|-------|
-| `deepseek-chat-3.2` | $0.00014 / $0.00028 | General purpose |
-| `deepseek-reasoner-3.2` | $0.00055 / $0.00219 | Advanced reasoning |
+| Model | Notes |
+|-------|-------|
+| `deepseek-chat-3.2` | General purpose |
+| `deepseek-reasoner-3.2` | Advanced reasoning |
 
 ### Usage
 
@@ -238,29 +238,9 @@ kothaset generate -p local --seed 42 -n 50 -o test.jsonl
 
 ---
 
-## Cost Estimation
 
-KothaSet estimates costs based on token usage:
 
-| Model | Input (per 1K) | Output (per 1K) |
-|-------|----------------|-----------------|
-| gpt-5.2 | $0.05 | $0.15 |
-| gemini-3 | $0.01 | $0.03 |
-| gpt-4o | $0.0025 | $0.01 |
-| gpt-4o-mini | $0.00015 | $0.0006 |
-| claude-3-opus | $0.015 | $0.075 |
-| claude-3-sonnet | $0.003 | $0.015 |
-| claude-3-haiku | $0.00025 | $0.00125 |
-| deepseek-chat-3.2 | $0.00014 | $0.00028 |
-| deepseek-reasoner-3.2 | $0.00055 | $0.00219 |
 
-Costs are displayed during generation:
-
-```
-[45%] 450/1000 samples | 125000 tokens | $1.2500 | 15.2/min | ETA: 2m30s
-```
-
----
 
 ## Troubleshooting
 

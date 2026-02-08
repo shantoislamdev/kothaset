@@ -122,33 +122,3 @@ type StreamChunk struct {
 	// Error if something went wrong
 	Error error `json:"error,omitempty"`
 }
-
-// Cost estimates for common models (per 1K tokens)
-var ModelCosts = map[string]struct {
-	Input  float64
-	Output float64
-}{
-	"gpt-5.2":               {0.05, 0.15},
-	"gemini-3":              {0.01, 0.03},
-	"deepseek-chat-3.2":     {0.005, 0.01},
-	"gpt-4":                 {0.03, 0.06},
-	"gpt-4-turbo":           {0.01, 0.03},
-	"gpt-4o":                {0.005, 0.015},
-	"gpt-4o-mini":           {0.00015, 0.0006},
-	"gpt-3.5-turbo":         {0.0005, 0.0015},
-	"claude-3-opus":     {0.015, 0.075},
-	"claude-3-sonnet":   {0.003, 0.015},
-	"claude-3-haiku":    {0.00025, 0.00125},
-	"deepseek-chat":     {0.00014, 0.00028},
-	"deepseek-reasoner": {0.00055, 0.00219},
-}
-
-// EstimateCost calculates estimated cost for token usage
-func EstimateCost(model string, usage TokenUsage) float64 {
-	costs, ok := ModelCosts[model]
-	if !ok {
-		return 0 // Unknown model
-	}
-	return (float64(usage.PromptTokens)/1000)*costs.Input +
-		(float64(usage.CompletionTokens)/1000)*costs.Output
-}

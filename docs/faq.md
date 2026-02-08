@@ -60,22 +60,7 @@ dataset = load_from_disk("./my_dataset")
 
 ---
 
-## Cost
 
-### Approximate costs per 1K samples
-
-| Model | Cost |
-|-------|------|
-| gpt-5.2 | $2-5 |
-| gemini-3 | $0.50-1.00 |
-| deepseek-3.2 | $0.05-0.15 |
-
-### How to reduce costs?
-1. Use cheaper models (`gpt-4o-mini`, `deepseek-chat`)
-2. Lower `--max-tokens`
-3. Start with small batches
-
----
 
 ## Data Quality
 
