@@ -28,9 +28,13 @@ If no path is provided, validates the default config resolution order.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		fmt.Println("✓ Configuration is valid")
 		if cfg != nil {
-			fmt.Printf("  Version:  %s\n", cfg.Version)
-			fmt.Printf("  Providers: %d configured\n", len(cfg.Providers))
-			fmt.Printf("  Schemas:   %d configured\n", len(cfg.Schemas))
+			fmt.Printf("  Version:   %s\n", cfg.Version)
+			fmt.Printf("  Provider:  %s\n", cfg.Global.Provider)
+			fmt.Printf("  Schema:    %s\n", cfg.Global.Schema)
+			fmt.Printf("  Model:     %s\n", cfg.Global.Model)
+		}
+		if secrets != nil {
+			fmt.Printf("  Configured providers: %d\n", len(secrets.Providers))
 		}
 		return nil
 	},
@@ -113,18 +117,18 @@ var providerListCmd = &cobra.Command{
 	Short: "List configured providers",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tTYPE\tMODEL\tSTATUS")
+		fmt.Fprintln(w, "NAME\tTYPE\tSTATUS")
 
-		if cfg != nil && len(cfg.Providers) > 0 {
-			for _, p := range cfg.Providers {
+		if secrets != nil && len(secrets.Providers) > 0 {
+			for _, p := range secrets.Providers {
 				status := "configured"
 				if p.APIKey == "" && p.APIKeyEnv == "" {
 					status = "no api key"
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Name, p.Type, p.Model, status)
+				fmt.Fprintf(w, "%s\t%s\t%s\n", p.Name, p.Type, status)
 			}
 		} else {
-			fmt.Fprintln(w, "openai\topenai\tgpt-4\tdefault")
+			fmt.Fprintln(w, "openai\topenai\tdefault")
 		}
 		w.Flush()
 		return nil

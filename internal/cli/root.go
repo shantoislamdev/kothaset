@@ -17,8 +17,9 @@ var (
 	Commit    = "unknown"
 	BuildDate = "unknown"
 
-	// Global config instance
-	cfg *config.Config
+	// Global config instances
+	cfg     *config.Config
+	secrets *config.SecretsConfig
 
 	// Global flags
 	cfgFile string
@@ -44,8 +45,8 @@ Features:
 Example:
   kothaset generate --schema instruction --count 1000 --output dataset.jsonl`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-		// Skip config loading for version command
-		if cmd.Name() == "version" {
+		// Skip config loading for version and init commands
+		if cmd.Name() == "version" || cmd.Name() == "init" {
 			return nil
 		}
 		return initConfig()
@@ -61,7 +62,7 @@ func Execute() error {
 
 func init() {
 	// Global flags
-	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: .kothaset.yaml)")
+	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: kothaset.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "suppress non-essential output")
 
@@ -81,16 +82,30 @@ func init() {
 // initConfig reads in config file and ENV variables if set
 func initConfig() error {
 	var err error
-	cfg, err = config.Load(cfgFile)
+
+	// Load public config (kothaset.yaml)
+	cfg, err = config.LoadPublicConfig(cfgFile)
 	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		return fmt.Errorf("failed to load kothaset.yaml: %w", err)
 	}
+
+	// Load secrets (.secrets.yaml)
+	secrets, err = config.LoadSecretsConfig("")
+	if err != nil {
+		return fmt.Errorf("failed to load .secrets.yaml: %w", err)
+	}
+
 	return nil
 }
 
 // GetConfig returns the loaded configuration
 func GetConfig() *config.Config {
 	return cfg
+}
+
+// GetSecrets returns the loaded secrets configuration
+func GetSecrets() *config.SecretsConfig {
+	return secrets
 }
 
 // IsVerbose returns whether verbose mode is enabled

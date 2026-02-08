@@ -3,9 +3,21 @@ package provider
 import (
 	"fmt"
 	"sync"
-
-	"github.com/shantoislamdev/kothaset/internal/config"
+	"time"
 )
+
+// Config contains provider configuration for creating a provider instance
+type Config struct {
+	Name       string
+	Type       string
+	BaseURL    string
+	APIKey     string
+	Model      string
+	MaxRetries int
+	Timeout    time.Duration
+	RateLimit  int // requests per minute
+	Headers    map[string]string
+}
 
 // Registry manages provider instances
 type Registry struct {
@@ -15,7 +27,7 @@ type Registry struct {
 }
 
 // Factory creates a provider from configuration
-type Factory func(cfg *config.ProviderConfig) (Provider, error)
+type Factory func(cfg *Config) (Provider, error)
 
 // Global registry instance
 var globalRegistry = NewRegistry()
@@ -63,7 +75,7 @@ func (r *Registry) Get(name string) (Provider, error) {
 }
 
 // GetOrCreate retrieves a provider or creates it from config
-func (r *Registry) GetOrCreate(cfg *config.ProviderConfig) (Provider, error) {
+func (r *Registry) GetOrCreate(cfg *Config) (Provider, error) {
 	// Check if already created
 	r.mu.RLock()
 	if provider, ok := r.providers[cfg.Name]; ok {
@@ -143,7 +155,7 @@ func Get(name string) (Provider, error) {
 }
 
 // GetOrCreate retrieves or creates a provider in the global registry
-func GetOrCreate(cfg *config.ProviderConfig) (Provider, error) {
+func GetOrCreate(cfg *Config) (Provider, error) {
 	return globalRegistry.GetOrCreate(cfg)
 }
 

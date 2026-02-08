@@ -5,12 +5,12 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 	"time"
 
 	"github.com/spf13/cobra"
 
-	ctxconfig "github.com/shantoislamdev/kothaset/internal/context"
 	"github.com/shantoislamdev/kothaset/internal/generator"
 	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
@@ -27,10 +27,10 @@ writes them to the output file in the chosen format.
 
 Examples:
   # Generate 100 instruction-response pairs
-  kothaset generate -n 100 -s instruction --seed 42 -o dataset.jsonl
+  kothaset generate -n 100 --seed 42 -o dataset.jsonl
 
-  # Generate with custom provider and seed file
-  kothaset generate -n 1000 -p openai -s chat --seed 123 --seeds topics.txt -o chat_data.jsonl
+  # Generate with custom provider and input file
+  kothaset generate -n 1000 -p openai -s chat --seed 123 -i topics.txt -o chat_data.jsonl
 
   # Resume interrupted generation
   kothaset generate --resume checkpoint.json`,
@@ -62,7 +62,7 @@ func init() {
 	generateCmd.MarkFlagRequired("output")
 
 	// Schema and provider
-	generateCmd.Flags().StringVarP(&genSchema, "schema", "s", "instruction", "dataset schema (instruction, chat, preference, classification)")
+	generateCmd.Flags().StringVarP(&genSchema, "schema", "s", "", "dataset schema (default: from config)")
 	generateCmd.Flags().StringVarP(&genProvider, "provider", "p", "", "LLM provider (default: from config)")
 	generateCmd.Flags().StringVarP(&genModel, "model", "m", "", "model to use (default: from config)")
 
@@ -91,29 +91,40 @@ func init() {
 }
 
 func runGenerate(cmd *cobra.Command, args []string) error {
-	// Get provider config
-	providerName := getProviderName()
-	providerCfg, err := cfg.GetProvider(providerName)
-	if err != nil {
-		return fmt.Errorf("provider %q not configured: %w", providerName, err)
+	// Get provider name from flag or config
+	providerName := genProvider
+	if providerName == "" {
+		providerName = cfg.Global.Provider
 	}
 
-	// Model to use (override if specified)
-	model := providerCfg.Model
-	if genModel != "" {
-		model = genModel
+	// Get provider config from secrets
+	providerCfg, err := secrets.GetProvider(providerName)
+	if err != nil {
+		return fmt.Errorf("provider %q not configured in .secrets.yaml: %w", providerName, err)
+	}
+
+	// Get schema name from flag or config
+	schemaName := genSchema
+	if schemaName == "" {
+		schemaName = cfg.Global.Schema
+	}
+
+	// Get model from flag or config
+	model := genModel
+	if model == "" {
+		model = cfg.Global.Model
 	}
 
 	// Get schema
-	sch, err := schema.Get(genSchema)
+	sch, err := schema.Get(schemaName)
 	if err != nil {
-		return fmt.Errorf("schema %q not found: %w", genSchema, err)
+		return fmt.Errorf("schema %q not found: %w", schemaName, err)
 	}
 
 	// Dry run - just validate config without creating provider
 	if genDryRun {
 		fmt.Println("✓ Configuration valid")
-		fmt.Printf("  Schema:      %s\n", genSchema)
+		fmt.Printf("  Schema:      %s\n", schemaName)
 		fmt.Printf("  Provider:    %s\n", providerName)
 		fmt.Printf("  Model:       %s\n", model)
 		fmt.Printf("  Count:       %d\n", genCount)
@@ -122,35 +133,47 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  Workers:     %d\n", genWorkers)
 		fmt.Printf("  Temperature: %.2f\n", genTemp)
 		if genInputFile != "" {
-			fmt.Printf("  Input file:   %s\n", genInputFile)
+			fmt.Printf("  Input file:  %s\n", genInputFile)
+		}
+		if cfg.Context != "" {
+			fmt.Println("  Context:     ✓ (from kothaset.yaml)")
+		}
+		if len(cfg.Instructions) > 0 {
+			fmt.Println("  Instructions: ✓ (from kothaset.yaml)")
 		}
 		return nil
 	}
 
-	// Override model in config for provider creation
-	if genModel != "" {
-		providerCfg.Model = genModel
+	// Create provider config for generation
+	provCfg := &provider.Config{
+		Name:       providerCfg.Name,
+		Type:       providerCfg.Type,
+		BaseURL:    providerCfg.BaseURL,
+		APIKey:     providerCfg.APIKey,
+		Model:      model,
+		MaxRetries: providerCfg.MaxRetries,
+		Timeout:    providerCfg.Timeout.Duration,
+		RateLimit:  providerCfg.RateLimit.RequestsPerMinute,
 	}
 
 	// Create provider
-	prov, err := provider.GetOrCreate(providerCfg)
+	prov, err := provider.GetOrCreate(provCfg)
 	if err != nil {
 		return fmt.Errorf("failed to create provider: %w", err)
 	}
 
-	// Load context.yaml (auto-loaded from current directory)
-	ctxCfg, err := ctxconfig.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load context.yaml: %w", err)
-	}
-	if !ctxCfg.IsEmpty() {
-		fmt.Println("Loaded context.yaml")
+	// Context and instructions from kothaset.yaml
+	userContext := cfg.Context
+	userInstruction := strings.Join(cfg.Instructions, "\n")
+
+	if userContext != "" || len(cfg.Instructions) > 0 {
+		fmt.Println("✓ Loaded context from kothaset.yaml")
 	}
 
 	// Build generator config
 	genCfg := generator.Config{
 		NumSamples:      genCount,
-		Schema:          genSchema,
+		Schema:          schemaName,
 		OutputPath:      genOutput,
 		OutputFormat:    genFormat,
 		Provider:        providerName,
@@ -165,8 +188,8 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		CheckpointEvery: 50,
 		ResumeFrom:      genResume,
 		InputFile:       genInputFile,
-		UserContext:     ctxCfg.Context,
-		UserInstruction: ctxCfg.Instruction,
+		UserContext:     userContext,
+		UserInstruction: userInstruction,
 	}
 
 	// Create generator
@@ -179,45 +202,31 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	}
 	gen.SetWriter(writer)
 
-	// Setup sampler
-	sampler, err := generator.NewFileSampler(genInputFile)
-	if err != nil {
-		return fmt.Errorf("failed to load input file: %w", err)
+	// Setup sampler from input file
+	if genInputFile != "" {
+		sampler, err := generator.NewFileSampler(genInputFile)
+		if err != nil {
+			return fmt.Errorf("failed to load input file %s: %w", genInputFile, err)
+		}
+		gen.SetSampler(sampler)
 	}
-	gen.SetSampler(sampler)
-	fmt.Printf("Loaded %d topics from input file\n", sampler.Count())
 
-	// Setup progress callback
-	startTime := time.Now()
-	gen.SetProgressCallback(func(p generator.Progress) {
-		elapsed := time.Since(startTime)
-		_ = elapsed // suppress unused warning
-		fmt.Printf("\r[%3.0f%%] %d/%d samples | %d tokens | %.1f/min | ETA: %s    ",
-			p.Percentage,
-			p.Completed,
-			p.Total,
-			p.TokensUsed,
-			p.SamplesPS*60,
-			formatDuration(p.ETA),
-		)
-	})
-
-	// Setup context with cancellation
+	// Create cancellable context
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	// Handle interrupt
-	sigChan := make(chan os.Signal, 1)
-	signal.Notify(sigChan, os.Interrupt, syscall.SIGTERM)
+	// Handle signals for graceful shutdown
+	sigCh := make(chan os.Signal, 1)
+	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
 	go func() {
-		<-sigChan
-		fmt.Println("\n⚠ Interrupted - saving checkpoint...")
+		<-sigCh
+		fmt.Println("\n⚠ Received interrupt, saving checkpoint...")
 		cancel()
 	}()
 
-	// Print header
-	fmt.Printf("Generating %d samples using %s (%s)\n", genCount, providerName, providerCfg.Model)
-	fmt.Printf("Schema: %s | Output: %s\n\n", genSchema, genOutput)
+	// Print generation info
+	fmt.Printf("🚀 Generating %d samples using %s (%s)\n", genCount, providerName, model)
+	fmt.Printf("   Schema: %s | Output: %s\n\n", schemaName, genOutput)
 
 	// Run generation
 	result, err := gen.Run(ctx)
@@ -235,16 +244,6 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	fmt.Printf("  Output:       %s\n", result.OutputPath)
 
 	return nil
-}
-
-func getProviderName() string {
-	if genProvider != "" {
-		return genProvider
-	}
-	if cfg != nil && cfg.Global.DefaultProvider != "" {
-		return cfg.Global.DefaultProvider
-	}
-	return "openai"
 }
 
 func formatDuration(d time.Duration) string {

@@ -13,19 +13,18 @@ import (
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 	"github.com/openai/openai-go/v3/shared"
-	"github.com/shantoislamdev/kothaset/internal/config"
 )
 
 // OpenAIProvider implements the Provider interface for OpenAI and compatible APIs
 type OpenAIProvider struct {
 	name   string
 	model  string
+	apiKey string
 	client *openai.Client
-	config *config.ProviderConfig
 }
 
 // NewOpenAIProvider creates a new OpenAI-compatible provider
-func NewOpenAIProvider(cfg *config.ProviderConfig) (Provider, error) {
+func NewOpenAIProvider(cfg *Config) (Provider, error) {
 	if cfg.APIKey == "" {
 		return nil, NewAuthError("API key is required")
 	}
@@ -38,9 +37,9 @@ func NewOpenAIProvider(cfg *config.ProviderConfig) (Provider, error) {
 	}
 
 	// Custom timeout via HTTP client
-	if cfg.Timeout.Duration > 0 {
+	if cfg.Timeout > 0 {
 		httpClient := &http.Client{
-			Timeout: cfg.Timeout.Duration,
+			Timeout: cfg.Timeout,
 		}
 		opts = append(opts, option.WithHTTPClient(httpClient))
 	}
@@ -50,8 +49,8 @@ func NewOpenAIProvider(cfg *config.ProviderConfig) (Provider, error) {
 	return &OpenAIProvider{
 		name:   cfg.Name,
 		model:  cfg.Model,
+		apiKey: cfg.APIKey,
 		client: &client,
-		config: cfg,
 	}, nil
 }
 
@@ -242,7 +241,7 @@ func (p *OpenAIProvider) SupportsBatching() bool {
 
 // Validate implements Provider.Validate
 func (p *OpenAIProvider) Validate() error {
-	if p.config.APIKey == "" {
+	if p.apiKey == "" {
 		return NewValidationError("API key is required")
 	}
 	if p.model == "" {

@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-// Config is the root configuration structure
+// Config is the root configuration structure for kothaset.yaml (public config)
 type Config struct {
 	// Version of the config schema for migrations
 	Version string `yaml:"version" json:"version"`
@@ -13,32 +13,35 @@ type Config struct {
 	// Global settings
 	Global GlobalConfig `yaml:"global" json:"global"`
 
-	// Provider configurations
-	Providers []ProviderConfig `yaml:"providers" json:"providers"`
+	// Context is the free-form context paragraph for dataset generation
+	Context string `yaml:"context,omitempty" json:"context,omitempty"`
 
-	// Schema configurations
-	Schemas []SchemaConfig `yaml:"schemas" json:"schemas"`
-
-	// Named profiles for quick switching
-	Profiles map[string]Profile `yaml:"profiles,omitempty" json:"profiles,omitempty"`
+	// Instructions is a list of generation instructions (one per line)
+	Instructions []string `yaml:"instructions,omitempty" json:"instructions,omitempty"`
 
 	// Logging configuration
-	Logging LoggingConfig `yaml:"logging" json:"logging"`
+	Logging LoggingConfig `yaml:"logging,omitempty" json:"logging,omitempty"`
+
+	// Named profiles for quick switching (optional)
+	Profiles map[string]Profile `yaml:"profiles,omitempty" json:"profiles,omitempty"`
 }
 
 // GlobalConfig contains global settings
 type GlobalConfig struct {
-	// DefaultProvider is the default LLM provider to use
-	DefaultProvider string `yaml:"default_provider" json:"default_provider"`
+	// Provider is the LLM provider to use
+	Provider string `yaml:"provider" json:"provider"`
 
-	// DefaultSchema is the default dataset schema
-	DefaultSchema string `yaml:"default_schema" json:"default_schema"`
+	// Schema is the dataset schema (instruction, chat, preference, classification)
+	Schema string `yaml:"schema" json:"schema"`
+
+	// Model is the LLM model to use
+	Model string `yaml:"model" json:"model"`
 
 	// OutputDir is the default directory for generated datasets
 	OutputDir string `yaml:"output_dir" json:"output_dir"`
 
-	// CacheDir is the directory for caching (e.g., checkpoints)
-	CacheDir string `yaml:"cache_dir" json:"cache_dir"`
+	// CacheDir is the directory for caching (optional, defaults to .kothaset/)
+	CacheDir string `yaml:"cache_dir,omitempty" json:"cache_dir,omitempty"`
 
 	// Concurrency is the default number of concurrent workers
 	Concurrency int `yaml:"concurrency" json:"concurrency"`
@@ -47,7 +50,13 @@ type GlobalConfig struct {
 	Timeout Duration `yaml:"timeout" json:"timeout"`
 }
 
-// ProviderConfig contains LLM provider settings
+// SecretsConfig is the root structure for .secrets.yaml (private config)
+type SecretsConfig struct {
+	// Providers contains provider configurations with credentials
+	Providers []ProviderConfig `yaml:"providers" json:"providers"`
+}
+
+// ProviderConfig contains LLM provider settings (in .secrets.yaml)
 type ProviderConfig struct {
 	// Name is the unique identifier for this provider configuration
 	Name string `yaml:"name" json:"name"`
@@ -63,9 +72,6 @@ type ProviderConfig struct {
 
 	// APIKeyEnv is the environment variable containing the API key
 	APIKeyEnv string `yaml:"api_key_env,omitempty" json:"api_key_env,omitempty"`
-
-	// Model is the default model to use
-	Model string `yaml:"model" json:"model"`
 
 	// Headers are additional HTTP headers
 	Headers map[string]string `yaml:"headers,omitempty" json:"headers,omitempty"`
@@ -87,18 +93,6 @@ type RateLimitConfig struct {
 
 	// TokensPerMinute is the maximum tokens per minute
 	TokensPerMinute int `yaml:"tokens_per_minute,omitempty" json:"tokens_per_minute,omitempty"`
-}
-
-// SchemaConfig contains dataset schema settings
-type SchemaConfig struct {
-	// Name is the unique identifier for this schema
-	Name string `yaml:"name" json:"name"`
-
-	// Path is the file path to a custom schema definition
-	Path string `yaml:"path,omitempty" json:"path,omitempty"`
-
-	// Builtin indicates this is a built-in schema name
-	Builtin bool `yaml:"builtin,omitempty" json:"builtin,omitempty"`
 }
 
 // Profile is a named preset for quick configuration
@@ -184,36 +178,35 @@ func DefaultConfig() *Config {
 	return &Config{
 		Version: "1.0",
 		Global: GlobalConfig{
-			DefaultProvider: "openai",
-			DefaultSchema:   "instruction",
-			OutputDir:       "./output",
-			CacheDir:        "./.kothaset",
-			Concurrency:     4,
-			Timeout:         Duration{time.Minute * 2},
+			Provider:    "openai",
+			Schema:      "instruction",
+			Model:       "gpt-5.2",
+			OutputDir:   ".",
+			CacheDir:    ".kothaset",
+			Concurrency: 4,
+			Timeout:     Duration{time.Minute * 2},
 		},
+		Logging: LoggingConfig{
+			Level:  "info",
+			Format: "text",
+		},
+	}
+}
+
+// DefaultSecretsConfig returns default secrets configuration
+func DefaultSecretsConfig() *SecretsConfig {
+	return &SecretsConfig{
 		Providers: []ProviderConfig{
 			{
 				Name:       "openai",
 				Type:       "openai",
-				BaseURL:    "", // Set custom base URL for OpenAI-compatible APIs
 				APIKeyEnv:  "OPENAI_API_KEY",
-				Model:      "gpt-4",
 				MaxRetries: 3,
 				Timeout:    Duration{time.Minute},
 				RateLimit: RateLimitConfig{
 					RequestsPerMinute: 60,
 				},
 			},
-		},
-		Schemas: []SchemaConfig{
-			{Name: "instruction", Builtin: true},
-			{Name: "chat", Builtin: true},
-			{Name: "preference", Builtin: true},
-			{Name: "classification", Builtin: true},
-		},
-		Logging: LoggingConfig{
-			Level:  "info",
-			Format: "text",
 		},
 	}
 }

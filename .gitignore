@@ -36,3 +36,7 @@ dist/
 # npm
 npm/bin/
 npm/node_modules/
+
+# KothaSet
+.secrets.yaml
+.kothaset/

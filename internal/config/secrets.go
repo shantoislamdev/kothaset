@@ -24,8 +24,8 @@ type SecretRef struct {
 	Value string     `yaml:"$value,omitempty" json:"$value,omitempty"`
 }
 
-// resolveSecrets resolves all secret references in the configuration
-func resolveSecrets(cfg *Config) error {
+// resolveSecrets resolves all secret references in the secrets configuration
+func resolveSecrets(cfg *SecretsConfig) error {
 	for i := range cfg.Providers {
 		p := &cfg.Providers[i]
 
