@@ -48,8 +48,8 @@ type Config struct {
 	CheckpointEvery int           `yaml:"checkpoint_every" json:"checkpoint_every"`
 	ResumeFrom      string        `yaml:"resume_from,omitempty" json:"resume_from,omitempty"`
 
-	// Seed file for diversity
-	SeedFile string `yaml:"seed_file,omitempty" json:"seed_file,omitempty"`
+	// Input file for topics/seeds (required)
+	InputFile string `yaml:"input_file" json:"input_file"`
 
 	// Variables for prompt templates
 	Variables map[string]any `yaml:"variables,omitempty" json:"variables,omitempty"`
@@ -164,6 +164,11 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	// Open output writer if not already set
 	if g.writer == nil {
 		return nil, fmt.Errorf("output writer not set - call SetWriter() first")
+	}
+
+	// Ensure sampler is set
+	if g.sampler == nil {
+		return nil, fmt.Errorf("sampler not set: input file is mandatory")
 	}
 	if err := g.writer.Open(g.config.OutputPath); err != nil {
 		return nil, fmt.Errorf("failed to open output: %w", err)

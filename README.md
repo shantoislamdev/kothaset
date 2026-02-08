@@ -58,7 +58,7 @@ go install github.com/shantoislamdev/kothaset/cmd/kothaset@latest
 
 3. **Generate a dataset:**
    ```bash
-   kothaset generate -n 100 -s instruction --seed 42 -o dataset.jsonl
+   kothaset generate -n 100 -s instruction --seed 42 -i topics.txt -o dataset.jsonl
    ```
 
 ---
@@ -103,42 +103,42 @@ providers:
 
 ```bash
 # Instruction dataset
-kothaset generate -n 1000 -s instruction --seed 42 -o instructions.jsonl
+kothaset generate -n 1000 -s instruction --seed 42 -i topics.txt -o instructions.jsonl
 
 # Chat conversations
-kothaset generate -n 500 -s chat --seed 123 -o conversations.jsonl
+kothaset generate -n 500 -s chat --seed 123 -i conversations.txt -o conversations.jsonl
 
 # Preference pairs for DPO  
-kothaset generate -n 500 -s preference --seed 456 -o dpo_data.jsonl
+kothaset generate -n 500 -s preference --seed 456 -i pairs.txt -o dpo_data.jsonl
 ```
 
 ### Output Formats
 
 ```bash
 # JSONL (default)
-kothaset generate -n 100 --seed 42 -f jsonl -o dataset.jsonl
+kothaset generate -n 100 --seed 42 -i topics.txt -f jsonl -o dataset.jsonl
 
 # Parquet
-kothaset generate -n 100 --seed 42 -f parquet -o dataset.parquet
+kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
 
 # HuggingFace datasets format
-kothaset generate -n 100 --seed 42 -f hf -o ./my_dataset
+kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./my_dataset
 ```
 
 ### Advanced Options
 
 ```bash
 # Use custom provider
-kothaset generate -n 100 --seed 42 -p local -o dataset.jsonl
+kothaset generate -n 100 --seed 42 -i topics.txt -p local -o dataset.jsonl
 
 # Control diversity with seed file
-kothaset generate -n 1000 --seed 42 --seeds topics.txt -o diverse.jsonl
+kothaset generate -n 1000 --seed 42 -i topics.txt -o diverse.jsonl
 
 # Resume interrupted generation
 kothaset generate --resume dataset.jsonl.checkpoint
 
 # Dry run (validate config)
-kothaset generate --dry-run -n 100 --seed 42
+kothaset generate --dry-run -n 100 --seed 42 -i topics.txt
 ```
 
 ---

@@ -45,7 +45,7 @@ var (
 	genCount        int
 	genWorkers      int
 	genSeed         int64
-	genSeedFile     string
+	genInputFile    string
 	genResume       string
 	genDryRun       bool
 	genModel        string
@@ -79,7 +79,8 @@ func init() {
 	// Reproducibility
 	generateCmd.Flags().Int64Var(&genSeed, "seed", 0, "random seed for reproducibility (required)")
 	generateCmd.MarkFlagRequired("seed")
-	generateCmd.Flags().StringVar(&genSeedFile, "seeds", "", "path to seed/topic file for diversity")
+	generateCmd.Flags().StringVarP(&genInputFile, "input", "i", "", "path to input file for topics/seeds (required)")
+	generateCmd.MarkFlagRequired("input")
 
 	// Resumability
 	generateCmd.Flags().StringVar(&genResume, "resume", "", "resume from checkpoint file")
@@ -119,8 +120,8 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  Format:      %s\n", genFormat)
 		fmt.Printf("  Workers:     %d\n", genWorkers)
 		fmt.Printf("  Temperature: %.2f\n", genTemp)
-		if genSeedFile != "" {
-			fmt.Printf("  Seed file:   %s\n", genSeedFile)
+		if genInputFile != "" {
+			fmt.Printf("  Input file:   %s\n", genInputFile)
 		}
 		return nil
 	}
@@ -153,7 +154,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		RetryDelay:      time.Second * 2,
 		CheckpointEvery: 50,
 		ResumeFrom:      genResume,
-		SeedFile:        genSeedFile,
+		InputFile:       genInputFile,
 	}
 
 	// Create generator
@@ -166,18 +167,13 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	}
 	gen.SetWriter(writer)
 
-	// Setup sampler if seed file provided
-	if genSeedFile != "" {
-		sampler, err := generator.NewFileSampler(genSeedFile)
-		if err != nil {
-			return fmt.Errorf("failed to load seed file: %w", err)
-		}
-		gen.SetSampler(sampler)
-		fmt.Printf("Loaded %d topics from seed file\n", sampler.Count())
-	} else {
-		// Use random sampler for variety
-		gen.SetSampler(generator.NewRandomSampler(genSeed))
+	// Setup sampler
+	sampler, err := generator.NewFileSampler(genInputFile)
+	if err != nil {
+		return fmt.Errorf("failed to load input file: %w", err)
 	}
+	gen.SetSampler(sampler)
+	fmt.Printf("Loaded %d topics from input file\n", sampler.Count())
 
 	// Setup progress callback
 	startTime := time.Now()

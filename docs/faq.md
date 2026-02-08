@@ -31,7 +31,7 @@ Ensures reproducibility—same seed = same dataset.
 
 ### How do I use a different model?
 ```bash
-kothaset generate -m gpt-5.2 --seed 42 -o dataset.jsonl
+kothaset generate -m gpt-5.2 --seed 42 -i topics.txt -o dataset.jsonl
 ```
 
 ### Can I resume interrupted generation?
@@ -65,14 +65,14 @@ dataset = load_from_disk("./my_dataset")
 ## Data Quality
 
 ### How to ensure diversity?
-Use a seed file:
+Use a diverse input file (seeds/topics):
 ```bash
-kothaset generate --seeds topics.txt --seed 42 -n 1000 -o diverse.jsonl
+kothaset generate -i topics.txt --seed 42 -n 1000 -o diverse.jsonl
 ```
 
 ### How to customize prompts?
 ```bash
-kothaset generate --system-prompt "You are an expert Python tutor" --seed 42 -o python.jsonl
+kothaset generate --system-prompt "You are an expert Python tutor" --seed 42 -i python_topics.txt -o python.jsonl
 ```
 
 ### How to validate quality?
