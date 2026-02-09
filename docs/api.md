@@ -217,8 +217,8 @@ kothaset validate [command]
 | Command | Description |
 |---------|-------------|
 | `config` | Validate configuration file structure |
-| `schema` | Validate a schema definition (Phase 3) |
-| `dataset` | Validate an existing dataset (Phase 3) |
+| `schema` | Validate a schema definition |
+| `dataset` | Validate an existing dataset file |
 
 ### Examples
 
@@ -226,8 +226,19 @@ kothaset validate [command]
 # Validate config file
 kothaset validate config
 
-# Validate specific config
-kothaset validate config --config my-config.yaml
+# Validate a schema
+kothaset validate schema instruction
+# ✓ Schema 'instruction' is valid
+#   Style:  instruction
+#   Fields: 3 (2 required)
+
+# Validate a dataset file
+kothaset validate dataset output.jsonl
+# Validating dataset: output.jsonl
+#   Format: jsonl
+#   Size:   12840 bytes
+# ✓ Valid dataset
+#   Rows: 50
 ```
 
 ---
@@ -247,13 +258,24 @@ kothaset schema [command]
 | Command | Description |
 |---------|-------------|
 | `list` | List available built-in schemas |
-| `show` | Show schema details (Phase 3) |
+| `show` | Show detailed schema information |
 
 ### Examples
 
 ```bash
 # List all schemas
 kothaset schema list
+
+# Show schema details
+kothaset schema show instruction
+# Name:        instruction
+# Style:       instruction
+# Description: Alpaca-style instruction-response pairs
+# Fields:
+#   NAME         TYPE    REQUIRED
+#   instruction  string  yes
+#   input        string  no
+#   output       string  yes
 ```
 
 ---
@@ -273,11 +295,19 @@ kothaset provider [command]
 | Command | Description |
 |---------|-------------|
 | `list` | List configured providers and their status |
-| `test` | Test provider connection (Phase 2) |
+| `test` | Test provider connectivity |
 
 ### Examples
 
 ```bash
 # List configured providers
 kothaset provider list
+
+# Test provider connectivity
+kothaset provider test openai
+# Testing provider openai (openai)...
+# ✓ Provider openai: connected
+#   Type:     openai
+#   Model:    gpt-5.2
+#   Latency:  312ms
 ```

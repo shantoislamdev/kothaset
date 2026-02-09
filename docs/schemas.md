@@ -40,7 +40,7 @@ The `instruction` schema generates Alpaca-style instruction-response pairs for s
 ### Usage
 
 ```bash
-kothaset generate -n 1000 -s instruction --seed 42 -o dataset.jsonl
+kothaset generate -n 1000 -s instruction --seed 42 -i topics.txt -o dataset.jsonl
 ```
 
 ### Example Output
@@ -197,7 +197,7 @@ cloud computing
 ```
 
 ```bash
-kothaset generate -n 1000 --seed 42 --seeds topics.txt -o diverse.jsonl
+kothaset generate -n 1000 --seed 42 -i topics.txt -o diverse.jsonl
 ```
 
 Each sample will be generated with a topic from the seed file, ensuring coverage across all specified areas.
@@ -216,10 +216,10 @@ kothaset generate -n 100 --seed 42 -f jsonl -o dataset.jsonl
 
 ### Parquet
 
-Columnar format for efficient storage:
+Native columnar format with Snappy compression for efficient storage and analysis:
 
 ```bash
-kothaset generate -n 100 --seed 42 -f parquet -o dataset.parquet
+kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
 ```
 
 ### HuggingFace Datasets

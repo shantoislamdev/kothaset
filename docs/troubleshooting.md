@@ -134,6 +134,29 @@ kothaset init
 
 ---
 
+## Validation Issues
+
+### \"Schema not found\" in validate schema
+```bash
+kothaset schema list  # View available schemas
+```
+
+### \"Cannot access file\" in validate dataset
+Check file exists and you have read permissions.
+
+### \"Provider test failed\"
+```bash
+# Test your provider
+kothaset provider test openai
+
+# Common fixes:
+# 1. Check API key is set
+# 2. Verify base_url for custom endpoints
+# 3. Increase timeout in .secrets.yaml
+```
+
+---
+
 ## Getting Help
 
 **Debug mode:**

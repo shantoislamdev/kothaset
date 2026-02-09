@@ -12,9 +12,10 @@
 - **Flexible Schemas** — Instruction (Alpaca), Chat (ShareGPT), Preference (DPO), Classification
 - **Streaming Output** — Real-time generation with progress tracking
 - **Resumable** — Atomic checkpointing, never lose progress
-- **Multiple Formats** — JSONL, Parquet, HuggingFace datasets
+- **Multiple Formats** — JSONL, Native Parquet, HuggingFace datasets
 - **Reproducible** — Required seed for deterministic LLM generation
 - **Diversity Control** — Input files for sequential topic coverage
+- **Validation** — Validate configs, schemas, datasets, and provider connectivity
 
 ---
 
