@@ -3,7 +3,6 @@ package cli
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -116,9 +115,4 @@ func IsVerbose() bool {
 // IsQuiet returns whether quiet mode is enabled
 func IsQuiet() bool {
 	return quiet
-}
-
-// printError prints an error message to stderr
-func printError(format string, args ...interface{}) {
-	fmt.Fprintf(os.Stderr, "Error: "+format+"\n", args...)
 }

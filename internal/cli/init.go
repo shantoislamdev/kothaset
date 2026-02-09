@@ -38,7 +38,6 @@ func runInit(cmd *cobra.Command, args []string) error {
 
 	publicContent := `# KothaSet Configuration
 # This file is PUBLIC - safe to commit to git
-# Available schemas: instruction, chat, preference, classification
 
 version: "1.0"
 
@@ -48,7 +47,6 @@ global:
   model: gpt-5.2
   # output_dir: ./output  # Defaults to current directory
   concurrency: 4
-  # timeout: 2m  # Default: 2m
 
 
 # Context: Background info or persona injected into every prompt
