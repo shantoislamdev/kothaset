@@ -40,3 +40,8 @@ npm/node_modules/
 # KothaSet
 .secrets.yaml
 .kothaset/
+
+# Test coverage
+coverage
+coverage.out
+coverage.html
