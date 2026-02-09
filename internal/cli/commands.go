@@ -1,10 +1,15 @@
 package cli
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"text/tabwriter"
+	"time"
 
+	"github.com/shantoislamdev/kothaset/internal/provider"
+	"github.com/shantoislamdev/kothaset/internal/schema"
 	"github.com/spf13/cobra"
 )
 
@@ -45,8 +50,61 @@ var validateSchemaCmd = &cobra.Command{
 	Short: "Validate a schema definition",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: Implement in Phase 3
-		return fmt.Errorf("schema validation not yet implemented - coming in Phase 3")
+		schemaName := args[0]
+
+		// Get schema from registry
+		sch, err := schema.Get(schemaName)
+		if err != nil {
+			return fmt.Errorf("schema not found: %s\nAvailable schemas: %v", schemaName, schema.List())
+		}
+
+		// Validate schema has required components
+		var issues []string
+
+		// Check name
+		if sch.Name() == "" {
+			issues = append(issues, "schema has no name")
+		}
+
+		// Check style
+		if sch.Style() == "" {
+			issues = append(issues, "schema has no style defined")
+		}
+
+		// Check fields
+		fields := sch.Fields()
+		if len(fields) == 0 {
+			issues = append(issues, "schema has no fields defined")
+		}
+
+		// Check required fields
+		requiredFields := sch.RequiredFields()
+		for _, reqField := range requiredFields {
+			found := false
+			for _, f := range fields {
+				if f.Name == reqField {
+					found = true
+					break
+				}
+			}
+			if !found {
+				issues = append(issues, fmt.Sprintf("required field '%s' not in field definitions", reqField))
+			}
+		}
+
+		// Report results
+		if len(issues) > 0 {
+			fmt.Printf("✗ Schema '%s' has %d issue(s):\n", schemaName, len(issues))
+			for _, issue := range issues {
+				fmt.Printf("  - %s\n", issue)
+			}
+			return fmt.Errorf("schema validation failed")
+		}
+
+		fmt.Printf("✓ Schema '%s' is valid\n", schemaName)
+		fmt.Printf("  Style:  %s\n", sch.Style())
+		fmt.Printf("  Fields: %d (%d required)\n", len(fields), len(requiredFields))
+		return nil
 	},
 }
 
@@ -55,9 +113,157 @@ var validateDatasetCmd = &cobra.Command{
 	Short: "Validate an existing dataset",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: Implement after output formats
-		return fmt.Errorf("dataset validation not yet implemented")
+		filePath := args[0]
+
+		// Check file exists
+		info, err := os.Stat(filePath)
+		if err != nil {
+			return fmt.Errorf("cannot access file: %w", err)
+		}
+
+		// Detect format from extension
+		format := detectFormat(filePath)
+		if format == "" {
+			return fmt.Errorf("unsupported format: %s\nSupported: .json, .jsonl, .csv, .parquet", filePath)
+		}
+
+		fmt.Printf("Validating dataset: %s\n", filePath)
+		fmt.Printf("  Format: %s\n", format)
+		fmt.Printf("  Size:   %d bytes\n", info.Size())
+
+		// Read and validate based on format
+		var rowCount int
+		var parseErr error
+
+		switch format {
+		case "jsonl":
+			rowCount, parseErr = validateJSONL(filePath)
+		case "json":
+			rowCount, parseErr = validateJSON(filePath)
+		case "csv":
+			rowCount, parseErr = validateCSV(filePath)
+		case "parquet":
+			// Parquet validation requires external library
+			fmt.Println("  Note: Native Parquet validation not yet implemented")
+			return nil
+		}
+
+		if parseErr != nil {
+			fmt.Printf("✗ Validation failed: %v\n", parseErr)
+			return parseErr
+		}
+
+		fmt.Printf("✓ Valid dataset\n")
+		fmt.Printf("  Rows: %d\n", rowCount)
+		return nil
 	},
+}
+
+// detectFormat returns the format string based on file extension
+func detectFormat(path string) string {
+	switch {
+	case hasExtension(path, ".jsonl"):
+		return "jsonl"
+	case hasExtension(path, ".json"):
+		return "json"
+	case hasExtension(path, ".csv"):
+		return "csv"
+	case hasExtension(path, ".parquet"):
+		return "parquet"
+	default:
+		return ""
+	}
+}
+
+// hasExtension checks if path ends with the given extension (case-insensitive)
+func hasExtension(path, ext string) bool {
+	return len(path) > len(ext) && path[len(path)-len(ext):] == ext
+}
+
+// validateJSONL validates a JSONL file and returns row count
+func validateJSONL(path string) (int, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+
+	lines := splitLines(string(data))
+	count := 0
+	for i, line := range lines {
+		if line == "" {
+			continue
+		}
+		var obj map[string]any
+		if err := json.Unmarshal([]byte(line), &obj); err != nil {
+			return count, fmt.Errorf("line %d: invalid JSON: %w", i+1, err)
+		}
+		count++
+	}
+	return count, nil
+}
+
+// validateJSON validates a JSON file and returns row count
+func validateJSON(path string) (int, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+
+	// Try array of objects
+	var arr []map[string]any
+	if err := json.Unmarshal(data, &arr); err == nil {
+		return len(arr), nil
+	}
+
+	// Try single object
+	var obj map[string]any
+	if err := json.Unmarshal(data, &obj); err == nil {
+		return 1, nil
+	}
+
+	return 0, fmt.Errorf("invalid JSON structure")
+}
+
+// validateCSV validates a CSV file and returns row count
+func validateCSV(path string) (int, error) {
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return 0, err
+	}
+
+	lines := splitLines(string(data))
+	if len(lines) == 0 {
+		return 0, nil
+	}
+
+	// Count non-empty lines (minus header)
+	count := 0
+	for _, line := range lines[1:] {
+		if line != "" {
+			count++
+		}
+	}
+	return count, nil
+}
+
+// splitLines splits text into lines, handling both \n and \r\n
+func splitLines(text string) []string {
+	var lines []string
+	start := 0
+	for i := 0; i < len(text); i++ {
+		if text[i] == '\n' {
+			end := i
+			if i > 0 && text[i-1] == '\r' {
+				end = i - 1
+			}
+			lines = append(lines, text[start:end])
+			start = i + 1
+		}
+	}
+	if start < len(text) {
+		lines = append(lines, text[start:])
+	}
+	return lines
 }
 
 func init() {
@@ -95,8 +301,45 @@ var schemaShowCmd = &cobra.Command{
 	Short: "Show schema details",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: Implement in Phase 3
-		return fmt.Errorf("schema show not yet implemented - coming in Phase 3")
+		schemaName := args[0]
+
+		// Get schema from registry
+		sch, err := schema.Get(schemaName)
+		if err != nil {
+			return fmt.Errorf("schema not found: %s\nRun 'kothaset schema list' to see available schemas", schemaName)
+		}
+
+		// Display schema metadata
+		fmt.Printf("Name:        %s\n", sch.Name())
+		fmt.Printf("Style:       %s\n", sch.Style())
+		fmt.Printf("Description: %s\n", sch.Description())
+		if sch.Version() != "" {
+			fmt.Printf("Version:     %s\n", sch.Version())
+		}
+
+		// Display fields
+		fields := sch.Fields()
+		if len(fields) > 0 {
+			fmt.Println("\nFields:")
+			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
+			fmt.Fprintln(w, "  NAME\tTYPE\tREQUIRED")
+			for _, f := range fields {
+				required := "no"
+				if f.Required {
+					required = "yes"
+				}
+				fmt.Fprintf(w, "  %s\t%s\t%s\n", f.Name, f.Type, required)
+			}
+			w.Flush()
+		}
+
+		// Display required fields summary
+		requiredFields := sch.RequiredFields()
+		if len(requiredFields) > 0 {
+			fmt.Printf("\nRequired: %v\n", requiredFields)
+		}
+
+		return nil
 	},
 }
 
@@ -140,8 +383,69 @@ var providerTestCmd = &cobra.Command{
 	Short: "Test provider connection",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		// TODO: Implement in Phase 2
-		return fmt.Errorf("provider test not yet implemented - coming in Phase 2")
+		providerName := args[0]
+
+		// Find provider config by name
+		var providerCfg *provider.Config
+		if secrets != nil {
+			for _, p := range secrets.Providers {
+				if p.Name == providerName {
+					timeout := 30 * time.Second
+					if p.Timeout.Duration > 0 {
+						timeout = p.Timeout.Duration
+					}
+					providerCfg = &provider.Config{
+						Name:       p.Name,
+						Type:       p.Type,
+						BaseURL:    p.BaseURL,
+						APIKey:     p.APIKey,
+						MaxRetries: p.MaxRetries,
+						Timeout:    timeout,
+						Headers:    p.Headers,
+					}
+					break
+				}
+			}
+		}
+
+		if providerCfg == nil {
+			return fmt.Errorf("provider not found: %s\nRun 'kothaset provider list' to see available providers", providerName)
+		}
+
+		if providerCfg.APIKey == "" {
+			return fmt.Errorf("provider %s has no API key configured", providerName)
+		}
+
+		fmt.Printf("Testing provider %s (%s)...\n", providerName, providerCfg.Type)
+
+		// Create provider instance
+		p, err := provider.GetOrCreate(providerCfg)
+		if err != nil {
+			fmt.Printf("✗ Failed to create provider: %v\n", err)
+			return err
+		}
+
+		// Test connection with health check
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		start := time.Now()
+		if err := p.HealthCheck(ctx); err != nil {
+			fmt.Printf("✗ Connection failed: %v\n", err)
+			return err
+		}
+		elapsed := time.Since(start)
+
+		// Success output
+		fmt.Printf("✓ Provider %s: connected\n", providerName)
+		fmt.Printf("  Type:     %s\n", p.Type())
+		fmt.Printf("  Model:    %s\n", p.Model())
+		fmt.Printf("  Latency:  %v\n", elapsed.Round(time.Millisecond))
+		if p.SupportsStreaming() {
+			fmt.Println("  Streaming: supported")
+		}
+
+		return nil
 	},
 }
 

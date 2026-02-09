@@ -8,17 +8,19 @@ import (
 	"sync"
 
 	"github.com/shantoislamdev/kothaset/internal/schema"
+	"github.com/xitongsys/parquet-go-source/local"
+	"github.com/xitongsys/parquet-go/parquet"
+	"github.com/xitongsys/parquet-go/writer"
 )
 
 // ParquetWriter writes samples in Parquet columnar format
-// Note: This is a simplified JSON-based implementation.
-// For production Parquet support, integrate github.com/xitongsys/parquet-go
 type ParquetWriter struct {
 	schema    schema.Schema
 	path      string
 	samples   []*schema.Sample
 	batchSize int
 	mu        sync.Mutex
+	useNative bool
 }
 
 // NewParquetWriter creates a new Parquet writer
@@ -27,6 +29,7 @@ func NewParquetWriter(sch schema.Schema) *ParquetWriter {
 		schema:    sch,
 		samples:   make([]*schema.Sample, 0, 1000),
 		batchSize: 1000,
+		useNative: true, // Enable native Parquet by default
 	}
 }
 
@@ -64,8 +67,76 @@ func (w *ParquetWriter) Close() error {
 		return nil
 	}
 
-	// For now, write as JSON array (Parquet requires external library)
-	// This serves as a placeholder that can be replaced with real Parquet
+	// Use native Parquet if enabled
+	if w.useNative {
+		return w.writeParquetNative()
+	}
+
+	// Fallback to JSON placeholder
+	return w.writeJSONPlaceholder()
+}
+
+// SetBatchSize sets the batch size for writes
+func (w *ParquetWriter) SetBatchSize(size int) {
+	w.batchSize = size
+}
+
+// SetUseNative controls whether to use native Parquet or JSON fallback
+func (w *ParquetWriter) SetUseNative(native bool) {
+	w.useNative = native
+}
+
+// ParquetRecord is a generic struct for Parquet writing
+// Since parquet-go requires struct tags, we use a map-based approach
+type ParquetRecord struct {
+	ID          string `parquet:"name=id, type=BYTE_ARRAY, convertedtype=UTF8"`
+	Instruction string `parquet:"name=instruction, type=BYTE_ARRAY, convertedtype=UTF8, encoding=PLAIN_DICTIONARY"`
+	Input       string `parquet:"name=input, type=BYTE_ARRAY, convertedtype=UTF8, encoding=PLAIN_DICTIONARY"`
+	Output      string `parquet:"name=output, type=BYTE_ARRAY, convertedtype=UTF8, encoding=PLAIN_DICTIONARY"`
+}
+
+// writeParquetNative writes using parquet-go library
+func (w *ParquetWriter) writeParquetNative() error {
+	// Create local file writer
+	fw, err := local.NewLocalFileWriter(w.path)
+	if err != nil {
+		return fmt.Errorf("failed to create parquet file: %w", err)
+	}
+	defer fw.Close()
+
+	// Create Parquet writer with the record schema
+	pw, err := writer.NewParquetWriter(fw, new(ParquetRecord), 4)
+	if err != nil {
+		return fmt.Errorf("failed to create parquet writer: %w", err)
+	}
+
+	// Set compression
+	pw.CompressionType = parquet.CompressionCodec_SNAPPY
+
+	// Write each sample
+	for _, sample := range w.samples {
+		record := ParquetRecord{
+			ID:          sample.ID,
+			Instruction: sample.GetString("instruction"),
+			Input:       sample.GetString("input"),
+			Output:      sample.GetString("output"),
+		}
+		if err := pw.Write(record); err != nil {
+			pw.WriteStop()
+			return fmt.Errorf("failed to write record: %w", err)
+		}
+	}
+
+	// Finalize writing
+	if err := pw.WriteStop(); err != nil {
+		return fmt.Errorf("failed to finalize parquet: %w", err)
+	}
+
+	return nil
+}
+
+// writeJSONPlaceholder writes JSON-based placeholder format
+func (w *ParquetWriter) writeJSONPlaceholder() error {
 	file, err := os.Create(w.path)
 	if err != nil {
 		return err
@@ -86,30 +157,10 @@ func (w *ParquetWriter) Close() error {
 		"schema":   w.schema.Name(),
 		"num_rows": len(w.samples),
 		"columns":  columns,
-		"_note":    "Install parquet-go for native Parquet support",
+		"_note":    "Use SetUseNative(true) for native Parquet support",
 	}
 
 	encoder := json.NewEncoder(file)
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(metadata)
-}
-
-// SetBatchSize sets the batch size for writes
-func (w *ParquetWriter) SetBatchSize(size int) {
-	w.batchSize = size
-}
-
-// writeParquetNative would be the native implementation
-// Requires: github.com/xitongsys/parquet-go
-func (w *ParquetWriter) writeParquetNative() error {
-	// TODO: Implement with parquet-go when dependency is added
-	// Example structure:
-	// fw, err := local.NewLocalFileWriter(w.path)
-	// pw, err := writer.NewParquetWriter(fw, schema, 4)
-	// for _, sample := range w.samples {
-	//     pw.Write(sample)
-	// }
-	// pw.WriteStop()
-	// fw.Close()
-	return fmt.Errorf("native Parquet not yet implemented - install parquet-go dependency")
 }
