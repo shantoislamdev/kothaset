@@ -197,13 +197,15 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		default:
 		}
 
+		// Acquire a worker slot *before* spawning the goroutine
+		// This provides backpressure and prevents spawning millions of goroutines
+		pool.Acquire()
+
 		wg.Add(1)
 		sampleIndex := int(atomic.LoadInt32(&g.completed)) + i
 
 		go func(idx int) {
 			defer wg.Done()
-
-			pool.Acquire()
 			defer pool.Release()
 
 			result := g.generateSample(ctx, idx)
