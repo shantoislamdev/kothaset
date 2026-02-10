@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## [1.0.2] - 2026-02-10
+
+### Added
+- **Seed Options**: Added `--seed random` option to generate per-request random seeds for more diverse dataset generation.
+- **Responsive Website**: Website is now fully responsive for small devices and mobile screens.
+- **Dynamic Version**: Website now dynamically fetches and displays the latest npm version.
+
+### Fixed
+- **npm CLI**: Fixed CLI comma issue that was causing failures after npm install.
+- **Terminal Display**: Fixed line wrapping issues in the terminal component on the website.
+- **Documentation**: Made `--seed` parameter optional in documentation examples for clarity.
+
 ## [1.0.1] - 2026-02-10
 
 ### Fixed
