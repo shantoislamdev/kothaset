@@ -61,25 +61,26 @@ kothaset generate -n 100 -s instruction -i topics.txt -o dataset.jsonl
 kothaset generate -n 10 -s instruction -i "machine learning" -o ml_data.jsonl
 
 # With custom provider and model
-kothaset generate -n 500 -p openai -m gpt-4o --seed 123 -i prompts.txt -o output.jsonl
+kothaset generate -n 500 -p openai -m gpt-4o -i prompts.txt -o output.jsonl
 
 # Chat format with more workers
-kothaset generate -n 1000 -s chat -w 8 --seed 456 -i conversations.txt -o chats.jsonl
+kothaset generate -n 1000 -s chat -w 8 -i conversations.txt -o chats.jsonl
 
 # Preference data for DPO
-kothaset generate -n 500 -s preference --seed 789 -i pairs.txt -o dpo.jsonl
+kothaset generate -n 500 -s preference -i pairs.txt -o dpo.jsonl
 
-
+# With seed for reproducibility
+kothaset generate -n 100 --seed 42 -i topics.txt -o reproducible.jsonl
 
 # Different output formats
-kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
-kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./hf_dataset
+kothaset generate -n 100 -i topics.txt -f parquet -o dataset.parquet
+kothaset generate -n 100 -i topics.txt -f hf -o ./hf_dataset
 
 # Resume interrupted generation
 kothaset generate --resume dataset.jsonl.checkpoint -i topics.txt
 
 # Dry run to validate config
-kothaset generate --dry-run -n 100 --seed 42 -i topics.txt
+kothaset generate --dry-run -n 100 -i topics.txt
 ```
 
 ### Output

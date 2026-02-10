@@ -3,7 +3,7 @@
 ## Instruction Dataset (SFT)
 
 ```bash
-kothaset generate -n 5000 -s instruction --seed 42 -i topics.txt -o sft_dataset.jsonl
+kothaset generate -n 5000 -s instruction -i topics.txt -o sft_dataset.jsonl
 ```
 
 Output:
@@ -24,7 +24,7 @@ kothaset generate -n 5 -s instruction -i "python programming" -o python.jsonl
 ## Chat Conversations
 
 ```bash
-kothaset generate -n 2000 -s chat --seed 123 -i conversations.txt -o conversations.jsonl
+kothaset generate -n 2000 -s chat -i conversations.txt -o conversations.jsonl
 ```
 
 Output:
@@ -37,7 +37,7 @@ Output:
 ## Preference Data (DPO)
 
 ```bash
-kothaset generate -n 3000 -s preference --seed 456 -i pairs.txt -o dpo_data.jsonl
+kothaset generate -n 3000 -s preference -i pairs.txt -o dpo_data.jsonl
 ```
 
 Output:
@@ -50,7 +50,7 @@ Output:
 ## Classification
 
 ```bash
-kothaset generate -n 10000 -s classification --seed 789 -i text_samples.txt -o labels.jsonl
+kothaset generate -n 10000 -s classification -i text_samples.txt -o labels.jsonl
 ```
 
 Output:
@@ -70,8 +70,20 @@ databases
 ```
 
 ```bash
-kothaset generate -n 1000 --seed 42 -i topics.txt -o diverse.jsonl
+kothaset generate -n 1000 -i topics.txt -o diverse.jsonl
 ```
+
+---
+
+## Reproducibility with Seed
+
+For reproducible results, use `--seed`:
+
+```bash
+kothaset generate -n 1000 --seed 42 -i topics.txt -o reproducible.jsonl
+```
+
+> **Note:** `--seed` is optional. Use it when you need deterministic, reproducible output.
 
 ---
 
@@ -95,10 +107,10 @@ Generate using specific providers and models:
 
 ```bash
 # Use quality provider with GPT-5.2 (default model)
-kothaset generate -p quality -n 100 --seed 42 -i topics.txt -o premium.jsonl
+kothaset generate -p quality -n 100 -i topics.txt -o premium.jsonl
 
 # Use fast provider with cheaper model
-kothaset generate -p fast -m gpt-4o-mini -n 5000 --seed 42 -i topics.txt -o bulk.jsonl
+kothaset generate -p fast -m gpt-4o-mini -n 5000 -i topics.txt -o bulk.jsonl
 ```
 
 ---
@@ -106,7 +118,7 @@ kothaset generate -p fast -m gpt-4o-mini -n 5000 --seed 42 -i topics.txt -o bulk
 ## Large-Scale Generation
 
 ```bash
-kothaset generate -n 50000 --seed 42 -w 8 -i topics.txt -o large.jsonl
+kothaset generate -n 50000 -w 8 -i topics.txt -o large.jsonl
 
 # Resume if interrupted (input file needed for validation)
 kothaset generate --resume large.jsonl.checkpoint
@@ -117,9 +129,9 @@ kothaset generate --resume large.jsonl.checkpoint
 ## Output Formats
 
 ```bash
-kothaset generate -n 100 --seed 42 -i topics.txt -f jsonl -o data.jsonl    # Default
-kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o data.parquet
-kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./my_dataset
+kothaset generate -n 100 -i topics.txt -f jsonl -o data.jsonl    # Default
+kothaset generate -n 100 -i topics.txt -f parquet -o data.parquet
+kothaset generate -n 100 -i topics.txt -f hf -o ./my_dataset
 ```
 
 Load HuggingFace format:

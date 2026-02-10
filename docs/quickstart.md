@@ -48,9 +48,10 @@ kothaset generate -n 10 -s instruction -i topics.txt -o my_dataset.jsonl
 **What this does:**
 - `-n 10` → Generate 10 samples
 - `-s instruction` → Alpaca-style instruction/response pairs
-- `--seed 42` → Random seed (recommended for reproducibility)
 - `-i topics.txt` → Input file or inline topic (required)
 - `-o my_dataset.jsonl` → Output file
+
+> **Optional:** Add `--seed 42` for reproducible results.
 
 ---
 
@@ -76,10 +77,11 @@ Get-Content my_dataset.jsonl -Head 3
 
 | Task | Command |
 |------|---------|
-| Generate more samples | `kothaset generate -n 1000 --seed 42 -i topics.txt -o dataset.jsonl` |
-| Use chat format | `kothaset generate -s chat --seed 42 -i conversations.txt -o chats.jsonl` |
-| Use different model | `kothaset generate -m gpt-5.2 --seed 42 -i topics.txt -o dataset.jsonl` |
-| Add topic diversity | `kothaset generate -i topics.txt --seed 42 -o diverse.jsonl` |
+| Generate more samples | `kothaset generate -n 1000 -i topics.txt -o dataset.jsonl` |
+| Use chat format | `kothaset generate -s chat -i conversations.txt -o chats.jsonl` |
+| Use different model | `kothaset generate -m gpt-5.2 -i topics.txt -o dataset.jsonl` |
+| Add topic diversity | `kothaset generate -i topics.txt -o diverse.jsonl` |
+| Reproducible results | `kothaset generate --seed 42 -i topics.txt -o dataset.jsonl` |
 
 ---
 
