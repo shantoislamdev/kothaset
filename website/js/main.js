@@ -4,6 +4,9 @@ document.addEventListener('DOMContentLoaded', () => {
     window.lucide.createIcons();
   }
 
+  // Fetch latest version
+  fetchLatestVersion();
+
   // Header Scroll Effect
   const header = document.getElementById('main-header');
   window.addEventListener('scroll', () => {
@@ -174,8 +177,34 @@ async function typeLine(container, step, typeSpeed) {
         return;
     }
 
+
+
     for (let i = 0; i < text.length; i++) {
         line.textContent += text[i];
-        await wait(Math.random() * typeSpeed + 20);
+        await wait(Math.random() * typeSpeed + 50);
+    }
+}
+
+async function fetchLatestVersion() {
+    try {
+        const response = await fetch('https://registry.npmjs.org/kothaset/latest');
+        if (!response.ok) throw new Error('Failed to fetch version');
+        const data = await response.json();
+        const version = data.version;
+
+        if (version) {
+            // Update header and mobile menu badges
+            document.querySelectorAll('.version-badge').forEach(el => {
+                el.innerText = `v${version}`;
+            });
+
+            // Update footer version
+            const footerVersion = document.querySelector('.version-text');
+            if (footerVersion) {
+                footerVersion.innerText = `v${version}`;
+            }
+        }
+    } catch (error) {
+        console.warn('Could not fetch latest version from npm:', error);
     }
 }
