@@ -83,7 +83,10 @@
                     <!-- Install Tabs Component -->
                     <div class="install-tabs-wrapper" data-tabs>
                             <div class="install-tabs-nav">
-                            <button class="tab-btn active" data-tab-target="#content-npm">
+                            <button class="tab-btn active" data-tab-target="#content-python">
+                                <i data-lucide="file-code" width="16" height="16" class="opacity-70"></i> Python
+                            </button>
+                            <button class="tab-btn" data-tab-target="#content-npm">
                                 <i data-lucide="package" width="16" height="16" class="opacity-70"></i> npm
                             </button>
                             <button class="tab-btn" data-tab-target="#content-brew">
@@ -97,7 +100,13 @@
                             </button>
                             </div>
 
-                            <div id="content-npm" class="install-cmd-box group" onclick="copyToClipboard('npm install -g kothaset', this.querySelector('.copy-icon-btn'))">
+                            <div id="content-python" class="install-cmd-box group" onclick="copyToClipboard('pip install kothaset', this.querySelector('.copy-icon-btn'))">
+                            <div class="cmd-prefix">$</div>
+                            <div class="cmd-text">pip install kothaset</div>
+                            <div class="copy-icon-btn"><i data-lucide="copy" width="18" height="18"></i></div>
+                            </div>
+
+                            <div id="content-npm" class="install-cmd-box group hidden" data-tab-content onclick="copyToClipboard('npm install -g kothaset', this.querySelector('.copy-icon-btn'))">
                             <div class="cmd-prefix">$</div>
                             <div class="cmd-text">npm install -g kothaset</div>
                             <div class="copy-icon-btn"><i data-lucide="copy" width="18" height="18"></i></div>
