@@ -79,8 +79,8 @@ kothaset generate -n 100 --seed random -i topics.txt -o diverse.jsonl
 kothaset generate -n 100 -i topics.txt -f parquet -o dataset.parquet
 kothaset generate -n 100 -i topics.txt -f hf -o ./hf_dataset
 
-# Resume interrupted generation
-kothaset generate --resume dataset.jsonl.checkpoint -i topics.txt
+# Resume interrupted generation (checkpoint stored in .kothaset/)
+kothaset generate --resume .kothaset/dataset.jsonl.checkpoint -i topics.txt
 
 # Dry run to validate config
 kothaset generate --dry-run -n 100 -i topics.txt
@@ -165,7 +165,7 @@ These flags work with all commands:
 
 KothaSet automatically saves checkpoints during generation:
 
-- Checkpoint file: `<output>.checkpoint`
+- Checkpoint location: `.kothaset/<output>.checkpoint`
 - Saved every 50 samples by default
 - Resume with `--resume <checkpoint>`
 
@@ -204,7 +204,7 @@ KothaSet automatically saves checkpoints during generation:
 When interrupted:
 
 ```
-Resume with: kothaset generate --resume dataset.jsonl.checkpoint
+Resume with: kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
 ```
 
 ---

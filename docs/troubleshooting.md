@@ -109,13 +109,13 @@ kothaset generate --max-tokens 2048 --seed 42 -o dataset.jsonl
 ## Checkpoints
 
 ### "Failed to load checkpoint"
-1. Verify file exists: `ls dataset.jsonl.checkpoint`
+1. Verify file exists: `ls .kothaset/dataset.jsonl.checkpoint`
 2. If corrupted, start fresh (existing output is preserved)
 
 ### Can't find checkpoint
-Checkpoints saved as `<output>.checkpoint`:
+Checkpoints saved in `.kothaset/<output>.checkpoint`:
 ```bash
-kothaset generate --resume dataset.jsonl.checkpoint
+kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
 ```
 
 ---

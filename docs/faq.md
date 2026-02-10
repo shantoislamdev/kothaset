@@ -40,8 +40,9 @@ kothaset generate -m gpt-5.2 --seed 42 -i topics.txt -o dataset.jsonl
 
 ### Can I resume interrupted generation?
 ```bash
-kothaset generate --resume dataset.jsonl.checkpoint
+kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
 ```
+Checkpoints are stored in `.kothaset/<output>.checkpoint`.
 
 ---
 

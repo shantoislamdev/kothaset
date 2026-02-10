@@ -130,8 +130,8 @@ kothaset generate -p fast -m gpt-4o-mini -n 5000 -i topics.txt -o bulk.jsonl
 ```bash
 kothaset generate -n 50000 -w 8 -i topics.txt -o large.jsonl
 
-# Resume if interrupted (input file needed for validation)
-kothaset generate --resume large.jsonl.checkpoint
+# Resume if interrupted (checkpoint stored in .kothaset/)
+kothaset generate --resume .kothaset/large.jsonl.checkpoint
 ```
 
 ---
