@@ -539,7 +539,7 @@ main { flex-grow: 1; padding-top: 5rem; overflow: hidden; }
 .dot-green { background-color: #27c93f; }
 .window-title { font-family: var(--font-mono); font-size: 0.75rem; color: var(--color-text-secondary); }
 
-.window-body { padding: 1.5rem; overflow-x: auto; font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.6; }
+.window-body { padding: 1.5rem; overflow-x: auto; font-family: var(--font-mono); font-size: 0.875rem; line-height: 1.6; white-space: pre; }
 .yaml-key { color: var(--color-terracotta); }
 .yaml-string { color: var(--color-green-600); }
 .yaml-val { color: var(--color-charcoal); }
