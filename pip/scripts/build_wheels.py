@@ -16,6 +16,7 @@ import argparse
 import base64
 import hashlib
 import os
+import re
 import shutil
 import stat
 import sys
@@ -199,10 +200,15 @@ def build_wheel(
         for py_file in SRC_DIR.glob("*.py"):
             shutil.copy2(py_file, pkg_dir / py_file.name)
 
-        # Update version in __init__.py
+        # Update version in __init__.py (replace placeholder with actual version)
         init_file = pkg_dir / "__init__.py"
         content = init_file.read_text()
-        content = content.replace('__version__ = "1.0.0"', f'__version__ = "{version}"')
+        # Replace any version placeholder (handles both "0.0.0" and any prior version)
+        content = re.sub(
+            r'__version__\s*=\s*"[^"]*".*',
+            f'__version__ = "{version}"',
+            content,
+        )
         init_file.write_text(content)
 
         # 2. Copy the Go binary into the package

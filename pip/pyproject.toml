@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "kothaset"
-version = "1.0.0"
+version = "0.0.0"  # Auto-set from git tag during CI build
 description = "High-quality dataset generation CLI for LLM training"
 readme = "README.md"
 license = {text = "Apache-2.0"}

@@ -5,7 +5,7 @@ from __future__ import annotations
 import os
 import sys
 
-__version__ = "1.0.0"
+__version__ = "0.0.0"  # Auto-set from git tag during CI build
 
 
 def find_binary() -> str:
