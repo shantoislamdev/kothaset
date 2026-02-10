@@ -1,0 +1,56 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kothaset"
+version = "1.0.0"
+description = "High-quality dataset generation CLI for LLM training"
+readme = "README.md"
+license = {text = "Apache-2.0"}
+requires-python = ">=3.8"
+authors = [
+    {name = "Shanto Islam", email = "shantoislamdev@gmail.com"},
+]
+keywords = [
+    "llm",
+    "dataset",
+    "ai",
+    "training",
+    "cli",
+    "machine-learning",
+    "synthetic-data",
+    "openai",
+    "gpt",
+    "fine-tuning",
+    "data-generation",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Software Development :: Code Generators",
+    "Typing :: Typed",
+]
+
+[project.urls]
+Homepage = "https://github.com/shantoislamdev/kothaset"
+Documentation = "https://github.com/shantoislamdev/kothaset/tree/main/docs"
+Repository = "https://github.com/shantoislamdev/kothaset"
+Issues = "https://github.com/shantoislamdev/kothaset/issues"
+Changelog = "https://github.com/shantoislamdev/kothaset/blob/main/CHANGELOG.md"
+
+[project.scripts]
+kothaset = "kothaset._main:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+kothaset = ["kothaset*"]

@@ -37,6 +37,12 @@ dist/
 npm/bin/
 npm/node_modules/
 
+# pip
+pip/dist/
+pip/build/
+pip/*.egg-info
+pip/src/*.egg-info
+
 # KothaSet
 .secrets.yaml
 .kothaset/

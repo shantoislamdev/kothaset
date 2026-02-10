@@ -60,3 +60,33 @@ jobs:
         run: npm publish --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  pypi-publish:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build tools
+        run: pip install twine
+
+      - name: Get version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+
+      - name: Build platform-specific wheels
+        working-directory: pip
+        run: python scripts/build_wheels.py --version ${{ steps.version.outputs.VERSION }}
+
+      - name: Publish to PyPI
+        working-directory: pip
+        run: twine upload dist/*.whl --non-interactive
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}

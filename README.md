@@ -2,6 +2,7 @@
 
 ![Go Version](https://img.shields.io/badge/Go-1.25+-00ADD8?logo=go&logoColor=white)
 [![npm version](https://img.shields.io/npm/v/kothaset.svg)](https://www.npmjs.com/package/kothaset)
+[![PyPI version](https://img.shields.io/pypi/v/kothaset.svg)](https://pypi.org/project/kothaset/)
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 
 **KothaSet** is a powerful CLI tool for generating high-quality datasets using Large Language Models (LLMs) as teacher models. Create diverse training data for fine-tuning smaller models.
@@ -21,7 +22,12 @@
 
 ## Installation
 
-### npm (Recommended)
+### pip (Python)
+```bash
+pip install kothaset
+```
+
+### npm (Node.js)
 ```bash
 npm install -g kothaset
 ```
