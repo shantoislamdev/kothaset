@@ -243,6 +243,7 @@ def build_wheel(
             f"Classifier: Intended Audience :: Science/Research\n"
             f"Classifier: License :: OSI Approved :: Apache Software License\n"
             f"Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence\n"
+            f"Description-Content-Type: text/markdown\n"
         )
         
         if readme_content:
