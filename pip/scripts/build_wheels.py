@@ -220,13 +220,19 @@ def build_wheel(
         info_dir = tmp / dist_info
         info_dir.mkdir()
 
+        # Read README for description
+        readme_path = Path(__file__).resolve().parent.parent / "README.md"
+        readme_content = ""
+        if readme_path.exists():
+            readme_content = readme_path.read_text(encoding="utf-8")
+
         # METADATA
-        (info_dir / "METADATA").write_text(
+        metadata_content = (
             f"Metadata-Version: 2.1\n"
             f"Name: {PACKAGE_NAME}\n"
             f"Version: {wheel_version}\n"
             f"Summary: High-quality dataset generation CLI for LLM training\n"
-            f"Home-page: https://github.com/{REPO}\n"
+            f"Home-page: https://kothaset.pages.dev\n"
             f"Author: Shanto Islam\n"
             f"Author-email: shantoislamdev@gmail.com\n"
             f"License: Apache-2.0\n"
@@ -238,6 +244,11 @@ def build_wheel(
             f"Classifier: License :: OSI Approved :: Apache Software License\n"
             f"Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence\n"
         )
+        
+        if readme_content:
+            metadata_content += f"\n{readme_content}\n"
+        
+        (info_dir / "METADATA").write_text(metadata_content)
 
         # WHEEL
         (info_dir / "WHEEL").write_text(
