@@ -45,3 +45,8 @@ npm/node_modules/
 coverage
 coverage.out
 coverage.html
+
+# Examples (Allow tracking)
+!examples/*.txt
+!examples/*.jsonl
+!examples/*.jsonl.checkpoint

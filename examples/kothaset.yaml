@@ -1,0 +1,27 @@
+# KothaSet Configuration
+# This file is PUBLIC - safe to commit to git
+
+version: "1.0"
+
+global:
+  provider: openai
+  schema: instruction  # Available: instruction, chat, preference, classification
+  model: openai/gpt-5-mini
+  # output_dir: ./output  # Defaults to current directory
+  concurrency: 4
+
+
+# Context: Background info or persona injected into every prompt
+context: |
+  Generate high-quality training data for an AI assistant.
+  The data should be helpful, accurate, and well-formatted.
+
+# Instructions: Specific rules and guidelines for generation
+instructions:
+  - Be creative and diverse in topics and approaches
+  - Vary the style and complexity of responses
+  - Use clear and concise language
+
+logging:
+  level: info
+  format: text
