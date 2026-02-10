@@ -109,7 +109,7 @@ document.addEventListener('DOMContentLoaded', () => {
 function initTerminalAnimation(element) {
     const steps = [
         { text: 'Run interrupted at 85%...', class: 'opacity-70 mb-2' },
-        { text: '$ kothaset generate --resume', class: 'text-terracotta mb-1' },
+        { text: '$ kothaset generate --resume -i topics.txt', class: 'text-terracotta mb-1' },
         { text: 'Resuming from ID #8501', class: 'opacity-70 mt-1' }
     ];
     
