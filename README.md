@@ -72,8 +72,6 @@ go install github.com/shantoislamdev/kothaset/cmd/kothaset@latest
 
 ## Configuration
 
-## Configuration
-
 KothaSet uses a **two-file configuration system** for better security and organization:
 
 ### 1. `kothaset.yaml` (Public)
