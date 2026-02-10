@@ -221,9 +221,10 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	gen.SetWriter(writer)
 
 	// Setup sampler from input file (mandatory)
-	sampler, err := generator.NewFileSampler(genInputFile)
+	// Now supports inline strings too
+	sampler, err := generator.NewSampler(genInputFile)
 	if err != nil {
-		return fmt.Errorf("failed to load input file %s: %w", genInputFile, err)
+		return fmt.Errorf("failed to load input (file or inline) %q: %w", genInputFile, err)
 	}
 	gen.SetSampler(sampler)
 

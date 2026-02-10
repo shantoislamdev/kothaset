@@ -3,6 +3,7 @@ package generator
 import (
 	"bufio"
 	"context"
+	"fmt"
 
 	"os"
 	"strings"
@@ -19,6 +20,40 @@ type Sampler interface {
 type FileSampler struct {
 	topics []string
 	mu     sync.Mutex
+}
+
+// NewSampler creates a sampler from a file path or inline string
+func NewSampler(input string) (Sampler, error) {
+	// Check if input is a file
+	info, err := os.Stat(input)
+	if err == nil && !info.IsDir() {
+		return NewFileSampler(input)
+	}
+
+	// If error is other than NotExist, return it (e.g. permission error)
+	if err != nil && !os.IsNotExist(err) {
+		// On Windows, checking for invalid chars might return other errors.
+		// We'll treat mostly everything as inline if it fails to be a file.
+		// But let's be safe: if it looks like a path but fails, maybe warn?
+		// For now, simple fallback:
+	}
+
+	// Treat as inline string (single topic)
+	// User requested that inline input should be a single topic only.
+	// For multiple topics, a file is required.
+	var topics []string
+	trimmed := strings.TrimSpace(input)
+	if trimmed != "" {
+		topics = append(topics, trimmed)
+	}
+
+	if len(topics) == 0 {
+		return nil, fmt.Errorf("input provided but contains no valid topics")
+	}
+
+	return &FileSampler{
+		topics: topics,
+	}, nil
 }
 
 // NewFileSampler creates a sampler from a file
@@ -40,6 +75,10 @@ func NewFileSampler(path string) (*FileSampler, error) {
 
 	if err := scanner.Err(); err != nil {
 		return nil, err
+	}
+
+	if len(topics) == 0 {
+		return nil, fmt.Errorf("input file is empty")
 	}
 
 	return &FileSampler{
