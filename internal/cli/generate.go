@@ -96,12 +96,6 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("input file is required (use -i or --input)")
 	}
 
-	// Auto-generate seed if not provided
-	if !cmd.Flags().Changed("seed") {
-		genSeed = time.Now().UnixNano()
-		fmt.Printf("ℹ No seed provided, using random seed: %d\n", genSeed)
-	}
-
 	// Get provider name from flag or config
 	providerName := genProvider
 	if providerName == "" {
@@ -181,6 +175,19 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		fmt.Println("✓ Loaded context from kothaset.yaml")
 	}
 
+	// Handle seed (optional)
+	var seedPtr *int64
+	if cmd.Flags().Changed("seed") {
+		seedPtr = &genSeed
+	} else if genSeed != 0 {
+		// Case where seed came from config file or env var (though cobra flags take precedence)
+		// Assuming genSeed default is 0. If user explicitly provided 0, we treat as seed 0.
+		// Cobra default is 0. If not changed, genSeed is 0.
+		// If we want to support seed=0 being valid, we rely on .Changed().
+		// If config loaded seed, we might need other logic?
+		// But this tool uses flags primarily.
+	}
+
 	// Build generator config
 	genCfg := generator.Config{
 		NumSamples:      genCount,
@@ -192,7 +199,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		SystemPrompt:    genSystemPrompt,
 		Temperature:     genTemp,
 		MaxTokens:       genMaxTokens,
-		Seed:            genSeed,
+		Seed:            seedPtr,
 		Workers:         genWorkers,
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,

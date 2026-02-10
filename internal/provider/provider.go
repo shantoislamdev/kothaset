@@ -59,7 +59,7 @@ type GenerationRequest struct {
 	StopSequences []string `json:"stop,omitempty"`
 
 	// Seed for reproducibility
-	Seed int64 `json:"seed"`
+	Seed *int64 `json:"seed,omitempty"`
 
 	// FrequencyPenalty reduces repetition (-2 to 2)
 	FrequencyPenalty float64 `json:"frequency_penalty,omitempty"`

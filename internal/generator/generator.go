@@ -35,8 +35,8 @@ type Config struct {
 	TopP         float64 `yaml:"top_p,omitempty" json:"top_p,omitempty"`
 
 	// Reproducibility
-	Seed          int64 `yaml:"seed" json:"seed"`
-	Deterministic bool  `yaml:"deterministic" json:"deterministic"`
+	Seed          *int64 `yaml:"seed,omitempty" json:"seed,omitempty"`
+	Deterministic bool   `yaml:"deterministic" json:"deterministic"`
 
 	// Concurrency
 	Workers   int `yaml:"workers" json:"workers"`
