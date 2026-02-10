@@ -124,9 +124,7 @@ type Generator struct {
 	schema   schema.Schema
 	sampler  Sampler
 
-	// State
-	mu         sync.Mutex
-	samples    []*schema.Sample
+	// State - only store counts, not samples (to prevent memory leaks)
 	completed  int32
 	failed     int32
 	tokensUsed int64
@@ -144,7 +142,6 @@ func New(cfg Config, prov provider.Provider, sch schema.Schema) *Generator {
 		config:   cfg,
 		provider: prov,
 		schema:   sch,
-		samples:  make([]*schema.Sample, 0, cfg.NumSamples),
 	}
 }
 
@@ -168,15 +165,15 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	startTime := time.Now()
 
 	// Load checkpoint if resuming
-	var checkpoint *Checkpoint
 	if g.config.ResumeFrom != "" {
-		var err error
-		checkpoint, err = LoadCheckpoint(g.config.ResumeFrom)
+		checkpoint, err := LoadCheckpoint(g.config.ResumeFrom)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load checkpoint: %w", err)
 		}
-		g.samples = checkpoint.Samples
-		atomic.StoreInt32(&g.completed, int32(len(g.samples)))
+		// Resume from checkpoint count - samples already written to output file
+		atomic.StoreInt32(&g.completed, int32(checkpoint.Completed))
+		atomic.StoreInt32(&g.failed, int32(checkpoint.Failed))
+		atomic.StoreInt64(&g.tokensUsed, int64(checkpoint.TokensUsed))
 	}
 
 	// Open output writer if not already set
@@ -237,12 +234,8 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		if result.err != nil {
 			atomic.AddInt32(&g.failed, 1)
 		} else {
-			g.mu.Lock()
-			g.samples = append(g.samples, result.sample)
-			g.mu.Unlock()
-
-			// Write to output
-			if err := g.writeSample(result.sample); err != nil {
+			// Write to output immediately - don't store in memory to prevent memory leaks
+			if err := g.writer.Write(result.sample); err != nil {
 				return nil, fmt.Errorf("failed to write sample: %w", err)
 			}
 
@@ -401,12 +394,6 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 	}
 }
 
-func (g *Generator) writeSample(sample *schema.Sample) error {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-	return g.writer.Write(sample)
-}
-
 func (g *Generator) reportProgress(startTime time.Time) {
 	if g.onProgress == nil {
 		return
@@ -438,13 +425,9 @@ func (g *Generator) reportProgress(startTime time.Time) {
 }
 
 func (g *Generator) saveCheckpoint() error {
-	g.mu.Lock()
-	defer g.mu.Unlock()
-
 	cp := &Checkpoint{
 		Timestamp:  time.Now(),
 		Config:     g.config,
-		Samples:    g.samples,
 		Completed:  int(atomic.LoadInt32(&g.completed)),
 		Failed:     int(atomic.LoadInt32(&g.failed)),
 		TokensUsed: int(atomic.LoadInt64(&g.tokensUsed)),
@@ -455,12 +438,11 @@ func (g *Generator) saveCheckpoint() error {
 
 // Checkpoint represents saved generation state
 type Checkpoint struct {
-	Timestamp  time.Time        `json:"timestamp"`
-	Config     Config           `json:"config"`
-	Samples    []*schema.Sample `json:"samples"`
-	Completed  int              `json:"completed"`
-	Failed     int              `json:"failed"`
-	TokensUsed int              `json:"tokens_used"`
+	Timestamp  time.Time `json:"timestamp"`
+	Config     Config    `json:"config"`
+	Completed  int       `json:"completed"`
+	Failed     int       `json:"failed"`
+	TokensUsed int       `json:"tokens_used"`
 }
 
 // SaveCheckpoint saves a checkpoint to disk
