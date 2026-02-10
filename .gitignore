@@ -36,10 +36,12 @@ dist/
 # npm
 npm/bin/
 npm/node_modules/
+npm/README.md
 
 # pip
 pip/dist/
 pip/build/
+pip/README.md
 pip/*.egg-info
 pip/src/*.egg-info
 
