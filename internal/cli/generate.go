@@ -78,8 +78,8 @@ func init() {
 	generateCmd.Flags().IntVarP(&genWorkers, "workers", "w", 4, "number of concurrent workers")
 
 	// Reproducibility
-	generateCmd.Flags().Int64Var(&genSeed, "seed", 0, "random seed for reproducibility (required)")
-	generateCmd.MarkFlagRequired("seed")
+	generateCmd.Flags().Int64Var(&genSeed, "seed", 0, "random seed for reproducibility")
+	// generateCmd.MarkFlagRequired("seed") // Optional now
 	generateCmd.Flags().StringVarP(&genInputFile, "input", "i", "", "path to input file for topics/seeds (required)")
 	generateCmd.MarkFlagRequired("input")
 
@@ -91,6 +91,17 @@ func init() {
 }
 
 func runGenerate(cmd *cobra.Command, args []string) error {
+	// Ensure input file is provided (handle empty string case)
+	if genInputFile == "" {
+		return fmt.Errorf("input file is required (use -i or --input)")
+	}
+
+	// Auto-generate seed if not provided
+	if !cmd.Flags().Changed("seed") {
+		genSeed = time.Now().UnixNano()
+		fmt.Printf("ℹ No seed provided, using random seed: %d\n", genSeed)
+	}
+
 	// Get provider name from flag or config
 	providerName := genProvider
 	if providerName == "" {
@@ -202,14 +213,12 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	}
 	gen.SetWriter(writer)
 
-	// Setup sampler from input file
-	if genInputFile != "" {
-		sampler, err := generator.NewFileSampler(genInputFile)
-		if err != nil {
-			return fmt.Errorf("failed to load input file %s: %w", genInputFile, err)
-		}
-		gen.SetSampler(sampler)
+	// Setup sampler from input file (mandatory)
+	sampler, err := generator.NewFileSampler(genInputFile)
+	if err != nil {
+		return fmt.Errorf("failed to load input file %s: %w", genInputFile, err)
 	}
+	gen.SetSampler(sampler)
 
 	// Create cancellable context
 	ctx, cancel := context.WithCancel(context.Background())

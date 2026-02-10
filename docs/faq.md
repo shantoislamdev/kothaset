@@ -13,7 +13,7 @@ OpenAI, DeepSeek, and any OpenAI-compatible API (vLLM, Ollama, etc.).
 ### Is an API key required?
 Yes. Get one at [platform.openai.com](https://platform.openai.com/api-keys).
 
-### Why is `--seed` required?
+### Why is `--seed` recommended?
 It controls the randomness of the LLM's generation (e.g., token sampling). It does **not** affect topic selection, which is strictly sequential based on your input file.
 
 ---

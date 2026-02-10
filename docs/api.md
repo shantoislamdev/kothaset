@@ -32,7 +32,7 @@ kothaset generate [flags]
 | Flag | Short | Type | Description |
 |------|-------|------|-------------|
 | `--output` | `-o` | string | Output file path |
-| `--seed` | | int64 | Random seed for reproducibility |
+| `--input` | `-i` | string | Path to input file |
 
 ### Optional Flags
 
@@ -47,7 +47,7 @@ kothaset generate [flags]
 | `--max-tokens` | | int | `2048` | Maximum tokens per response |
 | `--system-prompt` | | string | | Custom system prompt |
 | `--workers` | `-w` | int | `4` | Concurrent workers |
-| `--input` | `-i` | string | | Path to input file (required) |
+| `--seed` | | int64 | random | Random seed for reproducibility |
 | `--resume` | | string | | Resume from checkpoint |
 | `--dry-run` | | bool | `false` | Validate without generating |
 

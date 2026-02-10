@@ -48,7 +48,7 @@ kothaset generate -n 10 -s instruction -i topics.txt -o my_dataset.jsonl
 **What this does:**
 - `-n 10` → Generate 10 samples
 - `-s instruction` → Alpaca-style instruction/response pairs
-- `--seed 42` → Reproducible random seed (required)
+- `--seed 42` → Random seed (recommended for reproducibility)
 - `-i topics.txt` → Input file with topics (required)
 - `-o my_dataset.jsonl` → Output file
 
