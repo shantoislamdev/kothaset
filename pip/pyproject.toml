@@ -40,7 +40,7 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/shantoislamdev/kothaset"
+Homepage = "https://kothaset.pages.dev"
 Documentation = "https://github.com/shantoislamdev/kothaset/tree/main/docs"
 Repository = "https://github.com/shantoislamdev/kothaset"
 Issues = "https://github.com/shantoislamdev/kothaset/issues"
