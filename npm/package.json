@@ -24,7 +24,7 @@
     "gpt"
   ],
   "bin": {
-    "kothaset": "./bin/kothaset"
+    "kothaset": "./scripts/cli.js"
   },
   "scripts": {
     "postinstall": "node scripts/postinstall.js"
