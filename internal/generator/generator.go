@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -17,6 +18,16 @@ import (
 	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
 )
+
+const cacheDir = ".kothaset"
+
+// getCheckpointPath returns the path for the checkpoint file in the cache directory
+func getCheckpointPath(outputPath string) string {
+	// Create a safe filename from the output path by replacing path separators
+	baseName := filepath.Base(outputPath)
+	checkpointFile := baseName + ".checkpoint"
+	return filepath.Join(cacheDir, checkpointFile)
+}
 
 // Config contains all settings for dataset generation
 type Config struct {
@@ -439,7 +450,7 @@ func (g *Generator) saveCheckpoint() error {
 		TokensUsed: int(atomic.LoadInt64(&g.tokensUsed)),
 	}
 
-	return SaveCheckpoint(cp, g.config.OutputPath+".checkpoint")
+	return SaveCheckpoint(cp, getCheckpointPath(g.config.OutputPath))
 }
 
 // Checkpoint represents saved generation state
@@ -454,6 +465,11 @@ type Checkpoint struct {
 
 // SaveCheckpoint saves a checkpoint to disk
 func SaveCheckpoint(cp *Checkpoint, path string) error {
+	// Ensure cache directory exists
+	if err := os.MkdirAll(cacheDir, 0755); err != nil {
+		return fmt.Errorf("failed to create cache directory: %w", err)
+	}
+
 	data, err := json.MarshalIndent(cp, "", "  ")
 	if err != nil {
 		return err
