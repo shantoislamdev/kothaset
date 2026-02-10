@@ -32,7 +32,7 @@ kothaset generate [flags]
 | Flag | Short | Type | Description |
 |------|-------|------|-------------|
 | `--output` | `-o` | string | Output file path |
-| `--input` | `-i` | string | Path to input file |
+| `--input` | `-i` | string | Path to input file or inline topic |
 
 ### Optional Flags
 
@@ -54,8 +54,11 @@ kothaset generate [flags]
 ### Examples
 
 ```bash
-# Basic generation
+# Basic generation with input file
 kothaset generate -n 100 -s instruction --seed 42 -i topics.txt -o dataset.jsonl
+
+# Single topic inline
+kothaset generate -n 10 -s instruction -i "machine learning" -o ml_data.jsonl
 
 # With custom provider and model
 kothaset generate -n 500 -p openai -m gpt-4o --seed 123 -i prompts.txt -o output.jsonl

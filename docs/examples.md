@@ -13,6 +13,14 @@ Output:
 
 ---
 
+## Quick Generation (Inline Topic)
+
+Generate a small dataset for a specific topic without creating an input file:
+
+```bash
+kothaset generate -n 5 -s instruction -i "python programming" -o python.jsonl
+```
+
 ## Chat Conversations
 
 ```bash
