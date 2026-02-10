@@ -47,6 +47,21 @@ func (w *ParquetWriter) Open(path string) error {
 	return nil
 }
 
+func (w *ParquetWriter) OpenAppend(path string) error {
+	// Parquet doesn't support true append - we store samples in memory
+	// and rewrite on Close. Just set the path and continue from where we left off.
+	// The checkpoint system tracks how many samples were already completed.
+	w.path = path
+	// Ensure directory exists
+	dir := filepath.Dir(path)
+	if dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func (w *ParquetWriter) Write(sample *schema.Sample) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()

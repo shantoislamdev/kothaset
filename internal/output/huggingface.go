@@ -39,6 +39,17 @@ func (w *HuggingFaceWriter) Open(path string) error {
 	return nil
 }
 
+func (w *HuggingFaceWriter) OpenAppend(path string) error {
+	// HuggingFace writer buffers samples and writes on Close
+	// Just set the path - the checkpoint system tracks progress
+	w.path = path
+	// Ensure directory exists
+	if err := os.MkdirAll(path, 0755); err != nil {
+		return err
+	}
+	return nil
+}
+
 func (w *HuggingFaceWriter) Write(sample *schema.Sample) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()

@@ -12,6 +12,10 @@ type Writer interface {
 	// Open initializes the writer for the given path
 	Open(path string) error
 
+	// OpenAppend opens the writer in append mode for resuming
+	// This preserves existing data instead of truncating
+	OpenAppend(path string) error
+
 	// Write writes a single sample to the output
 	Write(sample *schema.Sample) error
 

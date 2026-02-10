@@ -68,6 +68,8 @@ type MockWriter struct {
 
 func (w *MockWriter) Open(path string) error { return nil }
 
+func (w *MockWriter) OpenAppend(path string) error { return nil }
+
 func (w *MockWriter) Write(sample *schema.Sample) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()

@@ -185,8 +185,16 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	if g.sampler == nil {
 		return nil, fmt.Errorf("sampler not set: input file is mandatory")
 	}
-	if err := g.writer.Open(g.config.OutputPath); err != nil {
-		return nil, fmt.Errorf("failed to open output: %w", err)
+
+	// Open output - use append mode when resuming to preserve existing data
+	if g.config.ResumeFrom != "" {
+		if err := g.writer.OpenAppend(g.config.OutputPath); err != nil {
+			return nil, fmt.Errorf("failed to open output in append mode: %w", err)
+		}
+	} else {
+		if err := g.writer.Open(g.config.OutputPath); err != nil {
+			return nil, fmt.Errorf("failed to open output: %w", err)
+		}
 	}
 	defer g.writer.Close()
 
