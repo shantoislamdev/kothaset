@@ -9,6 +9,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 
 	"github.com/shantoislamdev/kothaset/internal/generator"
@@ -267,12 +268,36 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		cancel()
 	}()
 
+	// Create progress bar
+	bar := progressbar.NewOptions(genCount,
+		progressbar.OptionEnableColorCodes(true),
+		progressbar.OptionShowCount(),
+		progressbar.OptionSetWidth(40),
+		progressbar.OptionSetDescription("Generating samples..."),
+		progressbar.OptionSetTheme(progressbar.Theme{
+			Saucer:        "[green]█[reset]",
+			SaucerHead:    "[green]>[reset]",
+			SaucerPadding: "[dark_gray]░[reset]",
+			BarStart:      "[",
+			BarEnd:        "]",
+		}),
+		progressbar.OptionOnCompletion(func() {
+			fmt.Println()
+		}),
+	)
+
+	// Set progress callback to update the bar
+	gen.SetProgressCallback(func(p generator.Progress) {
+		bar.Set(p.Completed)
+	})
+
 	// Print generation info
 	fmt.Printf("🚀 Generating %d samples using %s (%s)\n", genCount, providerName, model)
 	fmt.Printf("   Schema: %s | Output: %s\n\n", schemaName, genOutput)
 
 	// Run generation
 	result, err := gen.Run(ctx)
+	bar.Finish()
 	fmt.Println() // New line after progress
 
 	if err != nil {
