@@ -3,6 +3,8 @@ package generator
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -36,6 +38,7 @@ type Config struct {
 
 	// Reproducibility
 	Seed          *int64 `yaml:"seed,omitempty" json:"seed,omitempty"`
+	RandomSeed    bool   `yaml:"random_seed,omitempty" json:"random_seed,omitempty"` // Generate new random seed per request
 	Deterministic bool   `yaml:"deterministic" json:"deterministic"`
 
 	// Concurrency
@@ -276,6 +279,17 @@ type workerResult struct {
 	err    error
 }
 
+// generateRandomSeed creates a cryptographically secure random seed
+func generateRandomSeed() int64 {
+	var b [8]byte
+	_, err := rand.Read(b[:])
+	if err != nil {
+		// Fallback to time-based seed if crypto/rand fails
+		return time.Now().UnixNano()
+	}
+	return int64(binary.BigEndian.Uint64(b[:]))
+}
+
 func (g *Generator) generateSample(ctx context.Context, index int) *workerResult {
 	// Build prompt options
 	opts := schema.PromptOptions{
@@ -298,6 +312,17 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 		return &workerResult{err: fmt.Errorf("failed to generate prompt: %w", err)}
 	}
 
+	// Determine seed for this request
+	var requestSeed *int64
+	if g.config.RandomSeed {
+		// Generate a new random seed for each request
+		seed := generateRandomSeed()
+		requestSeed = &seed
+	} else {
+		// Use the fixed seed (may be nil)
+		requestSeed = g.config.Seed
+	}
+
 	// Build request
 	req := provider.GenerationRequest{
 		Messages: []provider.Message{
@@ -307,7 +332,7 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 		Temperature:  g.config.Temperature,
 		MaxTokens:    g.config.MaxTokens,
 		TopP:         g.config.TopP,
-		Seed:         g.config.Seed,
+		Seed:         requestSeed,
 	}
 
 	// Execute with retries

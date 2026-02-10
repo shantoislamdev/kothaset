@@ -130,6 +130,7 @@ providers:
 	fmt.Println("  1. Add your API key to .secrets.yaml or set OPENAI_API_KEY")
 	fmt.Println("  2. Edit kothaset.yaml to define your dataset context")
 	fmt.Println("  3. Generate: kothaset generate -n 10 -i topics.txt -o dataset.jsonl --seed 42")
+	fmt.Println("     (or use --seed random for different random seeds per request)")
 
 	return nil
 }

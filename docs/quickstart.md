@@ -82,6 +82,7 @@ Get-Content my_dataset.jsonl -Head 3
 | Use different model | `kothaset generate -m gpt-5.2 -i topics.txt -o dataset.jsonl` |
 | Add topic diversity | `kothaset generate -i topics.txt -o diverse.jsonl` |
 | Reproducible results | `kothaset generate --seed 42 -i topics.txt -o dataset.jsonl` |
+| Maximum diversity | `kothaset generate --seed random -i topics.txt -o dataset.jsonl` |
 
 ---
 

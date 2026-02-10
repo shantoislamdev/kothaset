@@ -42,8 +42,8 @@ func TestGenerateFlags(t *testing.T) {
 	if genOutput != "out.jsonl" {
 		t.Errorf("Expected output out.jsonl, got %s", genOutput)
 	}
-	if genSeed != 123 {
-		t.Errorf("Expected seed 123, got %d", genSeed)
+	if genSeed != "123" {
+		t.Errorf("Expected seed '123', got %s", genSeed)
 	}
 	if genInputFile != "topics.txt" {
 		t.Errorf("Expected input topics.txt, got %s", genInputFile)

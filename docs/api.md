@@ -47,7 +47,7 @@ kothaset generate [flags]
 | `--max-tokens` | | int | `0` | Max tokens (0 = default/config) |
 | `--system-prompt` | | string | | Custom system prompt |
 | `--workers` | `-w` | int | `4` | Concurrent workers |
-| `--seed` | | int64 | random | Random seed for reproducibility |
+| `--seed` | | string | | Random seed for reproducibility (number or "random") |
 | `--resume` | | string | | Resume from checkpoint |
 | `--dry-run` | | bool | `false` | Validate without generating |
 
@@ -71,6 +71,9 @@ kothaset generate -n 500 -s preference -i pairs.txt -o dpo.jsonl
 
 # With seed for reproducibility
 kothaset generate -n 100 --seed 42 -i topics.txt -o reproducible.jsonl
+
+# With random seed per request (maximizes diversity)
+kothaset generate -n 100 --seed random -i topics.txt -o diverse.jsonl
 
 # Different output formats
 kothaset generate -n 100 -i topics.txt -f parquet -o dataset.parquet

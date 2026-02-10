@@ -26,8 +26,11 @@ The generate command creates samples according to the specified schema and
 writes them to the output file in the chosen format.
 
 Examples:
-  # Generate 100 instruction-response pairs
+  # Generate 100 instruction-response pairs with fixed seed
   kothaset generate -n 100 --seed 42 -o dataset.jsonl
+
+  # Generate with random seed per request (maximizes diversity)
+  kothaset generate -n 100 --seed random -i topics.txt -o dataset.jsonl
 
   # Generate with custom provider and input file
   kothaset generate -n 1000 -p openai -s chat --seed 123 -i topics.txt -o chat_data.jsonl
@@ -45,7 +48,7 @@ var (
 	genFormat       string
 	genCount        int
 	genWorkers      int
-	genSeed         int64
+	genSeed         string
 	genInputFile    string
 	genResume       string
 	genDryRun       bool
@@ -78,7 +81,7 @@ func init() {
 	generateCmd.Flags().IntVarP(&genWorkers, "workers", "w", 4, "number of concurrent workers")
 
 	// Reproducibility
-	generateCmd.Flags().Int64Var(&genSeed, "seed", 0, "random seed for reproducibility")
+	generateCmd.Flags().StringVar(&genSeed, "seed", "", "random seed for reproducibility (use 'random' for client-side random seeds per request)")
 	// generateCmd.MarkFlagRequired("seed") // Optional now
 	generateCmd.Flags().StringVarP(&genInputFile, "input", "i", "", "path to input file for topics/seeds (required)")
 	generateCmd.MarkFlagRequired("input")
@@ -193,16 +196,21 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	}
 
 	// Handle seed (optional)
+	// Supports: empty (no seed), "random" (different random per request), or a specific number (fixed seed)
 	var seedPtr *int64
-	if cmd.Flags().Changed("seed") {
-		seedPtr = &genSeed
-	} else if genSeed != 0 {
-		// Case where seed came from config file or env var (though cobra flags take precedence)
-		// Assuming genSeed default is 0. If user explicitly provided 0, we treat as seed 0.
-		// Cobra default is 0. If not changed, genSeed is 0.
-		// If we want to support seed=0 being valid, we rely on .Changed().
-		// If config loaded seed, we might need other logic?
-		// But this tool uses flags primarily.
+	var randomSeed bool
+	if cmd.Flags().Changed("seed") || genSeed != "" {
+		if genSeed == "random" {
+			randomSeed = true
+		} else if genSeed != "" {
+			// Parse as int64 - fixed seed to be sent to AI
+			var parsedSeed int64
+			_, err := fmt.Sscanf(genSeed, "%d", &parsedSeed)
+			if err != nil {
+				return fmt.Errorf("invalid seed value %q: must be 'random' or a number", genSeed)
+			}
+			seedPtr = &parsedSeed
+		}
 	}
 
 	// Build generator config
@@ -216,7 +224,8 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		SystemPrompt:    genSystemPrompt,
 		Temperature:     genTemp,
 		MaxTokens:       genMaxTokens,
-		Seed:            seedPtr,
+		Seed:            seedPtr,    // Fixed seed sent to AI (nil if not specified)
+		RandomSeed:      randomSeed, // When true, generates new random seed per request
 		Workers:         genWorkers,
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,

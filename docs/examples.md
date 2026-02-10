@@ -85,6 +85,16 @@ kothaset generate -n 1000 --seed 42 -i topics.txt -o reproducible.jsonl
 
 > **Note:** `--seed` is optional. Use it when you need deterministic, reproducible output.
 
+## Maximum Diversity with Random Seeds
+
+To maximize diversity, use `--seed random` to generate a unique random seed for each AI request:
+
+```bash
+kothaset generate -n 1000 --seed random -i topics.txt -o diverse.jsonl
+```
+
+> **Tip:** Use `--seed random` when you want maximum variety in generated samples. Use `--seed 42` (or any fixed number) when you need reproducible results.
+
 ---
 
 ## Multi-Provider Setup
