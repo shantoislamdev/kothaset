@@ -85,8 +85,11 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 	params := openai.ChatCompletionNewParams{
 		Model:       openai.ChatModel(p.model),
 		Messages:    messages,
-		MaxTokens:   openai.Int(int64(req.MaxTokens)),
 		Temperature: openai.Float(req.Temperature),
+	}
+
+	if req.MaxTokens > 0 {
+		params.MaxTokens = openai.Int(int64(req.MaxTokens))
 	}
 
 	// Optional parameters

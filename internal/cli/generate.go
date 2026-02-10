@@ -67,11 +67,11 @@ func init() {
 	generateCmd.Flags().StringVarP(&genModel, "model", "m", "", "model to use (default: from config)")
 
 	// Output format
-	generateCmd.Flags().StringVarP(&genFormat, "format", "f", "jsonl", "output format (jsonl, parquet, hf)")
+	generateCmd.Flags().StringVarP(&genFormat, "format", "f", "", "output format (jsonl, parquet, hf)")
 
 	// Generation parameters
 	generateCmd.Flags().Float64Var(&genTemp, "temperature", 0.7, "sampling temperature")
-	generateCmd.Flags().IntVar(&genMaxTokens, "max-tokens", 2048, "maximum tokens per response")
+	generateCmd.Flags().IntVar(&genMaxTokens, "max-tokens", 0, "maximum tokens per response (0 = default)")
 	generateCmd.Flags().StringVar(&genSystemPrompt, "system-prompt", "", "custom system prompt")
 
 	// Concurrency and workers
@@ -112,6 +112,23 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	schemaName := genSchema
 	if schemaName == "" {
 		schemaName = cfg.Global.Schema
+	}
+
+	// Resolve output format
+	if genFormat == "" {
+		genFormat = cfg.Global.OutputFormat
+		if genFormat == "" {
+			genFormat = "jsonl" // Hard default
+		}
+	}
+
+	// Resolve max tokens
+	if genMaxTokens == 0 {
+		// Use global config if set
+		if cfg.Global.MaxTokens > 0 {
+			genMaxTokens = cfg.Global.MaxTokens
+		}
+		// Else remains 0 (unlimited/model default)
 	}
 
 	// Get model from flag or config

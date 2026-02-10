@@ -62,11 +62,11 @@ type Config struct {
 // DefaultConfig returns sensible defaults
 func DefaultConfig() Config {
 	return Config{
-		NumSamples:      100,
-		Schema:          "instruction",
-		OutputFormat:    "jsonl",
-		Temperature:     0.7,
-		MaxTokens:       2048,
+		NumSamples:   100,
+		Schema:       "instruction",
+		OutputFormat: "jsonl",
+		Temperature:  0.7,
+		// MaxTokens:       2048, // Removed default
 		Workers:         4,
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,

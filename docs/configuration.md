@@ -23,9 +23,11 @@ global:
   schema: instruction   # Default schema (instruction, chat, preference, classification)
   model: gpt-5.2        # Model to use (moved from provider config)
   concurrency: 4        # Number of concurrent workers
-  output_dir: ./output  # Default output directory
+  output_dir: ./output  # Default output directory (optional)
   cache_dir: .kothaset  # Cache directory (optional)
-  # timeout: 2m         # Request timeout (optional)
+  timeout: 2m         # Request timeout (optional)
+  max_tokens: 2048    # Max tokens per response (optional)
+  output_format: jsonl # Default output format (optional)
 
 # Context: Background info or persona injected into every prompt
 context: |

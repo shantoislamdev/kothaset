@@ -48,6 +48,12 @@ type GlobalConfig struct {
 
 	// Timeout is the default request timeout
 	Timeout Duration `yaml:"timeout" json:"timeout"`
+
+	// MaxTokens is the default max tokens per response (0 = unlimited/model default)
+	MaxTokens int `yaml:"max_tokens,omitempty" json:"max_tokens,omitempty"`
+
+	// OutputFormat is the default output format (jsonl, parquet, hf)
+	OutputFormat string `yaml:"output_format,omitempty" json:"output_format,omitempty"`
 }
 
 // SecretsConfig is the root structure for .secrets.yaml (private config)
@@ -175,13 +181,14 @@ func DefaultConfig() *Config {
 	return &Config{
 		Version: "1.0",
 		Global: GlobalConfig{
-			Provider:    "openai",
-			Schema:      "instruction",
-			Model:       "gpt-5.2",
-			OutputDir:   ".",
-			CacheDir:    ".kothaset",
-			Concurrency: 4,
-			Timeout:     Duration{time.Minute * 2},
+			Provider:     "openai",
+			Schema:       "instruction",
+			Model:        "gpt-5.2",
+			OutputDir:    ".",
+			CacheDir:     ".kothaset",
+			Concurrency:  4,
+			Timeout:      Duration{time.Minute * 2},
+			OutputFormat: "jsonl",
 		},
 		Logging: LoggingConfig{
 			Level:  "info",

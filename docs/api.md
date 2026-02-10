@@ -44,7 +44,7 @@ kothaset generate [flags]
 | `--model` | `-m` | string | from config | Model to use |
 | `--format` | `-f` | string | `jsonl` | Output format |
 | `--temperature` | | float | `0.7` | Sampling temperature |
-| `--max-tokens` | | int | `2048` | Maximum tokens per response |
+| `--max-tokens` | | int | `0` | Max tokens (0 = default/config) |
 | `--system-prompt` | | string | | Custom system prompt |
 | `--workers` | `-w` | int | `4` | Concurrent workers |
 | `--seed` | | int64 | random | Random seed for reproducibility |
@@ -55,7 +55,7 @@ kothaset generate [flags]
 
 ```bash
 # Basic generation with input file
-kothaset generate -n 100 -s instruction --seed 42 -i topics.txt -o dataset.jsonl
+kothaset generate -n 100 -s instruction -i topics.txt -o dataset.jsonl
 
 # Single topic inline
 kothaset generate -n 10 -s instruction -i "machine learning" -o ml_data.jsonl
