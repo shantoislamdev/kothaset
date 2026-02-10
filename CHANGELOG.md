@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## [1.0.3] - 2026-02-10
+
+### Added
+- **Init Gitignore**: `kothaset init` now intelligently handles `.gitignore` - creates new file if missing, appends missing entries if exists, or does nothing if already configured.
+
+### Changed
+- **Init Output**: Removed `--seed 42` from the example command in init next steps.
+
 ## [1.0.2] - 2026-02-10
 
 ### Added
