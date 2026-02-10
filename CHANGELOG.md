@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## [1.1.0] - 2026-02-10
+
+### Added
+- **Progress Bar**: Added visual progress bar during dataset generation for better user feedback.
+- **Streaming Output**: Samples are now written immediately to output files, preventing memory leaks on large datasets.
+
+### Changed
+- **Checkpoint Location**: Moved checkpoint files from output directory to `.kothaset` cache directory for cleaner workspace.
+- **Init Behavior**: Removed automatic output directory creation during init; directories are created on-demand during generation.
+- **Memory Management**: Removed in-memory samples storage, significantly reducing memory footprint for large datasets.
+
+### Fixed
+- **Checkpoint Resume**: Fixed issue where existing data was not properly preserved when resuming from a checkpoint.
+- **HuggingFace Output**: Fixed writer interface compatibility for HuggingFace dataset format.
+- **Parquet Output**: Fixed writer interface compatibility for Parquet format.
+
 ## [1.0.3] - 2026-02-10
 
 ### Added
