@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 )
@@ -108,18 +109,10 @@ providers:
 		return fmt.Errorf("failed to create output directory: %w", err)
 	}
 
-	// Update .gitignore if exists
-	gitignorePath := ".gitignore"
-	gitignoreEntries := "\n# KothaSet\n.secrets.yaml\n.kothaset/\n"
-	if data, err := os.ReadFile(gitignorePath); err == nil {
-		if !contains(string(data), ".secrets.yaml") {
-			f, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_WRONLY, 0644)
-			if err == nil {
-				f.WriteString(gitignoreEntries)
-				f.Close()
-				fmt.Println("✓ Updated .gitignore")
-			}
-		}
+	// Handle .gitignore
+	if err := handleGitignore(); err != nil {
+		// Non-fatal error, just log it
+		fmt.Printf("Warning: could not update .gitignore: %v\n", err)
 	}
 
 	absPath, _ := filepath.Abs(publicPath)
@@ -129,10 +122,95 @@ providers:
 	fmt.Println("\nNext steps:")
 	fmt.Println("  1. Add your API key to .secrets.yaml or set OPENAI_API_KEY")
 	fmt.Println("  2. Edit kothaset.yaml to define your dataset context")
-	fmt.Println("  3. Generate: kothaset generate -n 10 -i topics.txt -o dataset.jsonl --seed 42")
+	fmt.Println("  3. Generate: kothaset generate -n 10 -i topics.txt -o dataset.jsonl")
 	fmt.Println("     (or use --seed random for different random seeds per request)")
 
 	return nil
+}
+
+// handleGitignore checks for existing .gitignore and manages KothaSet entries
+func handleGitignore() error {
+	gitignorePath := ".gitignore"
+	entries := []string{".secrets.yaml", ".kothaset/"}
+
+	data, err := os.ReadFile(gitignorePath)
+	if err != nil {
+		// File doesn't exist, create new .gitignore
+		if os.IsNotExist(err) {
+			content := "# KothaSet\n"
+			for _, entry := range entries {
+				content += entry + "\n"
+			}
+			if err := os.WriteFile(gitignorePath, []byte(content), 0644); err != nil {
+				return fmt.Errorf("failed to create .gitignore: %w", err)
+			}
+			fmt.Println("✓ Created .gitignore")
+			return nil
+		}
+		return fmt.Errorf("failed to read .gitignore: %w", err)
+	}
+
+	// File exists, check for missing entries
+	content := string(data)
+	missingEntries := []string{}
+
+	for _, entry := range entries {
+		if !gitignoreContains(content, entry) {
+			missingEntries = append(missingEntries, entry)
+		}
+	}
+
+	// All entries already present, do nothing
+	if len(missingEntries) == 0 {
+		return nil
+	}
+
+	// Append missing entries
+	f, err := os.OpenFile(gitignorePath, os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return fmt.Errorf("failed to open .gitignore for appending: %w", err)
+	}
+	defer f.Close()
+
+	// Add newline if file doesn't end with one
+	if len(content) > 0 && !strings.HasSuffix(content, "\n") {
+		f.WriteString("\n")
+	}
+
+	// Check if we need to add a header
+	if !strings.Contains(content, "# KothaSet") {
+		f.WriteString("\n# KothaSet\n")
+	}
+
+	for _, entry := range missingEntries {
+		f.WriteString(entry + "\n")
+	}
+
+	fmt.Println("✓ Updated .gitignore")
+	return nil
+}
+
+// gitignoreChecks if content contains the given entry, handling variations
+func gitignoreContains(content, entry string) bool {
+	lines := strings.Split(content, "\n")
+	for _, line := range lines {
+		trimmed := strings.TrimSpace(line)
+		// Skip comments and empty lines
+		if trimmed == "" || strings.HasPrefix(trimmed, "#") {
+			continue
+		}
+		// Check for exact match or pattern match
+		if trimmed == entry {
+			return true
+		}
+		// Handle variations: .kothaset/ vs .kothaset vs .kothaset/*
+		entryTrimmed := strings.TrimSuffix(entry, "/")
+		trimmedNoSuffix := strings.TrimSuffix(trimmed, "/")
+		if trimmedNoSuffix == entryTrimmed {
+			return true
+		}
+	}
+	return false
 }
 
 func contains(s, substr string) bool {
