@@ -80,7 +80,7 @@ The `chat` schema generates multi-turn conversations in ShareGPT format, ideal f
 ### Usage
 
 ```bash
-kothaset generate -n 500 -s chat --seed 42 -o conversations.jsonl
+kothaset generate -n 500 -s chat --seed 42 -i conversations.txt -o conversations.jsonl
 ```
 
 ---
@@ -110,7 +110,7 @@ The `preference` schema generates prompt/chosen/rejected triplets for Direct Pre
 ### Usage
 
 ```bash
-kothaset generate -n 500 -s preference --seed 42 -o dpo_data.jsonl
+kothaset generate -n 500 -s preference --seed 42 -i pairs.txt -o dpo_data.jsonl
 ```
 
 ---
@@ -139,7 +139,7 @@ The `classification` schema generates labeled text samples for training classifi
 ### Usage
 
 ```bash
-kothaset generate -n 1000 -s classification --seed 42 -o labels.jsonl
+kothaset generate -n 1000 -s classification --seed 42 -i text_samples.txt -o labels.jsonl
 ```
 
 ---
@@ -211,7 +211,7 @@ Each sample will be generated with a topic from the seed file, ensuring coverage
 One JSON object per line:
 
 ```bash
-kothaset generate -n 100 --seed 42 -f jsonl -o dataset.jsonl
+kothaset generate -n 100 --seed 42 -i topics.txt -f jsonl -o dataset.jsonl
 ```
 
 ### Parquet
@@ -227,7 +227,7 @@ kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
 Directory structure compatible with `datasets` library:
 
 ```bash
-kothaset generate -n 100 --seed 42 -f hf -o ./my_dataset
+kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./my_dataset
 ```
 
 Load in Python:

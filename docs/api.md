@@ -73,7 +73,7 @@ kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
 kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./hf_dataset
 
 # Resume interrupted generation
-kothaset generate --resume dataset.jsonl.checkpoint
+kothaset generate --resume dataset.jsonl.checkpoint -i topics.txt
 
 # Dry run to validate config
 kothaset generate --dry-run -n 100 --seed 42 -i topics.txt
