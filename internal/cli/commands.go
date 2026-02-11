@@ -142,10 +142,6 @@ var validateDatasetCmd = &cobra.Command{
 			rowCount, parseErr = validateJSON(filePath)
 		case "csv":
 			rowCount, parseErr = validateCSV(filePath)
-		case "parquet":
-			// Parquet validation requires external library
-			fmt.Println("  Note: Native Parquet validation not yet implemented")
-			return nil
 		}
 
 		if parseErr != nil {

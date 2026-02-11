@@ -46,10 +46,6 @@ func (m *MockProvider) Generate(ctx context.Context, req provider.GenerationRequ
 	}, nil
 }
 
-func (m *MockProvider) GenerateStream(ctx context.Context, req provider.GenerationRequest) (<-chan provider.StreamChunk, error) {
-	return nil, fmt.Errorf("not implemented")
-}
-
 func (m *MockProvider) Name() string                          { return "mock" }
 func (m *MockProvider) Type() string                          { return "mock" }
 func (m *MockProvider) Model() string                         { return "mock-model" }

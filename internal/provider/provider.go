@@ -11,9 +11,6 @@ type Provider interface {
 	// Generate creates a completion for the given request
 	Generate(ctx context.Context, req GenerationRequest) (*GenerationResponse, error)
 
-	// GenerateStream creates a streaming completion (if supported)
-	GenerateStream(ctx context.Context, req GenerationRequest) (<-chan StreamChunk, error)
-
 	// Metadata
 	Name() string
 	Type() string
@@ -26,6 +23,14 @@ type Provider interface {
 	Validate() error
 	HealthCheck(ctx context.Context) error
 	Close() error
+}
+
+// StreamingProvider is the interface for providers that support streaming
+type StreamingProvider interface {
+	Provider
+
+	// GenerateStream creates a streaming completion
+	GenerateStream(ctx context.Context, req GenerationRequest) (<-chan StreamChunk, error)
 }
 
 // Message represents a chat message
