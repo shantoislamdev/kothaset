@@ -166,7 +166,7 @@ These flags work with all commands:
 KothaSet automatically saves checkpoints during generation:
 
 - Checkpoint location: `.kothaset/<output>.checkpoint`
-- Saved every 50 samples by default
+- Saved every 10 samples by default (configurable via `checkpoint_every` in profile)
 - Resume with `--resume <checkpoint>`
 
 ### Checkpoint Contents

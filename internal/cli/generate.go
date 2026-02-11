@@ -214,6 +214,12 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Determine checkpoint interval (flag > profile > default)
+	checkpointEvery := 10 // default
+	if cfg.Profiles["default"].Generation.CheckpointEvery > 0 {
+		checkpointEvery = cfg.Profiles["default"].Generation.CheckpointEvery
+	}
+
 	// Build generator config
 	genCfg := generator.Config{
 		NumSamples:      genCount,
@@ -230,7 +236,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		Workers:         genWorkers,
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,
-		CheckpointEvery: 50,
+		CheckpointEvery: checkpointEvery,
 		ResumeFrom:      genResume,
 		InputFile:       genInputFile,
 		UserContext:     userContext,

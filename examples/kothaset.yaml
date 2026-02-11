@@ -22,6 +22,13 @@ instructions:
   - Vary the style and complexity of responses
   - Use clear and concise language
 
+# Profiles: Named presets for different generation scenarios
+profiles:
+  default:
+    description: Default generation settings
+    generation:
+      checkpoint_every: 10  # Save checkpoint every N samples (default: 10)
+
 logging:
   level: info
   format: text

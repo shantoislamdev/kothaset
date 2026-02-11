@@ -84,7 +84,7 @@ func DefaultConfig() Config {
 		Workers:         4,
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,
-		CheckpointEvery: 50,
+		CheckpointEvery: 10,
 	}
 }
 
