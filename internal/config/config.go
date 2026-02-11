@@ -21,9 +21,6 @@ type Config struct {
 
 	// Logging configuration
 	Logging LoggingConfig `yaml:"logging,omitempty" json:"logging,omitempty"`
-
-	// Named profiles for quick switching (optional)
-	Profiles map[string]Profile `yaml:"profiles,omitempty" json:"profiles,omitempty"`
 }
 
 // GlobalConfig contains global settings
@@ -54,6 +51,9 @@ type GlobalConfig struct {
 
 	// OutputFormat is the default output format (jsonl, parquet, hf)
 	OutputFormat string `yaml:"output_format,omitempty" json:"output_format,omitempty"`
+
+	// CheckpointEvery is the number of samples between checkpoints (0 = disable)
+	CheckpointEvery int `yaml:"checkpoint_every,omitempty" json:"checkpoint_every,omitempty"`
 }
 
 // SecretsConfig is the root structure for .secrets.yaml (private config)
@@ -98,48 +98,6 @@ type RateLimitConfig struct {
 	TokensPerMinute int `yaml:"tokens_per_minute,omitempty" json:"tokens_per_minute,omitempty"`
 }
 
-// Profile is a named preset for quick configuration
-type Profile struct {
-	// Description of what this profile is for
-	Description string `yaml:"description,omitempty" json:"description,omitempty"`
-
-	// Provider to use
-	Provider string `yaml:"provider,omitempty" json:"provider,omitempty"`
-
-	// Schema to use
-	Schema string `yaml:"schema,omitempty" json:"schema,omitempty"`
-
-	// Generation settings
-	Generation GenerationConfig `yaml:"generation,omitempty" json:"generation,omitempty"`
-}
-
-// GenerationConfig contains settings for dataset generation
-type GenerationConfig struct {
-	// Temperature for sampling
-	Temperature float64 `yaml:"temperature" json:"temperature"`
-
-	// MaxTokens per response
-	MaxTokens int `yaml:"max_tokens" json:"max_tokens"`
-
-	// TopP nucleus sampling parameter
-	TopP float64 `yaml:"top_p,omitempty" json:"top_p,omitempty"`
-
-	// Seed for reproducibility
-	Seed int64 `yaml:"seed" json:"seed"`
-
-	// Workers for concurrent generation
-	Workers int `yaml:"workers" json:"workers"`
-
-	// BatchSize for batch requests (if supported)
-	BatchSize int `yaml:"batch_size,omitempty" json:"batch_size,omitempty"`
-
-	// CheckpointEvery samples to save progress
-	CheckpointEvery int `yaml:"checkpoint_every" json:"checkpoint_every"`
-
-	// SystemPrompt override
-	SystemPrompt string `yaml:"system_prompt,omitempty" json:"system_prompt,omitempty"`
-}
-
 // LoggingConfig contains logging settings
 type LoggingConfig struct {
 	// Level is the log level (debug, info, warn, error)
@@ -181,14 +139,15 @@ func DefaultConfig() *Config {
 	return &Config{
 		Version: "1.0",
 		Global: GlobalConfig{
-			Provider:     "openai",
-			Schema:       "instruction",
-			Model:        "gpt-5.2",
-			OutputDir:    ".",
-			CacheDir:     ".kothaset",
-			Concurrency:  4,
-			Timeout:      Duration{time.Minute * 2},
-			OutputFormat: "jsonl",
+			Provider:        "openai",
+			Schema:          "instruction",
+			Model:           "gpt-5.2",
+			OutputDir:       ".",
+			CacheDir:        ".kothaset",
+			Concurrency:     4,
+			Timeout:         Duration{time.Minute * 2},
+			OutputFormat:    "jsonl",
+			CheckpointEvery: 10,
 		},
 		Logging: LoggingConfig{
 			Level:  "info",

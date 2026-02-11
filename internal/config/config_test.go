@@ -15,6 +15,9 @@ func TestDefaultConfig(t *testing.T) {
 	if cfg.Global.Provider != "openai" {
 		t.Errorf("Expected default provider openai, got %s", cfg.Global.Provider)
 	}
+	if cfg.Global.CheckpointEvery != 10 {
+		t.Errorf("Expected default checkpoint_every 10, got %d", cfg.Global.CheckpointEvery)
+	}
 }
 
 func TestConfig_Validate(t *testing.T) {

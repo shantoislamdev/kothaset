@@ -214,10 +214,10 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		}
 	}
 
-	// Determine checkpoint interval (flag > profile > default)
-	checkpointEvery := 10 // default
-	if cfg.Profiles["default"].Generation.CheckpointEvery > 0 {
-		checkpointEvery = cfg.Profiles["default"].Generation.CheckpointEvery
+	// Determine checkpoint interval (flag > global config > default)
+	checkpointEvery := cfg.Global.CheckpointEvery
+	if checkpointEvery <= 0 {
+		checkpointEvery = 10 // fallback default
 	}
 
 	// Build generator config

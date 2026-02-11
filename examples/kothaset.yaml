@@ -9,7 +9,7 @@ global:
   model: openai/gpt-5-mini
   # output_dir: ./output  # Defaults to current directory
   concurrency: 4
-
+  checkpoint_every: 10  # Save checkpoint every N samples (default: 10)
 
 # Context: Background info or persona injected into every prompt
 context: |
@@ -21,13 +21,6 @@ instructions:
   - Be creative and diverse in topics and approaches
   - Vary the style and complexity of responses
   - Use clear and concise language
-
-# Profiles: Named presets for different generation scenarios
-profiles:
-  default:
-    description: Default generation settings
-    generation:
-      checkpoint_every: 10  # Save checkpoint every N samples (default: 10)
 
 logging:
   level: info

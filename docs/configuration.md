@@ -28,6 +28,7 @@ global:
   timeout: 2m         # Request timeout (optional)
   max_tokens: 2048    # Max tokens per response (optional)
   output_format: jsonl # Default output format (optional)
+  checkpoint_every: 10  # Save checkpoint every N samples (default: 10, 0 to disable)
 
 # Context: Background info or persona injected into every prompt
 context: |
