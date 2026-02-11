@@ -241,6 +241,8 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	for result := range results {
 		if result.err != nil {
 			atomic.AddInt32(&g.failed, 1)
+			// Log the error so failures are not silently swallowed
+			fmt.Fprintf(os.Stderr, "⚠ Sample failed: %v\n", result.err)
 		} else {
 			// Write to output immediately - don't store in memory to prevent memory leaks
 			if err := g.writer.Write(result.sample); err != nil {
