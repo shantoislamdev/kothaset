@@ -56,7 +56,7 @@ func (m *MockProvider) Validate() error                       { return nil }
 func (m *MockProvider) HealthCheck(ctx context.Context) error { return nil }
 func (m *MockProvider) Close() error                          { return nil }
 
-// MockWriter implements output.Writer for testing
+// MockWriter implements output.Writer for testing.
 type MockWriter struct {
 	Samples []*schema.Sample
 	mu      sync.Mutex
