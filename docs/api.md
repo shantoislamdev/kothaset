@@ -248,6 +248,8 @@ kothaset validate dataset output.jsonl
 #   Rows: 50
 ```
 
+> **Parquet note:** `kothaset validate dataset` currently performs full row/structure validation for `jsonl`, `json`, and `csv`. For `.parquet`, KothaSet detects the format but does not yet run deep parquet parsing/row validation.
+
 ---
 
 ## schema

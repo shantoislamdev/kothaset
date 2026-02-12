@@ -44,6 +44,10 @@ kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
 ```
 Checkpoints are stored in `.kothaset/<output>.checkpoint`.
 
+### Can `validate dataset` fully validate Parquet files?
+Not yet. `kothaset validate dataset` performs full row/structure validation for `jsonl`, `json`, and `csv`.
+For `.parquet`, KothaSet currently detects the format but does not run deep parquet parsing/row validation.
+
 ---
 
 ## Output

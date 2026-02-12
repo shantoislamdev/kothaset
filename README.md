@@ -85,6 +85,7 @@ global:
   model: gpt-5.2
   concurrency: 4
   output_dir: ./output
+  checkpoint_every: 10  # Save checkpoint every N samples (default: 10)
 
 # Context: Background info or persona injected into every prompt
 context: |
@@ -165,7 +166,7 @@ kothaset generate -n 100 --seed 42 -i topics.txt -p local -o dataset.jsonl
 kothaset generate -n 1000 --seed 42 -i topics.txt -o diverse.jsonl
 
 # Resume interrupted generation
-kothaset generate --resume dataset.jsonl.checkpoint
+kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
 
 # Dry run (validate config)
 kothaset generate --dry-run -n 100 --seed 42 -i topics.txt
