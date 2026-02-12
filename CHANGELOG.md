@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## [1.1.1] - 2026-02-12
+
 ### Changed
 - **Checkpoint Interval**: Default checkpoint save interval changed from 50 to 10 samples and is now configurable via `global.checkpoint_every` in `kothaset.yaml`.
 - **Parquet Output**: Removed placeholder fallback behavior; parquet output is now native parquet-only.
