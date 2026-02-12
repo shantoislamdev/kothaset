@@ -1,7 +1,6 @@
 package output
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -20,7 +19,6 @@ type ParquetWriter struct {
 	samples   []*schema.Sample
 	batchSize int
 	mu        sync.Mutex
-	useNative bool
 }
 
 // NewParquetWriter creates a new Parquet writer
@@ -29,7 +27,6 @@ func NewParquetWriter(sch schema.Schema) *ParquetWriter {
 		schema:    sch,
 		samples:   make([]*schema.Sample, 0, 1000),
 		batchSize: 1000,
-		useNative: true, // Enable native Parquet by default
 	}
 }
 
@@ -82,23 +79,12 @@ func (w *ParquetWriter) Close() error {
 		return nil
 	}
 
-	// Use native Parquet if enabled
-	if w.useNative {
-		return w.writeParquetNative()
-	}
-
-	// Fallback to JSON placeholder
-	return w.writeJSONPlaceholder()
+	return w.writeParquetNative()
 }
 
 // SetBatchSize sets the batch size for writes
 func (w *ParquetWriter) SetBatchSize(size int) {
 	w.batchSize = size
-}
-
-// SetUseNative controls whether to use native Parquet or JSON fallback
-func (w *ParquetWriter) SetUseNative(native bool) {
-	w.useNative = native
 }
 
 // ParquetRecord is a generic struct for Parquet writing
@@ -148,34 +134,4 @@ func (w *ParquetWriter) writeParquetNative() error {
 	}
 
 	return nil
-}
-
-// writeJSONPlaceholder writes JSON-based placeholder format
-func (w *ParquetWriter) writeJSONPlaceholder() error {
-	file, err := os.Create(w.path)
-	if err != nil {
-		return err
-	}
-	defer file.Close()
-
-	// Create columnar structure
-	columns := make(map[string][]any)
-	for _, sample := range w.samples {
-		for key, value := range sample.Fields {
-			columns[key] = append(columns[key], value)
-		}
-	}
-
-	// Write metadata
-	metadata := map[string]any{
-		"format":   "parquet-placeholder",
-		"schema":   w.schema.Name(),
-		"num_rows": len(w.samples),
-		"columns":  columns,
-		"_note":    "Use SetUseNative(true) for native Parquet support",
-	}
-
-	encoder := json.NewEncoder(file)
-	encoder.SetIndent("", "  ")
-	return encoder.Encode(metadata)
 }

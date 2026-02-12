@@ -54,42 +54,6 @@ func TestParquetWriter_Native(t *testing.T) {
 	}
 }
 
-func TestParquetWriter_Fallback(t *testing.T) {
-	tmpDir := t.TempDir()
-	outPath := filepath.Join(tmpDir, "test_fallback.parquet")
-
-	s := schema.NewInstructionSchema()
-	w := NewParquetWriter(s)
-	w.SetUseNative(false) // Use JSON fallback
-
-	if err := w.Open(outPath); err != nil {
-		t.Fatalf("Open failed: %v", err)
-	}
-
-	sample := &schema.Sample{
-		ID: "test-1",
-		Fields: map[string]any{
-			"instruction": "Test instruction",
-		},
-	}
-	w.Write(sample)
-
-	if err := w.Close(); err != nil {
-		t.Fatalf("Close failed: %v", err)
-	}
-
-	// Verify file exists
-	content, err := os.ReadFile(outPath)
-	if err != nil {
-		t.Fatalf("ReadFile failed: %v", err)
-	}
-
-	// Should contain JSON placeholder marker
-	if len(content) == 0 {
-		t.Error("Expected non-empty file")
-	}
-}
-
 func TestParquetWriter_EmptySamples(t *testing.T) {
 	tmpDir := t.TempDir()
 	outPath := filepath.Join(tmpDir, "empty.parquet")

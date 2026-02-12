@@ -148,7 +148,7 @@ kothaset generate -n 500 -s preference --seed 456 -i pairs.txt -o dpo_data.jsonl
 # JSONL (default)
 kothaset generate -n 100 --seed 42 -i topics.txt -f jsonl -o dataset.jsonl
 
-# Parquet
+# Parquet (native binary parquet output)
 kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
 
 # HuggingFace datasets format
