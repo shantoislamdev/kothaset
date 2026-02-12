@@ -3,6 +3,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -12,10 +13,12 @@ func TestResolveAPIKey(t *testing.T) {
 	defer os.Unsetenv("TEST_API_KEY")
 
 	tests := []struct {
-		name    string
-		apiKey  string
-		want    string
-		wantErr bool
+		name       string
+		apiKey     string
+		provType   string
+		want       string
+		wantErr    bool
+		errContain string
 	}{
 		{
 			name:    "raw key",
@@ -30,22 +33,70 @@ func TestResolveAPIKey(t *testing.T) {
 			wantErr: false,
 		},
 		{
-			name:    "missing env var",
-			apiKey:  "env.MISSING_KEY",
-			want:    "",
-			wantErr: false, // resolveAPIKey returns empty string on missing env var (for runtime resolution) or error depending on implementation?
-			// Wait, looking at secrets.go:58, it returns error if env var not set for "env." prefix
+			name:       "missing env var",
+			apiKey:     "env.MISSING_KEY",
+			want:       "",
+			wantErr:    true,
+			errContain: "environment variable not set",
+		},
+		{
+			name:    "legacy secret ref env",
+			apiKey:  "${env:TEST_API_KEY}",
+			want:    "secret-value",
+			wantErr: false,
+		},
+		{
+			name:       "legacy secret ref missing env",
+			apiKey:     "${env:MISSING_KEY}",
+			want:       "",
+			wantErr:    true,
+			errContain: "environment variable not set",
+		},
+		{
+			name:       "invalid secret ref format",
+			apiKey:     "${invalid}",
+			want:       "",
+			wantErr:    true,
+			errContain: "invalid secret reference format",
+		},
+		{
+			name:     "empty api key uses default env var",
+			apiKey:   "",
+			provType: "openai",
+			want:     "",
+			wantErr:  true, // OPENAI_API_KEY not set in test
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Note: validation logic in resolveAPIKey might differ slightly based on context
-			// We are testing resolveAPIKey directly via secrets.go internal logic if verified
-			// But resolveAPIKey is unexported. Wait, it IS unexported.
-			// I need to test via LoadSecretsConfig or resolveSecrets if possible,
-			// or export it for testing, or use reflection/linkname (bad practice).
-			// Actually I can test `LoadSecretsConfig` which calls it.
+			cfg := &ProviderConfig{
+				Name:   "test-provider",
+				Type:   tt.provType,
+				APIKey: tt.apiKey,
+			}
+
+			got, err := resolveAPIKey(cfg)
+
+			if tt.wantErr {
+				if err == nil {
+					t.Errorf("resolveAPIKey() expected error but got nil")
+					return
+				}
+				if tt.errContain != "" && !strings.Contains(err.Error(), tt.errContain) {
+					t.Errorf("resolveAPIKey() error = %v, want error containing %q", err, tt.errContain)
+				}
+				return
+			}
+
+			if err != nil {
+				t.Errorf("resolveAPIKey() unexpected error = %v", err)
+				return
+			}
+
+			if got != tt.want {
+				t.Errorf("resolveAPIKey() = %v, want %v", got, tt.want)
+			}
 		})
 	}
 }

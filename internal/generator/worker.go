@@ -1,11 +1,8 @@
 package generator
 
-import "sync"
-
 // WorkerPool manages concurrent workers using a semaphore pattern
 type WorkerPool struct {
 	sem chan struct{}
-	wg  sync.WaitGroup
 }
 
 // NewWorkerPool creates a new worker pool with the given concurrency limit
@@ -36,9 +33,4 @@ func (p *WorkerPool) Size() int {
 // Active returns the number of active workers
 func (p *WorkerPool) Active() int {
 	return len(p.sem)
-}
-
-// Wait waits for all workers to complete
-func (p *WorkerPool) Wait() {
-	p.wg.Wait()
 }
