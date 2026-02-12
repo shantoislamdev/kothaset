@@ -15,7 +15,6 @@ type Provider interface {
 	Name() string
 	Type() string
 	Model() string
-	SupportedModels() []string
 	SupportsStreaming() bool
 	SupportsBatching() bool
 

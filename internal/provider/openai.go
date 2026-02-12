@@ -224,16 +224,6 @@ func (p *OpenAIProvider) Model() string {
 	return p.model
 }
 
-// SupportedModels implements Provider.SupportedModels
-func (p *OpenAIProvider) SupportedModels() []string {
-	return []string{
-		"gpt-5.2", "gemini-3", "deepseek-chat-3.2",
-		"gpt-4", "gpt-4-turbo", "gpt-4o", "gpt-4o-mini",
-		"gpt-3.5-turbo", "gpt-3.5-turbo-16k",
-		// Compatible APIs may support other models
-	}
-}
-
 // SupportsStreaming implements Provider.SupportsStreaming
 func (p *OpenAIProvider) SupportsStreaming() bool {
 	return true

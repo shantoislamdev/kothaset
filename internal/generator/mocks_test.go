@@ -49,7 +49,6 @@ func (m *MockProvider) Generate(ctx context.Context, req provider.GenerationRequ
 func (m *MockProvider) Name() string                          { return "mock" }
 func (m *MockProvider) Type() string                          { return "mock" }
 func (m *MockProvider) Model() string                         { return "mock-model" }
-func (m *MockProvider) SupportedModels() []string             { return []string{"mock-model"} }
 func (m *MockProvider) SupportsStreaming() bool               { return false }
 func (m *MockProvider) SupportsBatching() bool                { return false }
 func (m *MockProvider) Validate() error                       { return nil }
