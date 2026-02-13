@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -218,4 +219,30 @@ func NewSchemaError(schema, field, message string) *SchemaError {
 		Field:   field,
 		Message: message,
 	}
+}
+
+// StripCodeBlock removes markdown code fences from LLM responses.
+// Handles ```json\n...\n```, ```\n...\n```, and nested ``` within content.
+func StripCodeBlock(raw string) string {
+	raw = strings.TrimSpace(raw)
+
+	// Handle ```json or ``` prefix
+	if strings.HasPrefix(raw, "```") {
+		// Find the end of the opening fence line
+		if idx := strings.Index(raw, "\n"); idx != -1 {
+			raw = raw[idx+1:]
+		} else {
+			raw = strings.TrimPrefix(raw, "```json")
+			raw = strings.TrimPrefix(raw, "```")
+		}
+
+		// Remove only the LAST closing fence
+		if idx := strings.LastIndex(raw, "```"); idx != -1 {
+			raw = raw[:idx]
+		}
+
+		raw = strings.TrimSpace(raw)
+	}
+
+	return raw
 }

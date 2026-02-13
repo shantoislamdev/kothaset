@@ -33,6 +33,7 @@ func TestConfig_Validate(t *testing.T) {
 				Global: GlobalConfig{
 					Provider: "openai",
 					Schema:   "instruction",
+					Model:    "gpt-5.2",
 				},
 			},
 			wantErr: false,

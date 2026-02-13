@@ -100,6 +100,20 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("input file is required (use -i or --input)")
 	}
 
+	// Validate generation parameters
+	if genCount <= 0 {
+		return fmt.Errorf("--count must be >= 1, got %d", genCount)
+	}
+	if genTemp < 0 || genTemp > 2.0 {
+		return fmt.Errorf("--temperature must be between 0 and 2.0, got %.2f", genTemp)
+	}
+	if genMaxTokens < 0 {
+		return fmt.Errorf("--max-tokens must be >= 0, got %d", genMaxTokens)
+	}
+	if genWorkers <= 0 {
+		return fmt.Errorf("--workers must be >= 1, got %d", genWorkers)
+	}
+
 	// Get provider name from flag or config
 	providerName := genProvider
 	if providerName == "" {

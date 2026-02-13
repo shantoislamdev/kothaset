@@ -104,18 +104,7 @@ Requirements:
 }
 
 func (s *ChatSchema) ParseResponse(raw string) (*Sample, error) {
-	raw = strings.TrimSpace(raw)
-
-	// Clean code blocks
-	if strings.HasPrefix(raw, "```json") {
-		raw = strings.TrimPrefix(raw, "```json")
-		raw = strings.TrimSuffix(raw, "```")
-		raw = strings.TrimSpace(raw)
-	} else if strings.HasPrefix(raw, "```") {
-		raw = strings.TrimPrefix(raw, "```")
-		raw = strings.TrimSuffix(raw, "```")
-		raw = strings.TrimSpace(raw)
-	}
+	raw = StripCodeBlock(raw)
 
 	var data struct {
 		System        string        `json:"system"`

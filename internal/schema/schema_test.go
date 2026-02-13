@@ -98,3 +98,22 @@ func TestSampleMetadata(t *testing.T) {
 		t.Errorf("Metadata not set correctly")
 	}
 }
+
+func TestStripCodeBlock_Nested(t *testing.T) {
+	raw := "```json\n{\n  \"text\": \"example with nested fence ``` inside\",\n  \"ok\": true\n}\n```"
+
+	got := StripCodeBlock(raw)
+
+	if got == raw {
+		t.Fatalf("expected code fences to be stripped")
+	}
+	if got == "" {
+		t.Fatalf("expected non-empty stripped content")
+	}
+	if got[0] != '{' {
+		t.Fatalf("expected JSON object start, got: %q", got)
+	}
+	if got[len(got)-1] != '}' {
+		t.Fatalf("expected JSON object end, got: %q", got)
+	}
+}

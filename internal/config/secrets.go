@@ -6,24 +6,6 @@ import (
 	"strings"
 )
 
-// SecretType defines how a secret is stored/retrieved
-type SecretType string
-
-const (
-	// SecretTypeEnv retrieves secret from environment variable
-	SecretTypeEnv SecretType = "env"
-	// SecretTypeFile retrieves secret from a file
-	SecretTypeFile SecretType = "file"
-	// SecretTypePlain is a plain text secret (not recommended)
-	SecretTypePlain SecretType = "plain"
-)
-
-// SecretRef represents a reference to a secret value
-type SecretRef struct {
-	Type  SecretType `yaml:"$type,omitempty" json:"$type,omitempty"`
-	Value string     `yaml:"$value,omitempty" json:"$value,omitempty"`
-}
-
 // resolveSecrets resolves all secret references in the secrets configuration
 func resolveSecrets(cfg *SecretsConfig) error {
 	for i := range cfg.Providers {
@@ -34,6 +16,7 @@ func resolveSecrets(cfg *SecretsConfig) error {
 		if err != nil {
 			// Don't fail on missing API keys during config loading
 			// They will be validated when the provider is used
+			fmt.Fprintf(os.Stderr, "⚠ Provider '%s': %v (will validate later)\n", p.Name, err)
 			continue
 		}
 		p.APIKey = apiKey
@@ -102,25 +85,25 @@ func resolveSecretRef(ref string) (string, error) {
 		return "", fmt.Errorf("invalid secret reference format: %s", ref)
 	}
 
-	secretType := SecretType(parts[0])
+	secretType := parts[0]
 	value := parts[1]
 
 	switch secretType {
-	case SecretTypeEnv:
+	case "env":
 		envValue := os.Getenv(value)
 		if envValue == "" {
 			return "", fmt.Errorf("environment variable not set: %s", value)
 		}
 		return envValue, nil
 
-	case SecretTypeFile:
+	case "file":
 		data, err := os.ReadFile(value)
 		if err != nil {
 			return "", fmt.Errorf("failed to read secret file: %w", err)
 		}
 		return strings.TrimSpace(string(data)), nil
 
-	case SecretTypePlain:
+	case "plain":
 		return value, nil
 
 	default:

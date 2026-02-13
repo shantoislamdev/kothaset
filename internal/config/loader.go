@@ -129,25 +129,11 @@ func LoadSecretsConfig(secretsPath string) (*SecretsConfig, error) {
 	}
 
 	// Resolve any secret references (env vars)
-	if err := resolveProviderSecrets(secrets); err != nil {
+	if err := resolveSecrets(secrets); err != nil {
 		return nil, fmt.Errorf("failed to resolve secrets: %w", err)
 	}
 
 	return secrets, nil
-}
-
-// resolveProviderSecrets resolves environment variable references in provider configs
-func resolveProviderSecrets(secrets *SecretsConfig) error {
-	for i := range secrets.Providers {
-		p := &secrets.Providers[i]
-
-		// Handle env.VAR_NAME syntax in api_key field
-		if strings.HasPrefix(p.APIKey, "env.") {
-			envVar := strings.TrimPrefix(p.APIKey, "env.")
-			p.APIKey = os.Getenv(envVar)
-		}
-	}
-	return nil
 }
 
 // GetProvider returns the provider configuration by name
@@ -172,6 +158,21 @@ func (c *Config) Validate() error {
 
 	if c.Global.Schema == "" {
 		return fmt.Errorf("global.schema is required")
+	}
+
+	if c.Global.Model == "" {
+		return fmt.Errorf("global.model is required")
+	}
+
+	if c.Global.Concurrency < 0 {
+		return fmt.Errorf("global.concurrency must be >= 0")
+	}
+
+	if c.Global.OutputFormat != "" {
+		supported := map[string]bool{"jsonl": true}
+		if !supported[c.Global.OutputFormat] {
+			return fmt.Errorf("unsupported output_format: %s (supported: jsonl)", c.Global.OutputFormat)
+		}
 	}
 
 	return nil

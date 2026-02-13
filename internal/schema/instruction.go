@@ -121,19 +121,7 @@ Requirements:
 }
 
 func (s *InstructionSchema) ParseResponse(raw string) (*Sample, error) {
-	// Clean up the response
-	raw = strings.TrimSpace(raw)
-
-	// Try to extract JSON if wrapped in code blocks
-	if strings.HasPrefix(raw, "```json") {
-		raw = strings.TrimPrefix(raw, "```json")
-		raw = strings.TrimSuffix(raw, "```")
-		raw = strings.TrimSpace(raw)
-	} else if strings.HasPrefix(raw, "```") {
-		raw = strings.TrimPrefix(raw, "```")
-		raw = strings.TrimSuffix(raw, "```")
-		raw = strings.TrimSpace(raw)
-	}
+	raw = StripCodeBlock(raw)
 
 	// Parse JSON
 	var data struct {

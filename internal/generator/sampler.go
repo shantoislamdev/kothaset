@@ -32,10 +32,11 @@ func NewSampler(input string) (Sampler, error) {
 
 	// If error is other than NotExist, return it (e.g. permission error)
 	if err != nil && !os.IsNotExist(err) {
-		// On Windows, checking for invalid chars might return other errors.
-		// We'll treat mostly everything as inline if it fails to be a file.
-		// But let's be safe: if it looks like a path but fails, maybe warn?
-		// For now, simple fallback:
+		// If it looks like a file path, treat the error as real.
+		if strings.ContainsAny(input, `/\`) || strings.Contains(input, ".") {
+			return nil, fmt.Errorf("cannot access input file '%s': %w", input, err)
+		}
+		// Otherwise, fall through to treat as inline topic.
 	}
 
 	// Treat as inline string (single topic)
@@ -66,6 +67,7 @@ func NewFileSampler(path string) (*FileSampler, error) {
 
 	var topics []string
 	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 64*1024), 1024*1024) // up to 1MB per line
 	for scanner.Scan() {
 		line := strings.TrimSpace(scanner.Text())
 		if line != "" && !strings.HasPrefix(line, "#") {
@@ -103,7 +105,9 @@ func (s *FileSampler) Sample(ctx context.Context, index int) (string, error) {
 
 // Topics returns all loaded topics
 func (s *FileSampler) Topics() []string {
-	return s.topics
+	out := make([]string, len(s.topics))
+	copy(out, s.topics)
+	return out
 }
 
 // Count returns the number of topics

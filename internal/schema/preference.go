@@ -98,17 +98,7 @@ The difference between chosen and rejected should represent clear quality distin
 }
 
 func (s *PreferenceSchema) ParseResponse(raw string) (*Sample, error) {
-	raw = strings.TrimSpace(raw)
-
-	if strings.HasPrefix(raw, "```json") {
-		raw = strings.TrimPrefix(raw, "```json")
-		raw = strings.TrimSuffix(raw, "```")
-		raw = strings.TrimSpace(raw)
-	} else if strings.HasPrefix(raw, "```") {
-		raw = strings.TrimPrefix(raw, "```")
-		raw = strings.TrimSuffix(raw, "```")
-		raw = strings.TrimSpace(raw)
-	}
+	raw = StripCodeBlock(raw)
 
 	var data struct {
 		Prompt   string `json:"prompt"`

@@ -247,10 +247,12 @@ func (p *OpenAIProvider) Validate() error {
 
 // HealthCheck implements Provider.HealthCheck
 func (p *OpenAIProvider) HealthCheck(ctx context.Context) error {
-	// Make a minimal request to verify connectivity
-	_, err := p.client.Models.List(ctx)
+	_, err := p.Generate(ctx, GenerationRequest{
+		Messages:  []Message{{Role: "user", Content: "hi"}},
+		MaxTokens: 1,
+	})
 	if err != nil {
-		return p.convertError(err)
+		return fmt.Errorf("health check failed: %w", err)
 	}
 	return nil
 }
