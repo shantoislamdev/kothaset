@@ -71,6 +71,11 @@ func (w *ParquetWriter) Flush() error {
 	return nil
 }
 
+func (w *ParquetWriter) Sync() error {
+	// No-op for batch writer, actual write happens on Close
+	return nil
+}
+
 func (w *ParquetWriter) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()

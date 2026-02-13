@@ -259,6 +259,10 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		// Checkpoint
 		checkpointCounter++
 		if g.config.CheckpointEvery > 0 && checkpointCounter >= g.config.CheckpointEvery {
+			// Sync to physical storage before checkpointing for crash-safe durability
+			if err := g.writer.Sync(); err != nil {
+				fmt.Fprintf(os.Stderr, "Warning: failed to sync output: %v\n", err)
+			}
 			if err := g.saveCheckpoint(); err != nil {
 				// Log but don't fail
 				fmt.Fprintf(os.Stderr, "Warning: failed to save checkpoint: %v\n", err)

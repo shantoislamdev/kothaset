@@ -61,6 +61,11 @@ func (w *HuggingFaceWriter) Flush() error {
 	return nil
 }
 
+func (w *HuggingFaceWriter) Sync() error {
+	// No-op for batch writer, actual write happens on Close
+	return nil
+}
+
 func (w *HuggingFaceWriter) Close() error {
 	w.mu.Lock()
 	defer w.mu.Unlock()

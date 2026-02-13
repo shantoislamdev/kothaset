@@ -73,6 +73,7 @@ func (w *MockWriter) Write(sample *schema.Sample) error {
 }
 
 func (w *MockWriter) Flush() error   { return nil }
+func (w *MockWriter) Sync() error    { return nil }
 func (w *MockWriter) Close() error   { return nil }
 func (w *MockWriter) Format() string { return "mock" }
 

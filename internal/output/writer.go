@@ -19,8 +19,12 @@ type Writer interface {
 	// Write writes a single sample to the output
 	Write(sample *schema.Sample) error
 
-	// Flush flushes any buffered data
+	// Flush flushes any buffered data to the OS
 	Flush() error
+
+	// Sync flushes buffered data and fsyncs to physical storage.
+	// Use at checkpoint boundaries for crash-safe durability.
+	Sync() error
 
 	// Close closes the writer and releases resources
 	Close() error

@@ -48,8 +48,11 @@ func (w *JSONLWriter) Write(sample *schema.Sample) error {
 	if _, err := w.writer.Write(data); err != nil {
 		return err
 	}
-	_, err = w.writer.WriteString("\n")
-	return err
+	if _, err = w.writer.WriteString("\n"); err != nil {
+		return err
+	}
+	// Flush to OS immediately so data survives application crashes
+	return w.writer.Flush()
 }
 
 func (w *JSONLWriter) Flush() error {
@@ -57,6 +60,22 @@ func (w *JSONLWriter) Flush() error {
 	defer w.mu.Unlock()
 	if w.writer != nil {
 		return w.writer.Flush()
+	}
+	return nil
+}
+
+// Sync flushes buffered data and fsyncs to physical storage.
+// Use at checkpoint boundaries for crash-safe durability.
+func (w *JSONLWriter) Sync() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.writer != nil {
+		if err := w.writer.Flush(); err != nil {
+			return err
+		}
+	}
+	if w.file != nil {
+		return w.file.Sync()
 	}
 	return nil
 }
