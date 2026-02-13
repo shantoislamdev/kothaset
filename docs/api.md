@@ -34,6 +34,8 @@ kothaset generate [flags]
 | `--output` | `-o` | string | Output file path |
 | `--input` | `-i` | string | Path to input file or inline topic |
 
+Parent directories for `--output` are created automatically if they do not exist.
+
 ### Optional Flags
 
 | Flag | Short | Type | Default | Description |
@@ -266,6 +268,8 @@ kothaset validate dataset output.jsonl
 # ✓ Valid dataset
 #   Rows: 50
 ```
+
+Extension matching for dataset validation is case-insensitive (for example, `DATASET.JSONL` is recognized as `jsonl`).
 
 
 

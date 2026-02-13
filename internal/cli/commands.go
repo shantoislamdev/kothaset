@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 	"text/tabwriter"
 	"time"
 
@@ -171,7 +172,7 @@ func detectFormat(path string) string {
 
 // hasExtension checks if path ends with the given extension (case-insensitive)
 func hasExtension(path, ext string) bool {
-	return len(path) > len(ext) && path[len(path)-len(ext):] == ext
+	return len(path) > len(ext) && strings.EqualFold(path[len(path)-len(ext):], ext)
 }
 
 // validateJSONL validates a JSONL file and returns row count

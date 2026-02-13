@@ -3,7 +3,9 @@ package output
 import (
 	"bufio"
 	"encoding/json"
+	"fmt"
 	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/shantoislamdev/kothaset/internal/schema"
@@ -27,6 +29,12 @@ func NewJSONLWriter(sch schema.Schema) *JSONLWriter {
 func (w *JSONLWriter) Format() string { return "jsonl" }
 
 func (w *JSONLWriter) Open(path string) error {
+	if dir := filepath.Dir(path); dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create output directory: %w", err)
+		}
+	}
+
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
 	if err != nil {
 		return err
@@ -91,6 +99,12 @@ func (w *JSONLWriter) Close() error {
 
 // OpenAppend opens the file in append mode for resuming
 func (w *JSONLWriter) OpenAppend(path string) error {
+	if dir := filepath.Dir(path); dir != "" && dir != "." {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("failed to create output directory: %w", err)
+		}
+	}
+
 	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
 	if err != nil {
 		return err

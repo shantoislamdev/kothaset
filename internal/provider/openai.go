@@ -167,8 +167,11 @@ func (p *OpenAIProvider) GenerateStream(ctx context.Context, req GenerationReque
 	params := openai.ChatCompletionNewParams{
 		Model:       openai.ChatModel(p.model),
 		Messages:    messages,
-		MaxTokens:   openai.Int(int64(req.MaxTokens)),
 		Temperature: openai.Float(req.Temperature),
+	}
+
+	if req.MaxTokens > 0 {
+		params.MaxTokens = openai.Int(int64(req.MaxTokens))
 	}
 
 	// Create stream

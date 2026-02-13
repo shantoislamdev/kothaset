@@ -155,6 +155,8 @@ kothaset generate -n 100 --seed 42 -i topics.txt -f jsonl -o dataset.jsonl
 
 ```
 
+`kothaset generate` automatically creates parent directories for `--output` paths (for example, `-o output/data/dataset.jsonl`).
+
 ### Advanced Options
 
 ```bash

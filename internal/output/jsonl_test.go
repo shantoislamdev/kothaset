@@ -85,3 +85,40 @@ func TestJSONLWriter_OpenAppend(t *testing.T) {
 		t.Errorf("Expected 2 lines, got %d", lines)
 	}
 }
+
+func TestJSONLWriter_Open_CreatesParentDirectories(t *testing.T) {
+	tmpDir := t.TempDir()
+	outPath := filepath.Join(tmpDir, "deep", "nested", "dataset.jsonl")
+
+	w := NewJSONLWriter(schema.NewInstructionSchema())
+	if err := w.Open(outPath); err != nil {
+		t.Fatalf("Open failed: %v", err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatalf("Close failed: %v", err)
+	}
+
+	if _, err := os.Stat(outPath); err != nil {
+		t.Fatalf("expected output file to exist at %q: %v", outPath, err)
+	}
+}
+
+func TestJSONLWriter_OpenAppend_CreatesParentDirectories(t *testing.T) {
+	tmpDir := t.TempDir()
+	outPath := filepath.Join(tmpDir, "deep", "append", "dataset.jsonl")
+
+	w := NewJSONLWriter(schema.NewInstructionSchema())
+	if err := w.OpenAppend(outPath); err != nil {
+		t.Fatalf("OpenAppend failed: %v", err)
+	}
+	if err := w.Write(&schema.Sample{Fields: map[string]any{"a": 1}}); err != nil {
+		t.Fatalf("Write failed: %v", err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatalf("Close failed: %v", err)
+	}
+
+	if _, err := os.Stat(outPath); err != nil {
+		t.Fatalf("expected output file to exist at %q: %v", outPath, err)
+	}
+}

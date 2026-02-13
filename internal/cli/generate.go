@@ -201,6 +201,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create provider: %w", err)
 	}
+	defer provider.CloseAll()
 
 	// Context and instructions from kothaset.yaml
 	userContext := cfg.Context
@@ -283,10 +284,15 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	// Handle signals for graceful shutdown
 	sigCh := make(chan os.Signal, 1)
 	signal.Notify(sigCh, os.Interrupt, syscall.SIGTERM)
+	defer signal.Stop(sigCh)
 	go func() {
-		<-sigCh
-		fmt.Println("\n⚠ Received interrupt, saving checkpoint...")
-		cancel()
+		select {
+		case <-sigCh:
+			fmt.Println("\n⚠ Received interrupt, saving checkpoint...")
+			cancel()
+		case <-ctx.Done():
+			// Generation finished normally or was cancelled.
+		}
 	}()
 
 	// Create progress bar
