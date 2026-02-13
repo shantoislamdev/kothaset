@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 	"time"
@@ -127,14 +128,15 @@ func (r *Registry) Close() error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	var lastErr error
+	var errs []error
 	for name, provider := range r.providers {
 		if err := provider.Close(); err != nil {
-			lastErr = fmt.Errorf("failed to close provider %s: %w", name, err)
+			errs = append(errs, fmt.Errorf("failed to close provider %s: %w", name, err))
 		}
-		delete(r.providers, name)
 	}
-	return lastErr
+	r.providers = make(map[string]Provider)
+
+	return errors.Join(errs...)
 }
 
 // Global registry functions

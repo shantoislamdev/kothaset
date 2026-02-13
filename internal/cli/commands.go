@@ -33,13 +33,21 @@ var validateConfigCmd = &cobra.Command{
 
 If no path is provided, validates the default config resolution order.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		fmt.Println("✓ Configuration is valid")
-		if cfg != nil {
-			fmt.Printf("  Version:   %s\n", cfg.Version)
-			fmt.Printf("  Provider:  %s\n", cfg.Global.Provider)
-			fmt.Printf("  Schema:    %s\n", cfg.Global.Schema)
-			fmt.Printf("  Model:     %s\n", cfg.Global.Model)
+		if cfg == nil {
+			return fmt.Errorf("no configuration loaded")
 		}
+
+		if err := cfg.Validate(); err != nil {
+			fmt.Printf("✗ Configuration invalid: %v\n", err)
+			return err
+		}
+
+		fmt.Println("✓ Configuration is valid")
+		fmt.Printf("  Version:   %s\n", cfg.Version)
+		fmt.Printf("  Provider:  %s\n", cfg.Global.Provider)
+		fmt.Printf("  Schema:    %s\n", cfg.Global.Schema)
+		fmt.Printf("  Model:     %s\n", cfg.Global.Model)
+
 		if secrets != nil {
 			fmt.Printf("  Configured providers: %d\n", len(secrets.Providers))
 		}

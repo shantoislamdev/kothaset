@@ -67,7 +67,7 @@ func TestValidate_Expanded(t *testing.T) {
 		{
 			name:    "negative concurrency",
 			cfg:     Config{Version: "1.0", Global: GlobalConfig{Provider: "openai", Schema: "instruction", Model: "gpt-5.2", Concurrency: -1}},
-			wantErr: "global.concurrency must be >= 0",
+			wantErr: "global.concurrency must be non-negative (0 = use default)",
 		},
 		{
 			name:    "unsupported output format",

@@ -7,7 +7,6 @@ import (
 
 	"os"
 	"strings"
-	"sync"
 )
 
 // Sampler provides topics/seeds for sample generation
@@ -19,7 +18,6 @@ type Sampler interface {
 // FileSampler reads topics from a file (one per line)
 type FileSampler struct {
 	topics []string
-	mu     sync.Mutex
 }
 
 // NewSampler creates a sampler from a file path or inline string
@@ -93,9 +91,6 @@ func (s *FileSampler) Sample(ctx context.Context, index int) (string, error) {
 	if len(s.topics) == 0 {
 		return "", nil
 	}
-
-	s.mu.Lock()
-	defer s.mu.Unlock()
 
 	// Use modulo for sequential access, or random for variety
 	// Here we use index modulo for predictable coverage

@@ -100,11 +100,10 @@ func DefaultConfig() Config {
 
 // Result contains the outcome of a generation run
 type Result struct {
-	TotalSamples    int `json:"total_samples"`
-	SuccessCount    int `json:"success_count"`
-	FailedCount     int `json:"failed_count"`
-	DuplicatesFound int `json:"duplicates_found"`
-	TotalTokens     int `json:"total_tokens"`
+	TotalSamples int `json:"total_samples"`
+	SuccessCount int `json:"success_count"`
+	FailedCount  int `json:"failed_count"`
+	TotalTokens  int `json:"total_tokens"`
 
 	Duration       time.Duration `json:"duration"`
 	OutputPath     string        `json:"output_path"`

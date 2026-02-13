@@ -5,7 +5,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/shantoislamdev/kothaset/internal/config"
 )
@@ -64,10 +63,6 @@ func init() {
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: kothaset.yaml)")
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "suppress non-essential output")
-
-	// Bind flags to viper
-	viper.BindPFlag("verbose", rootCmd.PersistentFlags().Lookup("verbose"))
-	viper.BindPFlag("quiet", rootCmd.PersistentFlags().Lookup("quiet"))
 
 	// Register subcommands
 	rootCmd.AddCommand(versionCmd)

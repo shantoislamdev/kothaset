@@ -26,10 +26,17 @@ func NewRegistry() *Registry {
 
 // registerBuiltins registers all built-in schemas
 func (r *Registry) registerBuiltins() {
-	r.Register(NewInstructionSchema())
-	r.Register(NewChatSchema())
-	r.Register(NewPreferenceSchema())
-	r.Register(NewClassificationSchema())
+	builtins := []Schema{
+		NewInstructionSchema(),
+		NewChatSchema(),
+		NewPreferenceSchema(),
+		NewClassificationSchema(),
+	}
+	for _, s := range builtins {
+		if err := r.Register(s); err != nil {
+			panic(fmt.Sprintf("failed to register built-in schema %q: %v", s.Name(), err))
+		}
+	}
 }
 
 // Register adds a schema to the registry

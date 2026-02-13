@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/shantoislamdev/kothaset/internal/schema"
 	"gopkg.in/yaml.v3"
 )
 
@@ -160,12 +161,18 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("global.schema is required")
 	}
 
+	// Verify schema is registered.
+	if _, err := schema.Get(c.Global.Schema); err != nil {
+		return fmt.Errorf("global.schema %q is not a valid schema: %w (available: %v)",
+			c.Global.Schema, err, schema.List())
+	}
+
 	if c.Global.Model == "" {
 		return fmt.Errorf("global.model is required")
 	}
 
 	if c.Global.Concurrency < 0 {
-		return fmt.Errorf("global.concurrency must be >= 0")
+		return fmt.Errorf("global.concurrency must be non-negative (0 = use default)")
 	}
 
 	if c.Global.OutputFormat != "" {
