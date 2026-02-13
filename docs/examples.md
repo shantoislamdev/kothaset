@@ -131,7 +131,8 @@ kothaset generate -p fast -m gpt-4o-mini -n 5000 -i topics.txt -o bulk.jsonl
 kothaset generate -n 50000 -w 8 -i topics.txt -o large.jsonl
 
 # Resume if interrupted (checkpoint stored in .kothaset/)
-kothaset generate --resume .kothaset/large.jsonl.checkpoint
+# Use the exact checkpoint filename present in `.kothaset/`
+kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint
 ```
 
 ---

@@ -162,7 +162,8 @@ kothaset generate -n 100 --seed 42 -i topics.txt -p local -o dataset.jsonl
 kothaset generate -n 1000 --seed 42 -i topics.txt -o diverse.jsonl
 
 # Resume interrupted generation
-kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
+# (use the exact checkpoint filename from `.kothaset/`)
+kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint
 
 # Dry run (validate config)
 kothaset generate --dry-run -n 100 --seed 42 -i topics.txt

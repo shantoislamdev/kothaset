@@ -80,7 +80,8 @@ kothaset generate -n 100 --seed random -i topics.txt -o diverse.jsonl
 
 
 # Resume interrupted generation (checkpoint stored in .kothaset/)
-kothaset generate --resume .kothaset/dataset.jsonl.checkpoint -i topics.txt
+# Use the exact checkpoint filename present in `.kothaset/`
+kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint -i topics.txt
 
 # Dry run to validate config
 kothaset generate --dry-run -n 100 -i topics.txt
@@ -165,9 +166,10 @@ These flags work with all commands:
 
 KothaSet automatically saves checkpoints during generation:
 
-- Checkpoint location: `.kothaset/<output>.checkpoint`
+- Checkpoint location: `.kothaset/<absolute-output-path-transformed>.checkpoint`
 - Saved every 10 samples by default (configurable via `checkpoint_every` in global config)
 - Resume with `--resume <checkpoint>`
+- Tip: if unsure, list files in `.kothaset/` and pass the checkpoint path exactly.
 
 ### Checkpoint Contents
 
@@ -175,7 +177,6 @@ KothaSet automatically saves checkpoints during generation:
 {
   "timestamp": "2026-02-08T12:00:00Z",
   "config": { ... },
-  "samples": [ ... ],
   "completed": 450,
   "failed": 2,
   "tokens_used": 125000
@@ -204,8 +205,15 @@ KothaSet automatically saves checkpoints during generation:
 When interrupted:
 
 ```
-Resume with: kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
+Resume with: kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint
 ```
+
+---
+
+## Retry and Write Durability Notes
+
+- Retry timing uses exponential backoff with jitter and respects provider retry-after hints when available.
+- JSONL writes are buffered for performance; durability is enforced at checkpoint sync boundaries and on normal close.
 
 ---
 

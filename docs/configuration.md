@@ -50,6 +50,10 @@ logging:
 
 ```
 
+Notes:
+- Checkpoints are saved under `.kothaset/` with filenames derived from the absolute output path.
+- Retryable provider errors use exponential backoff with jitter and respect provider retry-after hints when available.
+
 ---
 
 ## 2. `.secrets.yaml` (Private)

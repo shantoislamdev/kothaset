@@ -39,6 +39,7 @@ Check at [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
        rate_limit:
          requests_per_minute: 30
    ```
+3. Retries use exponential backoff with jitter automatically and honor provider retry-after hints when available.
 
 ---
 
@@ -90,6 +91,7 @@ kothaset generate --temperature 0.5 --seed 42 -o dataset.jsonl
 | High latency | Use faster model |
 | Low concurrency | Increase: `-w 8` |
 | Large responses | Reduce `--max-tokens` |
+| Frequent retries/rate limits | Reduce workers and/or model load |
 
 ---
 
@@ -104,18 +106,22 @@ All samples failed. Check error messages, verify API key, try `-n 1` to debug.
 kothaset generate --max-tokens 2048 --seed 42 -o dataset.jsonl
 ```
 
+### "Why isn't each JSONL line immediately flushed?"
+KothaSet buffers JSONL writes for performance. Durability is still maintained because data is flushed/synced at checkpoint boundaries and flushed on normal close.
+
 ---
 
 ## Checkpoints
 
 ### "Failed to load checkpoint"
-1. Verify file exists: `ls .kothaset/dataset.jsonl.checkpoint`
+1. Verify file exists by listing `.kothaset/` and choosing the exact checkpoint filename:
+   `ls .kothaset`
 2. If corrupted, start fresh (existing output is preserved)
 
 ### Can't find checkpoint
-Checkpoints saved in `.kothaset/<output>.checkpoint`:
+Checkpoints are saved in `.kothaset/` using a filename derived from the absolute output path:
 ```bash
-kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
+kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint
 ```
 
 ---

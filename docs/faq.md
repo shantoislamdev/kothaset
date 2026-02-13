@@ -40,9 +40,20 @@ kothaset generate -m gpt-5.2 --seed 42 -i topics.txt -o dataset.jsonl
 
 ### Can I resume interrupted generation?
 ```bash
-kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
+kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint
 ```
-Checkpoints are stored in `.kothaset/<output>.checkpoint`.
+Checkpoints are stored in `.kothaset/` using a filename derived from the absolute output path.
+If unsure, list the directory and use the exact filename:
+
+```bash
+ls .kothaset
+```
+
+### How are retries handled?
+Retryable provider errors use exponential backoff with jitter and honor provider retry-after hints when available.
+
+### Are JSONL writes durable if each sample is buffered?
+Yes. Writes are buffered for performance, then flushed/synced at checkpoint boundaries and flushed on close.
 
 ---
 
