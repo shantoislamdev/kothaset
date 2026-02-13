@@ -51,8 +51,7 @@ func (w *JSONLWriter) Write(sample *schema.Sample) error {
 	if _, err = w.writer.WriteString("\n"); err != nil {
 		return err
 	}
-	// Flush to OS immediately so data survives application crashes
-	return w.writer.Flush()
+	return nil
 }
 
 func (w *JSONLWriter) Flush() error {

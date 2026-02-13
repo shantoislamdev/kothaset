@@ -57,24 +57,63 @@ func (m *MockProvider) Close() error                          { return nil }
 
 // MockWriter implements output.Writer for testing.
 type MockWriter struct {
-	Samples []*schema.Sample
-	mu      sync.Mutex
+	Samples     []*schema.Sample
+	FailOnWrite bool
+	WriteCount  int
+	FailAfter   int
+	SyncCalls   int
+	CloseCalls  int
+	FlushCalls  int
+	OpenCalls   int
+	OpenAppends int
+	mu          sync.Mutex
 }
 
-func (w *MockWriter) Open(path string) error { return nil }
+func (w *MockWriter) Open(path string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.OpenCalls++
+	return nil
+}
 
-func (w *MockWriter) OpenAppend(path string) error { return nil }
+func (w *MockWriter) OpenAppend(path string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.OpenAppends++
+	return nil
+}
 
 func (w *MockWriter) Write(sample *schema.Sample) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	w.WriteCount++
+	if w.FailOnWrite {
+		if w.FailAfter <= 0 || w.WriteCount > w.FailAfter {
+			return fmt.Errorf("mock writer error")
+		}
+	}
 	w.Samples = append(w.Samples, sample)
 	return nil
 }
 
-func (w *MockWriter) Flush() error   { return nil }
-func (w *MockWriter) Sync() error    { return nil }
-func (w *MockWriter) Close() error   { return nil }
+func (w *MockWriter) Flush() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.FlushCalls++
+	return nil
+}
+func (w *MockWriter) Sync() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.SyncCalls++
+	return nil
+}
+func (w *MockWriter) Close() error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.CloseCalls++
+	return nil
+}
 func (w *MockWriter) Format() string { return "mock" }
 
 // MockSampler implements Sampler for testing

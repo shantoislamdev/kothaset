@@ -3,12 +3,14 @@ package generator
 
 import (
 	"context"
-	"crypto/rand"
+	crand "crypto/rand"
 	"encoding/binary"
 	"encoding/json"
 	"fmt"
+	"math/rand"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -23,9 +25,16 @@ const cacheDir = ".kothaset"
 
 // getCheckpointPath returns the path for the checkpoint file in the cache directory
 func getCheckpointPath(outputPath string) string {
-	// Create a safe filename from the output path by replacing path separators
-	baseName := filepath.Base(outputPath)
-	checkpointFile := baseName + ".checkpoint"
+	// Use absolute path to avoid collisions between same-named files in different dirs
+	absPath, err := filepath.Abs(outputPath)
+	if err != nil {
+		absPath = outputPath
+	}
+
+	// Create a safe filename by replacing separators/reserved characters
+	safeName := strings.ReplaceAll(absPath, string(filepath.Separator), "_")
+	safeName = strings.ReplaceAll(safeName, ":", "_")
+	checkpointFile := safeName + ".checkpoint"
 	return filepath.Join(cacheDir, checkpointFile)
 }
 
@@ -134,14 +143,18 @@ type Generator struct {
 
 	// Output
 	writer output.Writer
+
+	// Test hook for retry jitter
+	randFloat func() float64
 }
 
 // New creates a new generator
 func New(cfg Config, prov provider.Provider, sch schema.Schema) *Generator {
 	return &Generator{
-		config:   cfg,
-		provider: prov,
-		schema:   sch,
+		config:    cfg,
+		provider:  prov,
+		schema:    sch,
+		randFloat: rand.Float64,
 	}
 }
 
@@ -163,6 +176,8 @@ func (g *Generator) SetWriter(w output.Writer) {
 // Run executes the generation process
 func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	startTime := time.Now()
+	ctx, cancel := context.WithCancel(ctx)
+	defer cancel()
 
 	// Load checkpoint if resuming
 	if g.config.ResumeFrom != "" {
@@ -198,21 +213,72 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	}
 	defer g.writer.Close()
 
-	// Calculate remaining samples
-	remaining := g.config.NumSamples - int(atomic.LoadInt32(&g.completed))
+	// Calculate remaining samples from a stable base for this run
+	baseCompleted := int(atomic.LoadInt32(&g.completed))
+	remaining := g.config.NumSamples - baseCompleted
 
 	// Create worker pool
 	pool := NewWorkerPool(g.config.Workers)
 
 	// Submit work
-	results := make(chan *workerResult, remaining)
+	resultBuffer := g.config.Workers * 2
+	if resultBuffer < 1 {
+		resultBuffer = 1
+	}
+	results := make(chan *workerResult, resultBuffer)
 	var wg sync.WaitGroup
 	checkpointCounter := 0
+	var writeErr error
+	collectorDone := make(chan struct{})
 
+	// Always start collector so workers can never block forever on results sends.
+	go func() {
+		defer close(collectorDone)
+		for result := range results {
+			if result.err != nil {
+				atomic.AddInt32(&g.failed, 1)
+				// Log the error so failures are not silently swallowed
+				fmt.Fprintf(os.Stderr, "⚠ Sample failed: %v\n", result.err)
+			} else {
+				// Write to output immediately - don't store in memory to prevent memory leaks
+				if err := g.writer.Write(result.sample); err != nil {
+					atomic.AddInt32(&g.failed, 1)
+					fmt.Fprintf(os.Stderr, "⚠ Write failed: %v\n", err)
+					if writeErr == nil {
+						writeErr = err
+						cancel()
+					}
+					continue
+				}
+
+				atomic.AddInt32(&g.completed, 1)
+				atomic.AddInt64(&g.tokensUsed, int64(result.tokens))
+			}
+
+			// Update progress
+			g.reportProgress(startTime)
+
+			// Checkpoint
+			checkpointCounter++
+			if g.config.CheckpointEvery > 0 && checkpointCounter >= g.config.CheckpointEvery {
+				// Sync to physical storage before checkpointing for crash-safe durability
+				if err := g.writer.Sync(); err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: failed to sync output: %v\n", err)
+				}
+				if err := g.saveCheckpoint(); err != nil {
+					// Log but don't fail
+					fmt.Fprintf(os.Stderr, "Warning: failed to save checkpoint: %v\n", err)
+				}
+				checkpointCounter = 0
+			}
+		}
+	}()
+
+loop:
 	for i := 0; i < remaining; i++ {
 		select {
 		case <-ctx.Done():
-			goto cleanup
+			break loop
 		default:
 		}
 
@@ -221,7 +287,7 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		pool.Acquire()
 
 		wg.Add(1)
-		sampleIndex := int(atomic.LoadInt32(&g.completed)) + i
+		sampleIndex := baseCompleted + i
 
 		go func(idx int) {
 			defer wg.Done()
@@ -232,46 +298,13 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		}(sampleIndex)
 	}
 
-	// Collect results
+	// Close results when all workers finish
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
+	<-collectorDone
 
-	for result := range results {
-		if result.err != nil {
-			atomic.AddInt32(&g.failed, 1)
-			// Log the error so failures are not silently swallowed
-			fmt.Fprintf(os.Stderr, "⚠ Sample failed: %v\n", result.err)
-		} else {
-			// Write to output immediately - don't store in memory to prevent memory leaks
-			if err := g.writer.Write(result.sample); err != nil {
-				return nil, fmt.Errorf("failed to write sample: %w", err)
-			}
-
-			atomic.AddInt32(&g.completed, 1)
-			atomic.AddInt64(&g.tokensUsed, int64(result.tokens))
-		}
-
-		// Update progress
-		g.reportProgress(startTime)
-
-		// Checkpoint
-		checkpointCounter++
-		if g.config.CheckpointEvery > 0 && checkpointCounter >= g.config.CheckpointEvery {
-			// Sync to physical storage before checkpointing for crash-safe durability
-			if err := g.writer.Sync(); err != nil {
-				fmt.Fprintf(os.Stderr, "Warning: failed to sync output: %v\n", err)
-			}
-			if err := g.saveCheckpoint(); err != nil {
-				// Log but don't fail
-				fmt.Fprintf(os.Stderr, "Warning: failed to save checkpoint: %v\n", err)
-			}
-			checkpointCounter = 0
-		}
-	}
-
-cleanup:
 	// Final checkpoint
 	if err := g.saveCheckpoint(); err != nil {
 		fmt.Fprintf(os.Stderr, "Warning: failed to save final checkpoint: %v\n", err)
@@ -280,7 +313,7 @@ cleanup:
 	duration := time.Since(startTime)
 	tokens := int(atomic.LoadInt64(&g.tokensUsed))
 
-	return &Result{
+	result := &Result{
 		TotalSamples: g.config.NumSamples,
 		SuccessCount: int(atomic.LoadInt32(&g.completed)),
 		FailedCount:  int(atomic.LoadInt32(&g.failed)),
@@ -288,7 +321,13 @@ cleanup:
 
 		Duration:   duration,
 		OutputPath: g.config.OutputPath,
-	}, nil
+	}
+
+	if writeErr != nil {
+		return result, fmt.Errorf("generation completed with write errors: %w", writeErr)
+	}
+
+	return result, nil
 }
 
 type workerResult struct {
@@ -300,12 +339,44 @@ type workerResult struct {
 // generateRandomSeed creates a cryptographically secure random seed
 func generateRandomSeed() int64 {
 	var b [8]byte
-	_, err := rand.Read(b[:])
+	_, err := crand.Read(b[:])
 	if err != nil {
 		// Fallback to time-based seed if crypto/rand fails
 		return time.Now().UnixNano()
 	}
 	return int64(binary.BigEndian.Uint64(b[:]))
+}
+
+func (g *Generator) retryDelay(attempt int, err error) time.Duration {
+	if retryAfter := provider.GetRetryAfter(err); retryAfter > 0 {
+		return time.Duration(retryAfter) * time.Second
+	}
+
+	base := g.config.RetryDelay
+	if base <= 0 {
+		base = 100 * time.Millisecond
+	}
+
+	delay := base
+	for i := 1; i < attempt; i++ {
+		if delay >= 30*time.Second {
+			delay = 30 * time.Second
+			break
+		}
+		delay *= 2
+		if delay > 30*time.Second {
+			delay = 30 * time.Second
+			break
+		}
+	}
+
+	// Add ±20% jitter
+	randFloat := rand.Float64
+	if g.randFloat != nil {
+		randFloat = g.randFloat
+	}
+	factor := 0.8 + (0.4 * randFloat())
+	return time.Duration(float64(delay) * factor)
 }
 
 func (g *Generator) generateSample(ctx context.Context, index int) *workerResult {
@@ -358,10 +429,11 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 	var lastErr error
 	for attempt := 0; attempt <= g.config.MaxRetries; attempt++ {
 		if attempt > 0 {
+			delay := g.retryDelay(attempt, lastErr)
 			select {
 			case <-ctx.Done():
 				return &workerResult{err: ctx.Err()}
-			case <-time.After(g.config.RetryDelay):
+			case <-time.After(delay):
 			}
 		}
 

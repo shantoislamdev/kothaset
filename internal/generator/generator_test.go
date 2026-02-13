@@ -2,11 +2,38 @@ package generator
 
 import (
 	"context"
+	"errors"
+	"os"
+	"path/filepath"
+	"reflect"
+	"sort"
+	"sync"
 	"testing"
 	"time"
 
+	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
 )
+
+type indexTrackingSampler struct {
+	mu      sync.Mutex
+	indices []int
+}
+
+func (s *indexTrackingSampler) Sample(ctx context.Context, index int) (string, error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	s.indices = append(s.indices, index)
+	return "tracked-topic", nil
+}
+
+func (s *indexTrackingSampler) Indices() []int {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	cloned := make([]int, len(s.indices))
+	copy(cloned, s.indices)
+	return cloned
+}
 
 func TestGenerator_Run_Success(t *testing.T) {
 	// Setup
@@ -95,5 +122,157 @@ func TestGenerator_ProgressCallback(t *testing.T) {
 
 	if !called {
 		t.Error("Progress callback not called")
+	}
+}
+
+func TestGenerator_Run_ResumeTopicIndex(t *testing.T) {
+	tmpDir := t.TempDir()
+	checkpointPath := filepath.Join(tmpDir, "resume.checkpoint")
+
+	cp := &Checkpoint{
+		Timestamp:  time.Now(),
+		Config:     DefaultConfig(),
+		Completed:  50,
+		Failed:     0,
+		TokensUsed: 0,
+	}
+	if err := SaveCheckpoint(cp, checkpointPath); err != nil {
+		t.Fatalf("failed to save checkpoint: %v", err)
+	}
+
+	cfg := DefaultConfig()
+	cfg.NumSamples = 55
+	cfg.Workers = 4
+	cfg.ResumeFrom = checkpointPath
+	cfg.OutputPath = filepath.Join(tmpDir, "out.jsonl")
+
+	prov := &MockProvider{Response: `{"instruction":"this is long enough","output":"this is long enough output"}`}
+	gen := New(cfg, prov, schema.NewInstructionSchema())
+	sampler := &indexTrackingSampler{}
+	gen.SetSampler(sampler)
+	gen.SetWriter(&MockWriter{})
+
+	res, err := gen.Run(context.Background())
+	if err != nil {
+		t.Fatalf("Run failed: %v", err)
+	}
+
+	if res.SuccessCount != 55 {
+		t.Fatalf("expected success count 55, got %d", res.SuccessCount)
+	}
+
+	indices := sampler.Indices()
+	if len(indices) != 5 {
+		t.Fatalf("expected 5 sampled indices, got %d (%v)", len(indices), indices)
+	}
+	sort.Ints(indices)
+	expected := []int{50, 51, 52, 53, 54}
+	if !reflect.DeepEqual(indices, expected) {
+		t.Fatalf("expected sampled indices %v, got %v", expected, indices)
+	}
+}
+
+func TestGenerator_Run_WriteError_Graceful(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.NumSamples = 10
+	cfg.Workers = 4
+
+	prov := &MockProvider{Response: `{"instruction":"this is long enough","output":"this is long enough output"}`}
+	writer := &MockWriter{FailOnWrite: true, FailAfter: 3}
+	gen := New(cfg, prov, schema.NewInstructionSchema())
+	gen.SetSampler(&MockSampler{Topic: "test"})
+	gen.SetWriter(writer)
+
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	res, err := gen.Run(ctx)
+	if err == nil {
+		t.Fatal("expected write error, got nil")
+	}
+	if res == nil {
+		t.Fatal("expected partial result on write error, got nil")
+	}
+	if res.SuccessCount < 1 || res.SuccessCount > 3 {
+		t.Fatalf("expected partial successes between 1 and 3, got %d", res.SuccessCount)
+	}
+	if writer.CloseCalls != 1 {
+		t.Fatalf("expected writer close to be called once, got %d", writer.CloseCalls)
+	}
+}
+
+func TestGenerator_Run_Cancellation_NoPanic(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.NumSamples = 100
+	cfg.Workers = 8
+	cfg.MaxRetries = 0
+
+	prov := &MockProvider{
+		Delay:    50 * time.Millisecond,
+		Response: `{"instruction":"this is long enough","output":"this is long enough output"}`,
+	}
+	gen := New(cfg, prov, schema.NewInstructionSchema())
+	gen.SetSampler(&MockSampler{Topic: "cancel-topic"})
+	gen.SetWriter(&MockWriter{})
+
+	ctx, cancel := context.WithCancel(context.Background())
+	go func() {
+		time.Sleep(20 * time.Millisecond)
+		cancel()
+	}()
+
+	done := make(chan struct{})
+	var runErr error
+	go func() {
+		defer close(done)
+		_, runErr = gen.Run(ctx)
+	}()
+
+	select {
+	case <-done:
+		if runErr != nil && !errors.Is(runErr, context.Canceled) {
+			t.Fatalf("unexpected error on cancellation: %v", runErr)
+		}
+	case <-time.After(3 * time.Second):
+		t.Fatal("run did not terminate after cancellation (possible goroutine leak)")
+	}
+}
+
+func TestGenerator_Run_ExponentialBackoff(t *testing.T) {
+	gen := New(DefaultConfig(), &MockProvider{}, schema.NewInstructionSchema())
+	gen.randFloat = func() float64 { return 0.5 } // no jitter (factor 1.0)
+	gen.config.RetryDelay = 100 * time.Millisecond
+
+	if d := gen.retryDelay(1, provider.NewProviderError(provider.ErrKindRateLimit, "retry", nil)); d != 100*time.Millisecond {
+		t.Fatalf("attempt 1 delay mismatch: got %v", d)
+	}
+	if d := gen.retryDelay(2, provider.NewProviderError(provider.ErrKindRateLimit, "retry", nil)); d != 200*time.Millisecond {
+		t.Fatalf("attempt 2 delay mismatch: got %v", d)
+	}
+	if d := gen.retryDelay(3, provider.NewProviderError(provider.ErrKindRateLimit, "retry", nil)); d != 400*time.Millisecond {
+		t.Fatalf("attempt 3 delay mismatch: got %v", d)
+	}
+
+	if d := gen.retryDelay(20, provider.NewProviderError(provider.ErrKindRateLimit, "retry", nil)); d != 30*time.Second {
+		t.Fatalf("delay should be capped at 30s, got %v", d)
+	}
+
+	retryAfterErr := provider.NewRateLimitError("retry later", 7)
+	if d := gen.retryDelay(3, retryAfterErr); d != 7*time.Second {
+		t.Fatalf("retry-after should override backoff, got %v", d)
+	}
+}
+
+func TestGetCheckpointPath_UsesFullPath(t *testing.T) {
+	p1 := getCheckpointPath(filepath.Join("one", "dataset.jsonl"))
+	p2 := getCheckpointPath(filepath.Join("two", "dataset.jsonl"))
+	if p1 == p2 {
+		t.Fatalf("checkpoint path should differ for same basenames in different dirs: %s", p1)
+	}
+	if filepath.Base(p1) == "dataset.jsonl.checkpoint" || filepath.Base(p2) == "dataset.jsonl.checkpoint" {
+		t.Fatalf("checkpoint filename should include transformed full path, got %q and %q", filepath.Base(p1), filepath.Base(p2))
+	}
+	if err := os.MkdirAll(filepath.Dir(p1), 0755); err != nil {
+		t.Fatalf("failed to create checkpoint directory: %v", err)
 	}
 }
