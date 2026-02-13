@@ -41,7 +41,7 @@ Thank you for your interest in contributing to KothaSet! We welcome contribution
     - `generator/`: Core generation logic and worker pool.
     - `provider/`: LLM provider implementations (OpenAI, etc.).
     - `schema/`: Dataset schema definitions and validation.
-    - `output/`: Output format writers (JSONL, Parquet).
+    - `output/`: Output format writers (JSONL).
 - `npm/`: npm package wrapper and scripts.
 
 ## Pull Request Process

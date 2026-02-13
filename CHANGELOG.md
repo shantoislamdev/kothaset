@@ -64,6 +64,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Context Configuration**: Added `context` system for better context management.
 - **Input Handling**: Added support for inline string input via `-i` flag.
 
+### Breaking Changes
+- **Removed Output Formats**: Removed Parquet and HuggingFace output writers to simplify the core and improve robustness. JSONL is now the only supported output format.
+
 ### Changed
 - **CLI Interface**: Renamed `--seeds` flag to `--input` (`-i`) for clarity.
 - **Configuration**: Removed `api_key_env` in favor of consistent `env.VAR_NAME` syntax for secrets.

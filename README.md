@@ -13,7 +13,7 @@
 - **Flexible Schemas** — Instruction (Alpaca), Chat (ShareGPT), Preference (DPO), Classification
 - **Streaming Output** — Real-time generation with progress tracking
 - **Resumable** — Atomic checkpointing, never lose progress
-- **Multiple Formats** — JSONL, Native Parquet, HuggingFace datasets
+- **JSONL Output** — Streaming writes in standard JSONL format
 - **Reproducible** — Required seed for deterministic LLM generation
 - **Diversity Control** — Input files for sequential topic coverage
 - **Validation** — Validate configs, schemas, datasets, and provider connectivity
@@ -149,11 +149,7 @@ kothaset generate -n 500 -s preference --seed 456 -i pairs.txt -o dpo_data.jsonl
 # JSONL (default)
 kothaset generate -n 100 --seed 42 -i topics.txt -f jsonl -o dataset.jsonl
 
-# Parquet (native binary parquet output)
-kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
 
-# HuggingFace datasets format
-kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./my_dataset
 ```
 
 ### Advanced Options

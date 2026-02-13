@@ -144,14 +144,6 @@ kothaset schema list  # View available schemas
 ### \"Cannot access file\" in validate dataset
 Check file exists and you have read permissions.
 
-### Parquet file doesn't get full validation details
-`kothaset validate dataset` currently performs full row/structure validation for `jsonl`, `json`, and `csv`.
-For `.parquet`, format detection works, but deep parquet parsing/row validation is not yet implemented.
-
-For deeper parquet checks, use ecosystem tools such as:
-- Python `pyarrow` / `pandas`
-- DuckDB (`SELECT * FROM 'file.parquet' LIMIT 5`)
-
 ### \"Provider test failed\"
 ```bash
 # Test your provider

@@ -39,7 +39,7 @@ Features:
   • Flexible dataset schemas (instruction, chat, preference, classification)
   • Resumable generation with checkpointing
   • Seed-based generation for diversity
-  • Multiple output formats (JSONL, Parquet, HuggingFace)
+  • JSONL output format with streaming writes
 
 Example:
   kothaset generate --schema instruction --count 1000 --output dataset.jsonl`,

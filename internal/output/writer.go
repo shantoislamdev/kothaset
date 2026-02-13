@@ -38,16 +38,12 @@ func NewWriter(format string, sch schema.Schema) (Writer, error) {
 	switch format {
 	case "jsonl", "":
 		return NewJSONLWriter(sch), nil
-	case "parquet":
-		return NewParquetWriter(sch), nil
-	case "hf", "huggingface":
-		return NewHuggingFaceWriter(sch), nil
 	default:
-		return nil, fmt.Errorf("unsupported output format: %s", format)
+		return nil, fmt.Errorf("unsupported output format: %s (supported: jsonl)", format)
 	}
 }
 
 // SupportedFormats returns a list of supported output formats
 func SupportedFormats() []string {
-	return []string{"jsonl", "parquet", "hf"}
+	return []string{"jsonl"}
 }

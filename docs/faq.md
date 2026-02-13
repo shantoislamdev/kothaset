@@ -44,24 +44,17 @@ kothaset generate --resume .kothaset/dataset.jsonl.checkpoint
 ```
 Checkpoints are stored in `.kothaset/<output>.checkpoint`.
 
-### Can `validate dataset` fully validate Parquet files?
-Not yet. `kothaset validate dataset` performs full row/structure validation for `jsonl`, `json`, and `csv`.
-For `.parquet`, KothaSet currently detects the format but does not run deep parquet parsing/row validation.
-
 ---
 
 ## Output
 
 ### What formats are supported?
-- **JSONL** (default) — streaming
-- **Parquet** — columnar storage  
-- **HuggingFace** — `datasets` compatible
+- **JSONL** — High-performance, streaming-friendly JSON Lines (default)
 
 ### How do I load in Python?
 ```python
 from datasets import load_dataset
 dataset = load_dataset("json", data_files="dataset.jsonl")
-
 # Or HuggingFace format
 from datasets import load_from_disk
 dataset = load_from_disk("./my_dataset")

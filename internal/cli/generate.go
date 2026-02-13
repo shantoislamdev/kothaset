@@ -71,7 +71,7 @@ func init() {
 	generateCmd.Flags().StringVarP(&genModel, "model", "m", "", "model to use (default: from config)")
 
 	// Output format
-	generateCmd.Flags().StringVarP(&genFormat, "format", "f", "", "output format (jsonl, parquet, hf)")
+	generateCmd.Flags().StringVarP(&genFormat, "format", "f", "", "output format (jsonl)")
 
 	// Generation parameters
 	generateCmd.Flags().Float64Var(&genTemp, "temperature", 0.7, "sampling temperature")

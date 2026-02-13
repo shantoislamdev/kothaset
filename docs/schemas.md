@@ -213,26 +213,3 @@ One JSON object per line:
 ```bash
 kothaset generate -n 100 --seed 42 -i topics.txt -f jsonl -o dataset.jsonl
 ```
-
-### Parquet
-
-Native columnar format with Snappy compression for efficient storage and analysis:
-
-```bash
-kothaset generate -n 100 --seed 42 -i topics.txt -f parquet -o dataset.parquet
-```
-
-### HuggingFace Datasets
-
-Directory structure compatible with `datasets` library:
-
-```bash
-kothaset generate -n 100 --seed 42 -i topics.txt -f hf -o ./my_dataset
-```
-
-Load in Python:
-
-```python
-from datasets import load_from_disk
-dataset = load_from_disk("./my_dataset")
-```

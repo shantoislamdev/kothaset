@@ -124,7 +124,7 @@ var validateDatasetCmd = &cobra.Command{
 		// Detect format from extension
 		format := detectFormat(filePath)
 		if format == "" {
-			return fmt.Errorf("unsupported format: %s\nSupported: .json, .jsonl, .csv, .parquet", filePath)
+			return fmt.Errorf("unsupported format: %s\nSupported: .json, .jsonl, .csv", filePath)
 		}
 
 		fmt.Printf("Validating dataset: %s\n", filePath)
@@ -164,8 +164,6 @@ func detectFormat(path string) string {
 		return "json"
 	case hasExtension(path, ".csv"):
 		return "csv"
-	case hasExtension(path, ".parquet"):
-		return "parquet"
 	default:
 		return ""
 	}

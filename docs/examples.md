@@ -140,14 +140,6 @@ kothaset generate --resume .kothaset/large.jsonl.checkpoint
 
 ```bash
 kothaset generate -n 100 -i topics.txt -f jsonl -o data.jsonl    # Default
-kothaset generate -n 100 -i topics.txt -f parquet -o data.parquet
-kothaset generate -n 100 -i topics.txt -f hf -o ./my_dataset
-```
-
-Load HuggingFace format:
-```python
-from datasets import load_from_disk
-dataset = load_from_disk("./my_dataset")
 ```
 
 ---

@@ -49,7 +49,7 @@ type GlobalConfig struct {
 	// MaxTokens is the default max tokens per response (0 = unlimited/model default)
 	MaxTokens int `yaml:"max_tokens,omitempty" json:"max_tokens,omitempty"`
 
-	// OutputFormat is the default output format (jsonl, parquet, hf)
+	// OutputFormat is the default output format (jsonl)
 	OutputFormat string `yaml:"output_format,omitempty" json:"output_format,omitempty"`
 
 	// CheckpointEvery is the number of samples between checkpoints (0 = disable)

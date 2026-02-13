@@ -76,8 +76,8 @@ kothaset generate -n 100 --seed 42 -i topics.txt -o reproducible.jsonl
 kothaset generate -n 100 --seed random -i topics.txt -o diverse.jsonl
 
 # Different output formats
-kothaset generate -n 100 -i topics.txt -f parquet -o dataset.parquet
-kothaset generate -n 100 -i topics.txt -f hf -o ./hf_dataset
+
+
 
 # Resume interrupted generation (checkpoint stored in .kothaset/)
 kothaset generate --resume .kothaset/dataset.jsonl.checkpoint -i topics.txt
@@ -248,7 +248,7 @@ kothaset validate dataset output.jsonl
 #   Rows: 50
 ```
 
-> **Parquet note:** `kothaset validate dataset` currently performs full row/structure validation for `jsonl`, `json`, and `csv`. For `.parquet`, KothaSet detects the format but does not yet run deep parquet parsing/row validation.
+
 
 ---
 
