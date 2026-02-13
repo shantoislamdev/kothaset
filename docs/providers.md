@@ -93,3 +93,15 @@ $env:OPENAI_API_KEY = "sk-..."
 ```bash
 export OPENAI_API_KEY="sk-..."
 ```
+
+---
+
+## Provider Health Check Behavior
+
+`kothaset provider test <name>` performs a minimal generation-style request to validate end-to-end readiness:
+
+- authentication/API key
+- model availability/validity
+- network connectivity and endpoint behavior
+
+This is stricter than metadata-only checks and better reflects real generation readiness.

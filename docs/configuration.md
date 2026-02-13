@@ -81,8 +81,16 @@ providers:
 
 KothaSet resolves API keys in the following order:
 
-1.  **`api_key: env.VAR_NAME`**: If `api_key` starts with `env.`, the value is read from the specified environment variable (e.g., `env.OPENAI_API_KEY`).
-2.  **`api_key` (Raw Value)**: Otherwise, the string is used directly (e.g., `sk-...`).
+1. **`api_key: env.VAR_NAME`**: If `api_key` starts with `env.`, read from that environment variable (e.g., `env.OPENAI_API_KEY`).
+2. **Legacy env reference `${env:VAR_NAME}`**: Backward-compatible env reference format.
+3. **File reference `${file:/path/to/secret}`**: Reads the secret value from a file.
+4. **Raw `api_key` value**: Otherwise, the value is used directly (e.g., `sk-...`).
+5. **Default provider env fallback** (when `api_key` is empty):
+   - `openai` → `OPENAI_API_KEY`
+   - `anthropic` → `ANTHROPIC_API_KEY`
+   - `deepseek` → `DEEPSEEK_API_KEY`
+
+If a provider key cannot be resolved during load, KothaSet logs a warning to stderr and continues loading. Validation still happens when the provider is used.
 
 **Recommendation:** Use `env.VAR_NAME` for security.
 
@@ -96,8 +104,8 @@ You can also use environment variables for API keys, which is recommended for CI
 - `ANTHROPIC_API_KEY`
 - `DEEPSEEK_API_KEY`
 
-77- In `.secrets.yaml`, reference them using the `env.` prefix:
-78- 
-79- ```yaml
-80- api_key: env.OPENAI_API_KEY
-81- ```
+In `.secrets.yaml`, reference them using the `env.` prefix:
+
+```yaml
+api_key: env.OPENAI_API_KEY
+```

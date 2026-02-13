@@ -51,6 +51,15 @@ kothaset generate [flags]
 | `--resume` | | string | | Resume from checkpoint |
 | `--dry-run` | | bool | `false` | Validate without generating |
 
+### Validation Rules
+
+`kothaset generate` validates key numeric inputs before running:
+
+- `--count` must be `>= 1`
+- `--temperature` must be between `0` and `2.0`
+- `--max-tokens` must be `>= 0`
+- `--workers` must be `>= 1`
+
 ### Examples
 
 ```bash
