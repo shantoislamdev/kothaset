@@ -108,3 +108,4 @@ export OPENAI_API_KEY="sk-..."
 - network connectivity and endpoint behavior
 
 This is stricter than metadata-only checks and better reflects real generation readiness.
+It also consumes real API tokens.

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"sort"
 	"strings"
 	"text/tabwriter"
 	"time"
@@ -224,12 +225,18 @@ var schemaListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List available schemas",
 	RunE: func(cmd *cobra.Command, args []string) error {
+		names := schema.List()
+		sort.Strings(names)
+
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
 		fmt.Fprintln(w, "NAME\tSTYLE\tDESCRIPTION")
-		fmt.Fprintln(w, "instruction\tinstruction\tAlpaca-style instruction-response pairs")
-		fmt.Fprintln(w, "chat\tchat\tShareGPT-style multi-turn conversations")
-		fmt.Fprintln(w, "preference\tpreference\tDPO/RLHF preference pairs (chosen/rejected)")
-		fmt.Fprintln(w, "classification\tclassification\tText classification with labels")
+		for _, name := range names {
+			sch, err := schema.Get(name)
+			if err != nil {
+				continue
+			}
+			fmt.Fprintf(w, "%s\t%s\t%s\n", sch.Name(), sch.Style(), sch.Description())
+		}
 		w.Flush()
 		return nil
 	},
@@ -356,6 +363,7 @@ var providerTestCmd = &cobra.Command{
 		}
 
 		fmt.Printf("Testing provider %s (%s)...\n", providerName, providerCfg.Type)
+		fmt.Println("⚠ Health check makes a real API request and uses tokens.")
 
 		// Create provider instance
 		p, err := provider.GetOrCreate(providerCfg)

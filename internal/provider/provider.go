@@ -16,20 +16,11 @@ type Provider interface {
 	Type() string
 	Model() string
 	SupportsStreaming() bool
-	SupportsBatching() bool
 
 	// Lifecycle
 	Validate() error
 	HealthCheck(ctx context.Context) error
 	Close() error
-}
-
-// StreamingProvider is the interface for providers that support streaming
-type StreamingProvider interface {
-	Provider
-
-	// GenerateStream creates a streaming completion
-	GenerateStream(ctx context.Context, req GenerationRequest) (<-chan StreamChunk, error)
 }
 
 // Message represents a chat message
@@ -55,9 +46,6 @@ type GenerationRequest struct {
 
 	// TopP for nucleus sampling (0-1)
 	TopP float64 `json:"top_p,omitempty"`
-
-	// TopK for top-k sampling
-	TopK int `json:"top_k,omitempty"`
 
 	// StopSequences are strings that stop generation
 	StopSequences []string `json:"stop,omitempty"`

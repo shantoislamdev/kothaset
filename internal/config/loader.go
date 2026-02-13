@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/shantoislamdev/kothaset/internal/schema"
@@ -87,6 +88,19 @@ func LoadPublicConfig(configPath string) (*Config, error) {
 	// Trim context whitespace
 	cfg.Context = strings.TrimSpace(cfg.Context)
 
+	// Use a runtime default when concurrency is explicitly set to 0.
+	if cfg.Global.Concurrency == 0 {
+		cfg.Global.Concurrency = runtime.NumCPU()
+		if cfg.Global.Concurrency <= 0 {
+			cfg.Global.Concurrency = 4
+		}
+	}
+
+	// Enforce a concrete default output format.
+	if cfg.Global.OutputFormat == "" {
+		cfg.Global.OutputFormat = "jsonl"
+	}
+
 	return cfg, nil
 }
 
@@ -127,6 +141,18 @@ func LoadSecretsConfig(secretsPath string) (*SecretsConfig, error) {
 
 	if err := yaml.Unmarshal(data, secrets); err != nil {
 		return nil, fmt.Errorf("failed to parse secrets: %w", err)
+	}
+
+	for _, p := range secrets.Providers {
+		if p.Name == "" {
+			return nil, fmt.Errorf("provider name is required")
+		}
+		if p.Type == "" {
+			return nil, fmt.Errorf("provider %s type is required", p.Name)
+		}
+		if p.Type != "openai" {
+			return nil, fmt.Errorf("unsupported provider type: %s", p.Type)
+		}
 	}
 
 	// Resolve any secret references (env vars)
@@ -175,25 +201,11 @@ func (c *Config) Validate() error {
 		return fmt.Errorf("global.concurrency must be non-negative (0 = use default)")
 	}
 
-	if c.Global.OutputFormat != "" {
-		supported := map[string]bool{"jsonl": true}
-		if !supported[c.Global.OutputFormat] {
-			return fmt.Errorf("unsupported output_format: %s (supported: jsonl)", c.Global.OutputFormat)
-		}
+	if c.Global.OutputFormat == "" {
+		return fmt.Errorf("global.output_format is required (supported: jsonl)")
 	}
-
-	return nil
-}
-
-// SavePublicConfig saves the public configuration to kothaset.yaml
-func SavePublicConfig(cfg *Config, path string) error {
-	data, err := yaml.Marshal(cfg)
-	if err != nil {
-		return fmt.Errorf("failed to marshal config: %w", err)
-	}
-
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write config: %w", err)
+	if c.Global.OutputFormat != "jsonl" {
+		return fmt.Errorf("unsupported output_format: %s (supported: jsonl)", c.Global.OutputFormat)
 	}
 
 	return nil

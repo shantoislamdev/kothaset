@@ -67,17 +67,8 @@ func TestRegistry(t *testing.T) {
 		t.Error("Expected error for non-existent schema, got nil")
 	}
 
-	// Test ListByStyle
-	styleSchemas := r.ListByStyle(StyleInstruction)
-	found := false
-	for _, name := range styleSchemas {
-		if name == "instruction" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("ListByStyle failed to find 'instruction' schema")
+	if s.Style() != StyleInstruction {
+		t.Errorf("Expected style %s, got %s", StyleInstruction, s.Style())
 	}
 }
 

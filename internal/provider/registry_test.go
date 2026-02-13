@@ -13,14 +13,10 @@ type MockProvider struct {
 func (m *MockProvider) Generate(ctx context.Context, req GenerationRequest) (*GenerationResponse, error) {
 	return nil, nil
 }
-func (m *MockProvider) GenerateStream(ctx context.Context, req GenerationRequest) (<-chan StreamChunk, error) {
-	return nil, nil
-}
 func (m *MockProvider) Name() string                          { return m.name }
 func (m *MockProvider) Type() string                          { return "mock" }
 func (m *MockProvider) Model() string                         { return "mock-model" }
 func (m *MockProvider) SupportsStreaming() bool               { return false }
-func (m *MockProvider) SupportsBatching() bool                { return false }
 func (m *MockProvider) Validate() error                       { return nil }
 func (m *MockProvider) HealthCheck(ctx context.Context) error { return nil }
 func (m *MockProvider) Close() error                          { return nil }

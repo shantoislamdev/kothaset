@@ -22,12 +22,12 @@ global:
   provider: openai      # Default provider to use
   schema: instruction   # Default schema (instruction, chat, preference, classification)
   model: gpt-5.2        # Model to use (moved from provider config)
-  concurrency: 4        # Number of concurrent workers
+  concurrency: 4        # Number of concurrent workers (0 = auto: NumCPU, fallback 4)
   output_dir: ./output  # Default output directory (optional)
   cache_dir: .kothaset  # Cache directory (optional)
   timeout: 2m         # Request timeout (optional)
   max_tokens: 2048    # Max tokens per response (optional)
-  output_format: jsonl # Default output format (optional)
+  output_format: jsonl # Default output format (required if explicitly validated)
   checkpoint_every: 10  # Save checkpoint every N samples (default: 10, 0 to disable)
 
 # Context: Background info or persona injected into every prompt
@@ -40,11 +40,6 @@ instructions:
   - Be creative and diverse in topics and approaches
   - Vary the style and complexity of responses
   - Use clear and concise language
-
-logging:
-  level: info           # debug, info, warn, error
-  format: text          # text, json
-  file: kothaset.log    # Optional log file path
 
 
 
@@ -87,12 +82,13 @@ KothaSet resolves API keys in the following order:
 
 1. **`api_key: env.VAR_NAME`**: If `api_key` starts with `env.`, read from that environment variable (e.g., `env.OPENAI_API_KEY`).
 2. **Legacy env reference `${env:VAR_NAME}`**: Backward-compatible env reference format.
-3. **File reference `${file:/path/to/secret}`**: Reads the secret value from a file.
-4. **Raw `api_key` value**: Otherwise, the value is used directly (e.g., `sk-...`).
-5. **Default provider env fallback** (when `api_key` is empty):
+3. **Raw `api_key` value**: Otherwise, the value is used directly (e.g., `sk-...`).
+4. **Default provider env fallback** (when `api_key` is empty):
    - `openai` → `OPENAI_API_KEY`
    - `anthropic` → `ANTHROPIC_API_KEY`
    - `deepseek` → `DEEPSEEK_API_KEY`
+
+Any other `${...}` secret reference format (for example `${file:...}`) is rejected.
 
 If a provider key cannot be resolved during load, KothaSet logs a warning to stderr and continues loading. Validation still happens when the provider is used.
 

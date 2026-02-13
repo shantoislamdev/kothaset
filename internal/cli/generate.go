@@ -101,6 +101,9 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	if genInputFile == "" {
 		return fmt.Errorf("input file is required (use -i or --input)")
 	}
+	if hasParentPathTraversal(genOutput) {
+		return fmt.Errorf("output path must not contain '..': %s", genOutput)
+	}
 
 	// Validate generation parameters
 	if genCount <= 0 {
@@ -361,4 +364,16 @@ func formatDuration(d time.Duration) string {
 		return fmt.Sprintf("%dm%ds", int(d.Minutes()), int(d.Seconds())%60)
 	}
 	return fmt.Sprintf("%dh%dm", int(d.Hours()), int(d.Minutes())%60)
+}
+
+func hasParentPathTraversal(path string) bool {
+	parts := strings.FieldsFunc(path, func(r rune) bool {
+		return r == '/' || r == '\\'
+	})
+	for _, part := range parts {
+		if part == ".." {
+			return true
+		}
+	}
+	return false
 }

@@ -165,12 +165,6 @@ kothaset provider test openai
 
 ## Getting Help
 
-**Debug mode:**
-```yaml
-logging:
-  level: debug
-```
-
 **Dry run:**
 ```bash
 kothaset generate --dry-run -n 100 --seed 42

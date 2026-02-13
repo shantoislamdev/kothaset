@@ -155,8 +155,6 @@ These flags work with all commands:
 | Flag | Type | Description |
 |------|------|-------------|
 | `--config` | string | Config file path (default: `kothaset.yaml`) |
-| `--verbose`, `-v` | bool | Enable verbose output |
-| `--quiet`, `-q` | bool | Suppress non-essential output |
 | `--help` | bool | Show help |
 | `--version` | bool | Show version |
 
@@ -339,6 +337,7 @@ kothaset provider list
 # Test provider connectivity
 kothaset provider test openai
 # Testing provider openai (openai)...
+# ⚠ Health check makes a real API request and uses tokens.
 # ✓ Provider openai: connected
 #   Type:     openai
 #   Model:    gpt-5.2

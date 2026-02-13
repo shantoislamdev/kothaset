@@ -60,10 +60,6 @@ instructions:
   - Be creative and diverse in topics and approaches
   - Vary the style and complexity of responses
   - Use clear and concise language
-
-logging:
-  level: info
-  format: text
 `
 
 	if err := os.WriteFile(publicPath, []byte(publicContent), 0644); err != nil {

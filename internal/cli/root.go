@@ -21,8 +21,6 @@ var (
 
 	// Global flags
 	cfgFile string
-	verbose bool
-	quiet   bool
 )
 
 // rootCmd represents the base command when called without subcommands
@@ -61,8 +59,6 @@ func Execute() error {
 func init() {
 	// Global flags
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: kothaset.yaml)")
-	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable verbose output")
-	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "suppress non-essential output")
 
 	// Register subcommands
 	rootCmd.AddCommand(versionCmd)
@@ -100,14 +96,4 @@ func GetConfig() *config.Config {
 // GetSecrets returns the loaded secrets configuration
 func GetSecrets() *config.SecretsConfig {
 	return secrets
-}
-
-// IsVerbose returns whether verbose mode is enabled
-func IsVerbose() bool {
-	return verbose
-}
-
-// IsQuiet returns whether quiet mode is enabled
-func IsQuiet() bool {
-	return quiet
 }

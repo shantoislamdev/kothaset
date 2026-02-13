@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 	"reflect"
 	"sort"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -169,6 +170,74 @@ func TestGenerator_Run_ResumeTopicIndex(t *testing.T) {
 	expected := []int{50, 51, 52, 53, 54}
 	if !reflect.DeepEqual(indices, expected) {
 		t.Fatalf("expected sampled indices %v, got %v", expected, indices)
+	}
+}
+
+func TestGenerator_Run_ResumeSchemaMismatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	checkpointPath := filepath.Join(tmpDir, "resume.checkpoint")
+
+	cp := &Checkpoint{
+		SchemaVersion: checkpointVersion,
+		Timestamp:     time.Now(),
+		Config: Config{
+			Schema: "chat",
+		},
+		Completed: 2,
+	}
+	if err := SaveCheckpoint(cp, checkpointPath); err != nil {
+		t.Fatalf("failed to save checkpoint: %v", err)
+	}
+
+	cfg := DefaultConfig()
+	cfg.NumSamples = 5
+	cfg.Schema = "instruction"
+	cfg.ResumeFrom = checkpointPath
+	cfg.OutputPath = filepath.Join(tmpDir, "out.jsonl")
+
+	gen := New(cfg, &MockProvider{Response: `{"instruction":"this is long enough","output":"this is long enough output"}`}, schema.NewInstructionSchema())
+	gen.SetSampler(&MockSampler{Topic: "topic"})
+	gen.SetWriter(&MockWriter{})
+
+	_, err := gen.Run(context.Background())
+	if err == nil {
+		t.Fatalf("expected resume schema mismatch error")
+	}
+	if !strings.Contains(err.Error(), "resume schema mismatch") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestSaveCheckpoint_Overwrite(t *testing.T) {
+	tmpDir := t.TempDir()
+	path := filepath.Join(tmpDir, "checkpoint.json")
+
+	first := &Checkpoint{
+		SchemaVersion: checkpointVersion,
+		Timestamp:     time.Now(),
+		Config:        DefaultConfig(),
+		Completed:     1,
+	}
+	if err := SaveCheckpoint(first, path); err != nil {
+		t.Fatalf("first save failed: %v", err)
+	}
+
+	second := &Checkpoint{
+		SchemaVersion: checkpointVersion,
+		Timestamp:     time.Now(),
+		Config:        DefaultConfig(),
+		Completed:     2,
+	}
+	if err := SaveCheckpoint(second, path); err != nil {
+		t.Fatalf("second save failed: %v", err)
+	}
+
+	got, err := LoadCheckpoint(path)
+	if err != nil {
+		t.Fatalf("load failed: %v", err)
+	}
+	if got.Completed != 2 {
+		t.Fatalf("expected overwritten checkpoint completed=2, got %d", got.Completed)
 	}
 }
 

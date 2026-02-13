@@ -19,9 +19,6 @@ type Config struct {
 
 	// Instructions is a list of generation instructions (one per line)
 	Instructions []string `yaml:"instructions,omitempty" json:"instructions,omitempty"`
-
-	// Logging configuration
-	Logging LoggingConfig `yaml:"logging,omitempty" json:"logging,omitempty"`
 }
 
 // GlobalConfig contains global settings
@@ -99,18 +96,6 @@ type RateLimitConfig struct {
 	TokensPerMinute int `yaml:"tokens_per_minute,omitempty" json:"tokens_per_minute,omitempty"`
 }
 
-// LoggingConfig contains logging settings
-type LoggingConfig struct {
-	// Level is the log level (debug, info, warn, error)
-	Level string `yaml:"level" json:"level"`
-
-	// Format is the log format (text, json)
-	Format string `yaml:"format" json:"format"`
-
-	// File is an optional log file path
-	File string `yaml:"file,omitempty" json:"file,omitempty"`
-}
-
 // Duration is a wrapper around time.Duration for YAML unmarshaling
 type Duration struct {
 	time.Duration
@@ -164,10 +149,6 @@ func DefaultConfig() *Config {
 			Timeout:         Duration{time.Minute * 2},
 			OutputFormat:    "jsonl",
 			CheckpointEvery: 10,
-		},
-		Logging: LoggingConfig{
-			Level:  "info",
-			Format: "text",
 		},
 	}
 }

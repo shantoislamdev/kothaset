@@ -54,16 +54,13 @@ type Config struct {
 	SystemPrompt string  `yaml:"system_prompt,omitempty" json:"system_prompt,omitempty"`
 	Temperature  float64 `yaml:"temperature" json:"temperature"`
 	MaxTokens    int     `yaml:"max_tokens" json:"max_tokens"`
-	TopP         float64 `yaml:"top_p,omitempty" json:"top_p,omitempty"`
 
 	// Reproducibility
-	Seed          *int64 `yaml:"seed,omitempty" json:"seed,omitempty"`
-	RandomSeed    bool   `yaml:"random_seed,omitempty" json:"random_seed,omitempty"` // Generate new random seed per request
-	Deterministic bool   `yaml:"deterministic" json:"deterministic"`
+	Seed       *int64 `yaml:"seed,omitempty" json:"seed,omitempty"`
+	RandomSeed bool   `yaml:"random_seed,omitempty" json:"random_seed,omitempty"` // Generate new random seed per request
 
 	// Concurrency
 	Workers   int `yaml:"workers" json:"workers"`
-	BatchSize int `yaml:"batch_size" json:"batch_size"`
 	RateLimit int `yaml:"rate_limit" json:"rate_limit"`
 
 	// Resilience
@@ -74,9 +71,6 @@ type Config struct {
 
 	// Input file for topics/seeds (required)
 	InputFile string `yaml:"input_file" json:"input_file"`
-
-	// Variables for prompt templates
-	Variables map[string]any `yaml:"variables,omitempty" json:"variables,omitempty"`
 
 	// Context from context.yaml (free-form paragraphs)
 	UserContext     string `yaml:"user_context,omitempty" json:"user_context,omitempty"`
@@ -186,6 +180,12 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		checkpoint, err := LoadCheckpoint(g.config.ResumeFrom)
 		if err != nil {
 			return nil, fmt.Errorf("failed to load checkpoint: %w", err)
+		}
+		if checkpoint.SchemaVersion != 0 && checkpoint.SchemaVersion != checkpointVersion {
+			return nil, fmt.Errorf("unsupported checkpoint schema version: %d", checkpoint.SchemaVersion)
+		}
+		if checkpoint.Config.Schema != "" && checkpoint.Config.Schema != g.config.Schema {
+			return nil, fmt.Errorf("resume schema mismatch: checkpoint=%s current=%s", checkpoint.Config.Schema, g.config.Schema)
 		}
 		// Resume from checkpoint count - samples already written to output file
 		atomic.StoreInt32(&g.completed, int32(checkpoint.Completed))
@@ -359,10 +359,6 @@ func (g *Generator) retryDelay(attempt int, err error) time.Duration {
 
 	delay := base
 	for i := 1; i < attempt; i++ {
-		if delay >= 30*time.Second {
-			delay = 30 * time.Second
-			break
-		}
 		delay *= 2
 		if delay > 30*time.Second {
 			delay = 30 * time.Second
@@ -382,7 +378,6 @@ func (g *Generator) retryDelay(attempt int, err error) time.Duration {
 func (g *Generator) generateSample(ctx context.Context, index int) *workerResult {
 	// Build prompt options
 	opts := schema.PromptOptions{
-		Variables:       g.config.Variables,
 		UserContext:     g.config.UserContext,
 		UserInstruction: g.config.UserInstruction,
 	}
@@ -420,7 +415,6 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 		SystemPrompt: g.config.SystemPrompt,
 		Temperature:  g.config.Temperature,
 		MaxTokens:    g.config.MaxTokens,
-		TopP:         g.config.TopP,
 		Seed:         requestSeed,
 	}
 
@@ -494,7 +488,10 @@ func (g *Generator) reportProgress(startTime time.Time) {
 	tokens := int(atomic.LoadInt64(&g.tokensUsed))
 
 	elapsed := time.Since(startTime)
-	samplesPS := float64(completed) / elapsed.Seconds()
+	var samplesPS float64
+	if elapsed.Seconds() > 0 {
+		samplesPS = float64(completed) / elapsed.Seconds()
+	}
 
 	remaining := g.config.NumSamples - completed - failed
 	var eta time.Duration
@@ -516,11 +513,12 @@ func (g *Generator) reportProgress(startTime time.Time) {
 
 func (g *Generator) saveCheckpoint() error {
 	cp := &Checkpoint{
-		Timestamp:  time.Now(),
-		Config:     g.config,
-		Completed:  int(atomic.LoadInt32(&g.completed)),
-		Failed:     int(atomic.LoadInt32(&g.failed)),
-		TokensUsed: int(atomic.LoadInt64(&g.tokensUsed)),
+		SchemaVersion: checkpointVersion,
+		Timestamp:     time.Now(),
+		Config:        g.config,
+		Completed:     int(atomic.LoadInt32(&g.completed)),
+		Failed:        int(atomic.LoadInt32(&g.failed)),
+		TokensUsed:    int(atomic.LoadInt64(&g.tokensUsed)),
 	}
 
 	return SaveCheckpoint(cp, getCheckpointPath(g.config.OutputPath))
@@ -528,12 +526,15 @@ func (g *Generator) saveCheckpoint() error {
 
 // Checkpoint represents saved generation state
 type Checkpoint struct {
-	Timestamp  time.Time `json:"timestamp"`
-	Config     Config    `json:"config"`
-	Completed  int       `json:"completed"`
-	Failed     int       `json:"failed"`
-	TokensUsed int       `json:"tokens_used"`
+	SchemaVersion int       `json:"schema_version"`
+	Timestamp     time.Time `json:"timestamp"`
+	Config        Config    `json:"config"`
+	Completed     int       `json:"completed"`
+	Failed        int       `json:"failed"`
+	TokensUsed    int       `json:"tokens_used"`
 }
+
+const checkpointVersion = 1
 
 // SaveCheckpoint saves a checkpoint to disk
 func SaveCheckpoint(cp *Checkpoint, path string) error {
@@ -552,6 +553,7 @@ func SaveCheckpoint(cp *Checkpoint, path string) error {
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
 		return err
 	}
+	_ = os.Remove(path)
 	return os.Rename(tmpPath, path)
 }
 

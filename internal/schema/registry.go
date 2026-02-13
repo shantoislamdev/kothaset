@@ -76,20 +76,6 @@ func (r *Registry) List() []string {
 	return names
 }
 
-// ListByStyle returns schemas matching a specific style
-func (r *Registry) ListByStyle(style DatasetStyle) []string {
-	r.mu.RLock()
-	defer r.mu.RUnlock()
-
-	names := make([]string, 0)
-	for name, schema := range r.schemas {
-		if schema.Style() == style {
-			names = append(names, name)
-		}
-	}
-	return names
-}
-
 // Global registry functions
 
 // Register adds a schema to the global registry
@@ -105,9 +91,4 @@ func Get(name string) (Schema, error) {
 // List returns all schemas in the global registry
 func List() []string {
 	return globalRegistry.List()
-}
-
-// ListByStyle returns schemas matching a style
-func ListByStyle(style DatasetStyle) []string {
-	return globalRegistry.ListByStyle(style)
 }

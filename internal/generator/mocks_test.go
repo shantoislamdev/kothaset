@@ -50,7 +50,6 @@ func (m *MockProvider) Name() string                          { return "mock" }
 func (m *MockProvider) Type() string                          { return "mock" }
 func (m *MockProvider) Model() string                         { return "mock-model" }
 func (m *MockProvider) SupportsStreaming() bool               { return false }
-func (m *MockProvider) SupportsBatching() bool                { return false }
 func (m *MockProvider) Validate() error                       { return nil }
 func (m *MockProvider) HealthCheck(ctx context.Context) error { return nil }
 func (m *MockProvider) Close() error                          { return nil }

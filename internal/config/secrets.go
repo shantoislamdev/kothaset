@@ -42,8 +42,8 @@ func resolveAPIKey(p *ProviderConfig) (string, error) {
 	}
 
 	// Check for legacy ${env:VAR_NAME} format
-	if isSecretRef(apiKey) {
-		return resolveSecretRef(apiKey)
+	if strings.HasPrefix(apiKey, "${") && strings.HasSuffix(apiKey, "}") {
+		return resolveLegacyEnvRef(apiKey)
 	}
 
 	// Raw API key (used as-is)
@@ -66,63 +66,20 @@ func resolveAPIKey(p *ProviderConfig) (string, error) {
 	return "", fmt.Errorf("no API key found for provider %s", p.Name)
 }
 
-// isSecretRef checks if a string looks like a secret reference
-func isSecretRef(s string) bool {
-	return strings.HasPrefix(s, "${") && strings.HasSuffix(s, "}")
-}
-
-// resolveSecretRef resolves a secret reference string
-// Format: ${type:value}
-// Examples:
-//   - ${env:MY_API_KEY}
-//   - ${file:/path/to/secret}
-func resolveSecretRef(ref string) (string, error) {
+// resolveLegacyEnvRef resolves legacy ${env:VAR_NAME} references.
+func resolveLegacyEnvRef(ref string) (string, error) {
 	// Remove ${ and }
 	inner := ref[2 : len(ref)-1]
 
 	parts := strings.SplitN(inner, ":", 2)
-	if len(parts) != 2 {
-		return "", fmt.Errorf("invalid secret reference format: %s", ref)
+	if len(parts) != 2 || parts[0] != "env" {
+		return "", fmt.Errorf("unsupported secret reference: %s (only env vars are supported)", ref)
 	}
 
-	secretType := parts[0]
-	value := parts[1]
-
-	switch secretType {
-	case "env":
-		envValue := os.Getenv(value)
-		if envValue == "" {
-			return "", fmt.Errorf("environment variable not set: %s", value)
-		}
-		return envValue, nil
-
-	case "file":
-		data, err := os.ReadFile(value)
-		if err != nil {
-			return "", fmt.Errorf("failed to read secret file: %w", err)
-		}
-		return strings.TrimSpace(string(data)), nil
-
-	case "plain":
-		return value, nil
-
-	default:
-		return "", fmt.Errorf("unknown secret type: %s", secretType)
+	envVar := parts[1]
+	envValue := os.Getenv(envVar)
+	if envValue == "" {
+		return "", fmt.Errorf("environment variable not set: %s", envVar)
 	}
-}
-
-// ResolveSecret is a public helper to resolve a single secret reference
-func ResolveSecret(ref string) (string, error) {
-	if !isSecretRef(ref) {
-		return ref, nil
-	}
-	return resolveSecretRef(ref)
-}
-
-// MaskSecret returns a masked version of a secret for display
-func MaskSecret(secret string) string {
-	if len(secret) <= 8 {
-		return "********"
-	}
-	return secret[:4] + "..." + secret[len(secret)-4:]
+	return envValue, nil
 }

@@ -3,7 +3,6 @@ package schema
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -17,7 +16,6 @@ const (
 	StyleChat           DatasetStyle = "chat"           // Multi-turn conversations
 	StylePreference     DatasetStyle = "preference"     // Chosen/rejected for DPO/RLHF
 	StyleClassification DatasetStyle = "classification" // Text + label(s)
-	StyleCompletion     DatasetStyle = "completion"     // Prompt + completion
 )
 
 // Schema defines the interface for dataset schemas
@@ -182,20 +180,6 @@ func (s *Sample) Set(field string, value any) {
 		s.Fields = make(map[string]any)
 	}
 	s.Fields[field] = value
-}
-
-// ToJSON converts the sample to JSON
-func (s *Sample) ToJSON() ([]byte, error) {
-	return json.Marshal(s)
-}
-
-// ToJSONL converts the sample to JSONL format (single line)
-func (s *Sample) ToJSONL() ([]byte, error) {
-	data, err := json.Marshal(s.Fields)
-	if err != nil {
-		return nil, err
-	}
-	return append(data, '\n'), nil
 }
 
 // SchemaError represents a schema-related error

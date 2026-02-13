@@ -14,7 +14,7 @@
 - **Streaming Output** — Real-time generation with progress tracking
 - **Resumable** — Atomic checkpointing, never lose progress
 - **JSONL Output** — Streaming writes in standard JSONL format
-- **Reproducible** — Required seed for deterministic LLM generation
+- **Reproducible** — Optional fixed seed for deterministic-style runs
 - **Diversity Control** — Input files for sequential topic coverage
 - **Validation** — Validate configs, schemas, datasets, and provider connectivity
 

@@ -5,7 +5,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -14,6 +13,8 @@ import (
 	"github.com/openai/openai-go/v3/option"
 	"github.com/openai/openai-go/v3/shared"
 )
+
+const maxResponseContentBytes = 1 << 20
 
 // OpenAIProvider implements the Provider interface for OpenAI and compatible APIs
 type OpenAIProvider struct {
@@ -105,6 +106,10 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 	}
 
 	choice := resp.Choices[0]
+	if len(choice.Message.Content) > maxResponseContentBytes {
+		return nil, NewValidationError("response content too large (max 1MB)")
+	}
+
 	return &GenerationResponse{
 		Content:      choice.Message.Content,
 		FinishReason: string(choice.FinishReason),
@@ -117,59 +122,6 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 		RequestID: resp.ID,
 		Latency:   time.Since(start),
 	}, nil
-}
-
-// GenerateStream implements Provider.GenerateStream
-func (p *OpenAIProvider) GenerateStream(ctx context.Context, req GenerationRequest) (<-chan StreamChunk, error) {
-	messages := convertMessages(req)
-
-	// Build request parameters
-	params := openai.ChatCompletionNewParams{
-		Model:       openai.ChatModel(p.model),
-		Messages:    messages,
-		Temperature: openai.Float(req.Temperature),
-	}
-
-	if req.MaxTokens > 0 {
-		params.MaxTokens = openai.Int(int64(req.MaxTokens))
-	}
-
-	// Create stream
-	stream := p.client.Chat.Completions.NewStreaming(ctx, params)
-
-	// Create output channel
-	out := make(chan StreamChunk, 100)
-
-	go func() {
-		defer close(out)
-
-		for stream.Next() {
-			evt := stream.Current()
-			if len(evt.Choices) > 0 {
-				choice := evt.Choices[0]
-				chunk := StreamChunk{
-					Content: choice.Delta.Content,
-				}
-				if choice.FinishReason != "" {
-					chunk.Done = true
-					chunk.FinishReason = string(choice.FinishReason)
-				}
-				out <- chunk
-			}
-		}
-
-		if err := stream.Err(); err != nil {
-			if errors.Is(err, io.EOF) || errors.Is(err, context.Canceled) {
-				out <- StreamChunk{Done: true, FinishReason: "stop"}
-			} else {
-				out <- StreamChunk{Done: true, Error: p.convertError(err)}
-			}
-		} else {
-			out <- StreamChunk{Done: true, FinishReason: "stop"}
-		}
-	}()
-
-	return out, nil
 }
 
 // Name implements Provider.Name
@@ -192,11 +144,6 @@ func (p *OpenAIProvider) SupportsStreaming() bool {
 	return true
 }
 
-// SupportsBatching implements Provider.SupportsBatching
-func (p *OpenAIProvider) SupportsBatching() bool {
-	return false // OpenAI batch API has different semantics
-}
-
 // Validate implements Provider.Validate
 func (p *OpenAIProvider) Validate() error {
 	if p.apiKey == "" {
@@ -210,6 +157,7 @@ func (p *OpenAIProvider) Validate() error {
 
 // HealthCheck implements Provider.HealthCheck
 func (p *OpenAIProvider) HealthCheck(ctx context.Context) error {
+	// Health checks consume real tokens because this calls the API.
 	_, err := p.Generate(ctx, GenerationRequest{
 		Messages:  []Message{{Role: "user", Content: "hi"}},
 		MaxTokens: 1,

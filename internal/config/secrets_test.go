@@ -57,7 +57,14 @@ func TestResolveAPIKey(t *testing.T) {
 			apiKey:     "${invalid}",
 			want:       "",
 			wantErr:    true,
-			errContain: "invalid secret reference format",
+			errContain: "only env vars are supported",
+		},
+		{
+			name:       "legacy file secret ref is rejected",
+			apiKey:     "${file:/etc/passwd}",
+			want:       "",
+			wantErr:    true,
+			errContain: "only env vars are supported",
 		},
 		{
 			name:     "empty api key uses default env var",
@@ -128,22 +135,5 @@ providers:
 
 	if secrets.Providers[0].APIKey != "my-secret-key" {
 		t.Errorf("Expected api_key 'my-secret-key', got '%s'", secrets.Providers[0].APIKey)
-	}
-}
-
-func TestMaskSecret(t *testing.T) {
-	tests := []struct {
-		input string
-		want  string
-	}{
-		{"1234567890", "1234...7890"},
-		{"short", "********"},
-		{"12345678", "********"},
-	}
-
-	for _, tt := range tests {
-		if got := MaskSecret(tt.input); got != tt.want {
-			t.Errorf("MaskSecret(%s) = %s, want %s", tt.input, got, tt.want)
-		}
 	}
 }
