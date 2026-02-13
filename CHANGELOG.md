@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## [1.2.0] - 2026-02-13
+
+### Added
+- **CI Hardening**: CI now runs `go vet`, `govulncheck`, and race tests (`go test -race`) for improved quality and security validation.
+
+### Changed
+- **Config Alignment**: Configuration behavior and documentation were aligned and hardened (validation/parsing improvements, clearer schema/provider handling).
+- **Generator Robustness**: Generation loop and JSONL hot path were optimized and made more resilient; output writes are more durable.
+- **Docs**: Updated and clarified docs around checkpoint resume, retries, write behavior, and provider health-check behavior.
+
+### Removed
+- **Output Formats**: Parquet and HuggingFace output writers were removed; JSONL is now the only supported output format.
+
 ## [1.1.1] - 2026-02-12
 
 ### Changed

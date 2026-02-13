@@ -1,6 +1,6 @@
 {
   "name": "kothaset",
-  "version": "1.1.1",
+  "version": "1.2.0",
   "description": "High-quality dataset generation CLI for LLM training",
   "author": "Shanto Islam <shantoislamdev@gmail.com>",
   "license": "Apache-2.0",
