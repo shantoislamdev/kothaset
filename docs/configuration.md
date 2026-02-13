@@ -85,8 +85,6 @@ KothaSet resolves API keys in the following order:
 3. **Raw `api_key` value**: Otherwise, the value is used directly (e.g., `sk-...`).
 4. **Default provider env fallback** (when `api_key` is empty):
    - `openai` → `OPENAI_API_KEY`
-   - `anthropic` → `ANTHROPIC_API_KEY`
-   - `deepseek` → `DEEPSEEK_API_KEY`
 
 Any other `${...}` secret reference format (for example `${file:...}`) is rejected.
 
@@ -101,8 +99,7 @@ If a provider key cannot be resolved during load, KothaSet logs a warning to std
 You can also use environment variables for API keys, which is recommended for CI/CD environments.
 
 - `OPENAI_API_KEY`
-- `ANTHROPIC_API_KEY`
-- `DEEPSEEK_API_KEY`
+- Any custom variable referenced as `env.<NAME>` in `.secrets.yaml`
 
 In `.secrets.yaml`, reference them using the `env.` prefix:
 

@@ -17,21 +17,6 @@ const (
 	SecretsConfigFile = ".secrets.yaml"
 )
 
-// Load loads configuration from kothaset.yaml and .secrets.yaml
-func Load() (*Config, *SecretsConfig, error) {
-	cfg, err := LoadPublicConfig("")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	secrets, err := LoadSecretsConfig("")
-	if err != nil {
-		return nil, nil, err
-	}
-
-	return cfg, secrets, nil
-}
-
 // LoadPublicConfig loads the public kothaset.yaml configuration
 func LoadPublicConfig(configPath string) (*Config, error) {
 	// Start with defaults

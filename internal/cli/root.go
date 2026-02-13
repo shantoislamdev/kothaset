@@ -32,7 +32,7 @@ using large language models as teacher models. These datasets are designed
 for training and fine-tuning smaller models (0.6B-32B parameters).
 
 Features:
-  • Multiple LLM providers (OpenAI, Anthropic, custom endpoints)
+  • Multiple LLM providers (OpenAI and OpenAI-compatible endpoints)
   • Flexible dataset schemas (instruction, chat, preference, classification)
   • Resumable generation with checkpointing
   • Seed-based generation for diversity
@@ -86,14 +86,4 @@ func initConfig() error {
 	}
 
 	return nil
-}
-
-// GetConfig returns the loaded configuration
-func GetConfig() *config.Config {
-	return cfg
-}
-
-// GetSecrets returns the loaded secrets configuration
-func GetSecrets() *config.SecretsConfig {
-	return secrets
 }

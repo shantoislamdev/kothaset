@@ -1,6 +1,10 @@
 package cli
 
-import "testing"
+import (
+	"os"
+	"path/filepath"
+	"testing"
+)
 
 func TestHasExtension_CaseInsensitive(t *testing.T) {
 	tests := []struct {
@@ -40,5 +44,28 @@ func TestDetectFormat_CaseInsensitive(t *testing.T) {
 		if got := detectFormat(tc.path); got != tc.want {
 			t.Fatalf("detectFormat(%q) = %q, want %q", tc.path, got, tc.want)
 		}
+	}
+}
+
+func TestValidateConfigCmd_LoadsPathArgument(t *testing.T) {
+	origCfg := cfg
+	defer func() { cfg = origCfg }()
+	cfg = nil
+
+	tmpDir := t.TempDir()
+	configPath := filepath.Join(tmpDir, "kothaset.yaml")
+	content := []byte(`version: "1.0"
+global:
+  provider: openai
+  schema: instruction
+  model: gpt-5.2
+  output_format: jsonl
+`)
+	if err := os.WriteFile(configPath, content, 0o644); err != nil {
+		t.Fatalf("failed to write temp config: %v", err)
+	}
+
+	if err := validateConfigCmd.RunE(validateConfigCmd, []string{configPath}); err != nil {
+		t.Fatalf("expected config path validation to pass, got: %v", err)
 	}
 }

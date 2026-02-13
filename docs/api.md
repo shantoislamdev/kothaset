@@ -92,7 +92,7 @@ kothaset generate -n 1000 -i topics.txt -o dataset.jsonl --timeout 30m
 
 # Resume interrupted generation (checkpoint stored in .kothaset/)
 # Use the exact checkpoint filename present in `.kothaset/`
-kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint -i topics.txt
+kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint
 
 # Dry run to validate config
 kothaset generate --dry-run -n 100 -i topics.txt
@@ -201,7 +201,6 @@ KothaSet automatically saves checkpoints during generation:
 |----------|-------------|
 | `OPENAI_API_KEY` | OpenAI API key |
 | `DEEPSEEK_API_KEY` | DeepSeek API key |
-| `KOTHASET_CONFIG` | Custom config file path |
 
 ---
 

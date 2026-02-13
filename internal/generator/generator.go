@@ -10,6 +10,7 @@ import (
 	"math/rand"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -21,10 +22,14 @@ import (
 	"github.com/shantoislamdev/kothaset/internal/schema"
 )
 
-const cacheDir = ".kothaset"
+const defaultCacheDir = ".kothaset"
 
 // getCheckpointPath returns the path for the checkpoint file in the cache directory
-func getCheckpointPath(outputPath string) string {
+func getCheckpointPath(outputPath, cacheRoot string) string {
+	if strings.TrimSpace(cacheRoot) == "" {
+		cacheRoot = defaultCacheDir
+	}
+
 	// Use absolute path to avoid collisions between same-named files in different dirs
 	absPath, err := filepath.Abs(outputPath)
 	if err != nil {
@@ -35,7 +40,7 @@ func getCheckpointPath(outputPath string) string {
 	safeName := strings.ReplaceAll(absPath, string(filepath.Separator), "_")
 	safeName = strings.ReplaceAll(safeName, ":", "_")
 	checkpointFile := safeName + ".checkpoint"
-	return filepath.Join(cacheDir, checkpointFile)
+	return filepath.Join(cacheRoot, checkpointFile)
 }
 
 // Config contains all settings for dataset generation
@@ -67,12 +72,13 @@ type Config struct {
 	MaxRetries      int           `yaml:"max_retries" json:"max_retries"`
 	RetryDelay      time.Duration `yaml:"retry_delay" json:"retry_delay"`
 	CheckpointEvery int           `yaml:"checkpoint_every" json:"checkpoint_every"`
+	CacheDir        string        `yaml:"cache_dir,omitempty" json:"cache_dir,omitempty"`
 	ResumeFrom      string        `yaml:"resume_from,omitempty" json:"resume_from,omitempty"`
 
 	// Input file for topics/seeds (required)
 	InputFile string `yaml:"input_file" json:"input_file"`
 
-	// Context from context.yaml (free-form paragraphs)
+	// Context from kothaset.yaml (free-form paragraphs)
 	UserContext     string `yaml:"user_context,omitempty" json:"user_context,omitempty"`
 	UserInstruction string `yaml:"user_instruction,omitempty" json:"user_instruction,omitempty"`
 }
@@ -89,6 +95,7 @@ func DefaultConfig() Config {
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,
 		CheckpointEvery: 10,
+		CacheDir:        defaultCacheDir,
 	}
 }
 
@@ -133,6 +140,7 @@ type Generator struct {
 	completed  int32
 	failed     int32
 	tokensUsed int64
+	inProgress int32
 
 	// Callbacks
 	onProgress ProgressCallback
@@ -187,6 +195,27 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		if checkpoint.Config.Schema != "" && checkpoint.Config.Schema != g.config.Schema {
 			return nil, fmt.Errorf("resume schema mismatch: checkpoint=%s current=%s", checkpoint.Config.Schema, g.config.Schema)
 		}
+		if checkpoint.Config.Provider != "" && g.config.Provider != "" && checkpoint.Config.Provider != g.config.Provider {
+			return nil, fmt.Errorf("resume provider mismatch: checkpoint=%s current=%s", checkpoint.Config.Provider, g.config.Provider)
+		}
+		if checkpoint.Config.Model != "" && g.config.Model != "" && checkpoint.Config.Model != g.config.Model {
+			return nil, fmt.Errorf("resume model mismatch: checkpoint=%s current=%s", checkpoint.Config.Model, g.config.Model)
+		}
+		if checkpoint.Config.InputFile != "" && g.config.InputFile != "" && checkpoint.Config.InputFile != g.config.InputFile {
+			return nil, fmt.Errorf("resume input mismatch: checkpoint=%s current=%s", checkpoint.Config.InputFile, g.config.InputFile)
+		}
+		if checkpoint.Config.OutputPath != "" && g.config.OutputPath != "" {
+			samePath, pathErr := pathsEqual(checkpoint.Config.OutputPath, g.config.OutputPath)
+			if pathErr != nil {
+				return nil, fmt.Errorf("failed to compare checkpoint output path with current output path: %w", pathErr)
+			}
+			if !samePath {
+				return nil, fmt.Errorf("resume output mismatch: checkpoint=%s current=%s", checkpoint.Config.OutputPath, g.config.OutputPath)
+			}
+		}
+		if checkpoint.Completed > g.config.NumSamples {
+			return nil, fmt.Errorf("resume count mismatch: checkpoint completed=%d exceeds requested num_samples=%d", checkpoint.Completed, g.config.NumSamples)
+		}
 		// Resume from checkpoint count - samples already written to output file
 		atomic.StoreInt32(&g.completed, int32(checkpoint.Completed))
 		atomic.StoreInt32(&g.failed, int32(checkpoint.Failed))
@@ -218,6 +247,9 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	// Calculate remaining samples from a stable base for this run
 	baseCompleted := int(atomic.LoadInt32(&g.completed))
 	remaining := g.config.NumSamples - baseCompleted
+	if remaining < 0 {
+		return nil, fmt.Errorf("invalid generation state: completed=%d exceeds requested num_samples=%d", baseCompleted, g.config.NumSamples)
+	}
 
 	// Create worker pool
 	pool := NewWorkerPool(g.config.Workers)
@@ -292,6 +324,8 @@ loop:
 		go func(idx int) {
 			defer wg.Done()
 			defer pool.Release()
+			atomic.AddInt32(&g.inProgress, 1)
+			defer atomic.AddInt32(&g.inProgress, -1)
 
 			result := g.generateSample(ctx, idx)
 			results <- result
@@ -319,8 +353,9 @@ loop:
 		FailedCount:  int(atomic.LoadInt32(&g.failed)),
 		TotalTokens:  tokens,
 
-		Duration:   duration,
-		OutputPath: g.config.OutputPath,
+		Duration:       duration,
+		OutputPath:     g.config.OutputPath,
+		CheckpointPath: g.checkpointPath(),
 	}
 
 	if writeErr != nil {
@@ -462,6 +497,7 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 		Provider:    g.provider.Name(),
 		Model:       resp.Model,
 		Temperature: g.config.Temperature,
+		Seed:        derefSeed(requestSeed),
 		TokensUsed:  resp.Usage.TotalTokens,
 		Latency:     resp.Latency,
 		Topic:       opts.Topic,
@@ -486,6 +522,7 @@ func (g *Generator) reportProgress(startTime time.Time) {
 	completed := int(atomic.LoadInt32(&g.completed))
 	failed := int(atomic.LoadInt32(&g.failed))
 	tokens := int(atomic.LoadInt64(&g.tokensUsed))
+	inProgress := int(atomic.LoadInt32(&g.inProgress))
 
 	elapsed := time.Since(startTime)
 	var samplesPS float64
@@ -503,12 +540,21 @@ func (g *Generator) reportProgress(startTime time.Time) {
 		Total:      g.config.NumSamples,
 		Completed:  completed,
 		Failed:     failed,
+		InProgress: inProgress,
 		Percentage: float64(completed) / float64(g.config.NumSamples) * 100,
 		TokensUsed: tokens,
 
 		ETA:       eta,
 		SamplesPS: samplesPS,
 	})
+}
+
+func (g *Generator) checkpointPath() string {
+	cacheDir := g.config.CacheDir
+	if strings.TrimSpace(cacheDir) == "" {
+		cacheDir = defaultCacheDir
+	}
+	return getCheckpointPath(g.config.OutputPath, cacheDir)
 }
 
 func (g *Generator) saveCheckpoint() error {
@@ -521,7 +567,7 @@ func (g *Generator) saveCheckpoint() error {
 		TokensUsed:    int(atomic.LoadInt64(&g.tokensUsed)),
 	}
 
-	return SaveCheckpoint(cp, getCheckpointPath(g.config.OutputPath))
+	return SaveCheckpoint(cp, g.checkpointPath())
 }
 
 // Checkpoint represents saved generation state
@@ -538,9 +584,14 @@ const checkpointVersion = 1
 
 // SaveCheckpoint saves a checkpoint to disk
 func SaveCheckpoint(cp *Checkpoint, path string) error {
-	// Ensure cache directory exists
-	if err := os.MkdirAll(cacheDir, 0755); err != nil {
-		return fmt.Errorf("failed to create cache directory: %w", err)
+	// Ensure target directory exists
+	dir := filepath.Dir(path)
+	if dir == "" || dir == "." {
+		dir = defaultCacheDir
+		path = filepath.Join(dir, filepath.Base(path))
+	}
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("failed to create checkpoint directory: %w", err)
 	}
 
 	data, err := json.MarshalIndent(cp, "", "  ")
@@ -548,13 +599,39 @@ func SaveCheckpoint(cp *Checkpoint, path string) error {
 		return err
 	}
 
-	// Write atomically
+	// Write to a temporary file first.
 	tmpPath := path + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
 		return err
 	}
-	_ = os.Remove(path)
-	return os.Rename(tmpPath, path)
+	if tmpFile, err := os.OpenFile(tmpPath, os.O_RDWR, 0); err == nil {
+		_ = tmpFile.Sync()
+		_ = tmpFile.Close()
+	}
+
+	// On Unix, rename replaces atomically. On Windows, rename fails if destination exists.
+	if runtime.GOOS != "windows" {
+		return os.Rename(tmpPath, path)
+	}
+
+	backupPath := path + ".bak"
+	_ = os.Remove(backupPath)
+	if _, err := os.Stat(path); err == nil {
+		if err := os.Rename(path, backupPath); err != nil {
+			_ = os.Remove(tmpPath)
+			return err
+		}
+	}
+
+	if err := os.Rename(tmpPath, path); err != nil {
+		if _, statErr := os.Stat(backupPath); statErr == nil {
+			_ = os.Rename(backupPath, path)
+		}
+		return err
+	}
+
+	_ = os.Remove(backupPath)
+	return nil
 }
 
 // LoadCheckpoint loads a checkpoint from disk
@@ -569,4 +646,23 @@ func LoadCheckpoint(path string) (*Checkpoint, error) {
 		return nil, err
 	}
 	return &cp, nil
+}
+
+func pathsEqual(a, b string) (bool, error) {
+	aAbs, err := filepath.Abs(a)
+	if err != nil {
+		return false, err
+	}
+	bAbs, err := filepath.Abs(b)
+	if err != nil {
+		return false, err
+	}
+	return filepath.Clean(aAbs) == filepath.Clean(bAbs), nil
+}
+
+func derefSeed(seed *int64) int64 {
+	if seed == nil {
+		return 0
+	}
+	return *seed
 }

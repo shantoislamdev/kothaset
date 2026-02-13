@@ -208,6 +208,78 @@ func TestGenerator_Run_ResumeSchemaMismatch(t *testing.T) {
 	}
 }
 
+func TestGenerator_Run_ResumeOutputMismatch(t *testing.T) {
+	tmpDir := t.TempDir()
+	checkpointPath := filepath.Join(tmpDir, "resume.checkpoint")
+
+	cp := &Checkpoint{
+		SchemaVersion: checkpointVersion,
+		Timestamp:     time.Now(),
+		Config: Config{
+			Schema:     "instruction",
+			OutputPath: filepath.Join(tmpDir, "one.jsonl"),
+		},
+		Completed: 2,
+	}
+	if err := SaveCheckpoint(cp, checkpointPath); err != nil {
+		t.Fatalf("failed to save checkpoint: %v", err)
+	}
+
+	cfg := DefaultConfig()
+	cfg.NumSamples = 5
+	cfg.Schema = "instruction"
+	cfg.ResumeFrom = checkpointPath
+	cfg.OutputPath = filepath.Join(tmpDir, "two.jsonl")
+
+	gen := New(cfg, &MockProvider{Response: `{"instruction":"this is long enough","output":"this is long enough output"}`}, schema.NewInstructionSchema())
+	gen.SetSampler(&MockSampler{Topic: "topic"})
+	gen.SetWriter(&MockWriter{})
+
+	_, err := gen.Run(context.Background())
+	if err == nil {
+		t.Fatalf("expected resume output mismatch error")
+	}
+	if !strings.Contains(err.Error(), "resume output mismatch") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestGenerator_Run_ResumeCompletedExceedsRequested(t *testing.T) {
+	tmpDir := t.TempDir()
+	checkpointPath := filepath.Join(tmpDir, "resume.checkpoint")
+
+	cp := &Checkpoint{
+		SchemaVersion: checkpointVersion,
+		Timestamp:     time.Now(),
+		Config: Config{
+			Schema:     "instruction",
+			OutputPath: filepath.Join(tmpDir, "out.jsonl"),
+		},
+		Completed: 10,
+	}
+	if err := SaveCheckpoint(cp, checkpointPath); err != nil {
+		t.Fatalf("failed to save checkpoint: %v", err)
+	}
+
+	cfg := DefaultConfig()
+	cfg.NumSamples = 5
+	cfg.Schema = "instruction"
+	cfg.ResumeFrom = checkpointPath
+	cfg.OutputPath = filepath.Join(tmpDir, "out.jsonl")
+
+	gen := New(cfg, &MockProvider{Response: `{"instruction":"this is long enough","output":"this is long enough output"}`}, schema.NewInstructionSchema())
+	gen.SetSampler(&MockSampler{Topic: "topic"})
+	gen.SetWriter(&MockWriter{})
+
+	_, err := gen.Run(context.Background())
+	if err == nil {
+		t.Fatalf("expected resume count mismatch error")
+	}
+	if !strings.Contains(err.Error(), "resume count mismatch") {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
 func TestSaveCheckpoint_Overwrite(t *testing.T) {
 	tmpDir := t.TempDir()
 	path := filepath.Join(tmpDir, "checkpoint.json")
@@ -333,8 +405,8 @@ func TestGenerator_Run_ExponentialBackoff(t *testing.T) {
 }
 
 func TestGetCheckpointPath_UsesFullPath(t *testing.T) {
-	p1 := getCheckpointPath(filepath.Join("one", "dataset.jsonl"))
-	p2 := getCheckpointPath(filepath.Join("two", "dataset.jsonl"))
+	p1 := getCheckpointPath(filepath.Join("one", "dataset.jsonl"), defaultCacheDir)
+	p2 := getCheckpointPath(filepath.Join("two", "dataset.jsonl"), defaultCacheDir)
 	if p1 == p2 {
 		t.Fatalf("checkpoint path should differ for same basenames in different dirs: %s", p1)
 	}

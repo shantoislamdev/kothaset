@@ -54,17 +54,18 @@ kothaset generate -n 1000 -s instruction --seed 42 -i topics.txt -o dataset.json
 
 ## Chat Schema
 
-The `chat` schema generates multi-turn conversations in ShareGPT format, ideal for training conversational models.
+The `chat` schema generates multi-turn conversations for conversational model training.
 
 ### Structure
 
 ```json
 {
+  "system": "Optional system prompt",
   "conversations": [
-    {"from": "human", "value": "Hello, can you help me?"},
-    {"from": "gpt", "value": "Of course! What do you need help with?"},
-    {"from": "human", "value": "I need to understand Python decorators"},
-    {"from": "gpt", "value": "Python decorators are..."}
+    {"role": "user", "content": "Hello, can you help me?"},
+    {"role": "assistant", "content": "Of course! What do you need help with?"},
+    {"role": "user", "content": "I need to understand Python decorators"},
+    {"role": "assistant", "content": "Python decorators are..."}
   ]
 }
 ```
@@ -74,8 +75,9 @@ The `chat` schema generates multi-turn conversations in ShareGPT format, ideal f
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
 | `conversations` | array | ✓ | Array of message objects |
-| `conversations[].from` | string | ✓ | Speaker (`human` or `gpt`) |
-| `conversations[].value` | string | ✓ | Message content |
+| `conversations[].role` | string | ✓ | Speaker (`user` or `assistant`) |
+| `conversations[].content` | string | ✓ | Message content |
+| `system` | string | | Optional system prompt |
 
 ### Usage
 
@@ -144,42 +146,10 @@ kothaset generate -n 1000 -s classification --seed 42 -i text_samples.txt -o lab
 
 ---
 
-## Sample Metadata
+## Metadata Note
 
-Each generated sample includes metadata:
-
-```json
-{
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "fields": {
-    "instruction": "...",
-    "output": "..."
-  },
-  "metadata": {
-    "generated_at": "2026-02-08T12:00:00Z",
-    "provider": "openai",
-    "model": "gpt-5.2",
-    "temperature": 0.7,
-    "seed": 42,
-    "tokens_used": 256,
-    "latency": "1.2s",
-    "topic": "programming"
-  }
-}
-```
-
-### Metadata Fields
-
-| Field | Type | Description |
-|-------|------|-------------|
-| `generated_at` | timestamp | When the sample was created |
-| `provider` | string | LLM provider used |
-| `model` | string | Model used |
-| `temperature` | float | Sampling temperature |
-| `seed` | int64 | Random seed for reproducibility |
-| `tokens_used` | int | Total tokens consumed |
-| `latency` | duration | Generation time |
-| `topic` | string | Topic/seed used (if any) |
+JSONL output contains schema fields only (for example, `instruction/input/output` for the instruction schema).
+Generation metadata (provider/model/tokens/seed/latency) is tracked internally for progress and checkpointing.
 
 ---
 

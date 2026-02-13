@@ -3,6 +3,9 @@ package cli
 import (
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/shantoislamdev/kothaset/internal/config"
 )
 
 func TestGenerateFlags(t *testing.T) {
@@ -120,5 +123,56 @@ func TestGenerate_BoundsChecking(t *testing.T) {
 				t.Fatalf("error = %q, want contains %q", err.Error(), tt.wantErr)
 			}
 		})
+	}
+}
+
+func TestGenerate_SeedValidationStrict(t *testing.T) {
+	origCfg, origSecrets := cfg, secrets
+	origCount, origTemp, origMaxTokens := genCount, genTemp, genMaxTokens
+	origWorkers, origInput, origOutput := genWorkers, genInputFile, genOutput
+	origSeed, origDryRun := genSeed, genDryRun
+	defer func() {
+		cfg, secrets = origCfg, origSecrets
+		genCount, genTemp, genMaxTokens = origCount, origTemp, origMaxTokens
+		genWorkers, genInputFile, genOutput = origWorkers, origInput, origOutput
+		genSeed, genDryRun = origSeed, origDryRun
+	}()
+
+	cfg = &config.Config{
+		Version: "1.0",
+		Global: config.GlobalConfig{
+			Provider:     "openai",
+			Schema:       "instruction",
+			Model:        "gpt-5.2",
+			OutputFormat: "jsonl",
+		},
+	}
+	secrets = &config.SecretsConfig{
+		Providers: []config.ProviderConfig{
+			{
+				Name:       "openai",
+				Type:       "openai",
+				APIKey:     "test-key",
+				MaxRetries: 3,
+				Timeout:    config.Duration{Duration: time.Second},
+			},
+		},
+	}
+
+	genCount = 1
+	genTemp = 0.7
+	genMaxTokens = 0
+	genWorkers = 1
+	genInputFile = "topic"
+	genOutput = "out.jsonl"
+	genSeed = "123abc"
+	genDryRun = true
+
+	err := runGenerate(generateCmd, nil)
+	if err == nil {
+		t.Fatalf("expected seed validation error, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid seed value") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }

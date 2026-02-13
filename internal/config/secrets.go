@@ -53,9 +53,7 @@ func resolveAPIKey(p *ProviderConfig) (string, error) {
 
 	// Fallback: Default environment variable based on provider type
 	defaultEnvVars := map[string]string{
-		"openai":    "OPENAI_API_KEY",
-		"anthropic": "ANTHROPIC_API_KEY",
-		"deepseek":  "DEEPSEEK_API_KEY",
+		"openai": "OPENAI_API_KEY",
 	}
 	if envVar, ok := defaultEnvVars[p.Type]; ok {
 		if value := os.Getenv(envVar); value != "" {

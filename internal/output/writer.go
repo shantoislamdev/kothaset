@@ -42,8 +42,3 @@ func NewWriter(format string, sch schema.Schema) (Writer, error) {
 		return nil, fmt.Errorf("unsupported output format: %s (supported: jsonl)", format)
 	}
 }
-
-// SupportedFormats returns a list of supported output formats
-func SupportedFormats() []string {
-	return []string{"jsonl"}
-}

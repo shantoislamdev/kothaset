@@ -40,7 +40,7 @@
                 </nav>
                 <div class="header-divider"></div>
                 <a href="https://www.npmjs.com/package/kothaset" target="_blank" rel="noopener noreferrer" class="version-badge">
-                    v0.0.1
+                    v1.1.1
                 </a>
             </div>
 
@@ -60,7 +60,7 @@
             <div class="mobile-menu-divider"></div>
             <div class="flex items-center justify-between">
                 <span class="text-sm text-text-secondary">Version</span>
-                <span class="version-badge">v0.0.1</span>
+                <span class="version-badge">v1.1.1</span>
             </div>
         </div>
     </header>
@@ -358,16 +358,15 @@
                         <div class="window-body">
 <span class="yaml-key">version:</span> <span class="yaml-string">"1.0"</span>
 
-<span class="yaml-key">providers:</span>
-  - <span class="yaml-key">name:</span> <span class="yaml-string">main-teacher</span>
-    <span class="yaml-key">type:</span> <span class="yaml-val">openai</span>
-    <span class="yaml-key">model:</span> <span class="yaml-val">gpt-5.2</span>
-    <span class="yaml-key">rate_limit:</span>
-      <span class="yaml-key">requests_per_minute:</span> <span class="yaml-val">500</span>
-
 <span class="yaml-key">global:</span>
+  <span class="yaml-key">provider:</span> <span class="yaml-val">openai</span>
+  <span class="yaml-key">schema:</span> <span class="yaml-val">instruction</span>
+  <span class="yaml-key">model:</span> <span class="yaml-val">gpt-5.2</span>
   <span class="yaml-key">concurrency:</span> <span class="yaml-val">20</span>
-  <span class="yaml-key">default_schema:</span> <span class="yaml-val">instruction</span>
+  <span class="yaml-key">checkpoint_every:</span> <span class="yaml-val">10</span>
+
+<span class="yaml-key">context:</span> <span class="yaml-string">|</span>
+  Generate robust, diverse instruction data.
                         </div>
                     </div>
                 </div>
@@ -424,7 +423,7 @@
             <div class="footer-bottom">
                 <p>© 2026 Shanto Islam. Apache 2.0 License.</p>
                 <div class="flex gap-4">
-                    <span class="version-text">v0.0.1</span>
+                    <span class="version-text">v1.1.1</span>
                     <span>Go / Node</span>
                 </div>
             </div>

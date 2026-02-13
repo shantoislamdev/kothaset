@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -61,10 +63,9 @@ var (
 )
 
 func init() {
-	// Required flags
+	// Core flags
 	generateCmd.Flags().IntVarP(&genCount, "count", "n", 100, "number of samples to generate")
-	generateCmd.Flags().StringVarP(&genOutput, "output", "o", "", "output file path (required)")
-	generateCmd.MarkFlagRequired("output")
+	generateCmd.Flags().StringVarP(&genOutput, "output", "o", "", "output file path (required unless --resume supplies it)")
 
 	// Schema and provider
 	generateCmd.Flags().StringVarP(&genSchema, "schema", "s", "", "dataset schema (default: from config)")
@@ -85,9 +86,7 @@ func init() {
 
 	// Reproducibility
 	generateCmd.Flags().StringVar(&genSeed, "seed", "", "random seed for reproducibility (use 'random' for client-side random seeds per request)")
-	// generateCmd.MarkFlagRequired("seed") // Optional now
-	generateCmd.Flags().StringVarP(&genInputFile, "input", "i", "", "path to input file for topics/seeds (required)")
-	generateCmd.MarkFlagRequired("input")
+	generateCmd.Flags().StringVarP(&genInputFile, "input", "i", "", "path to input file for topics/seeds (required unless --resume supplies it)")
 
 	// Resumability
 	generateCmd.Flags().StringVar(&genResume, "resume", "", "resume from checkpoint file")
@@ -97,14 +96,6 @@ func init() {
 }
 
 func runGenerate(cmd *cobra.Command, args []string) error {
-	// Ensure input file is provided (handle empty string case)
-	if genInputFile == "" {
-		return fmt.Errorf("input file is required (use -i or --input)")
-	}
-	if hasParentPathTraversal(genOutput) {
-		return fmt.Errorf("output path must not contain '..': %s", genOutput)
-	}
-
 	// Validate generation parameters
 	if genCount <= 0 {
 		return fmt.Errorf("--count must be >= 1, got %d", genCount)
@@ -115,8 +106,89 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	if genMaxTokens < 0 {
 		return fmt.Errorf("--max-tokens must be >= 0, got %d", genMaxTokens)
 	}
-	if genWorkers <= 0 {
-		return fmt.Errorf("--workers must be >= 1, got %d", genWorkers)
+
+	// Load resume checkpoint early so required values can be inferred safely.
+	var resumeCheckpoint *generator.Checkpoint
+	if genResume != "" {
+		cp, err := generator.LoadCheckpoint(genResume)
+		if err != nil {
+			return fmt.Errorf("failed to load checkpoint %q: %w", genResume, err)
+		}
+		resumeCheckpoint = cp
+
+		// Backfill values from checkpoint when caller did not override.
+		if genOutput == "" {
+			genOutput = cp.Config.OutputPath
+		}
+		if genInputFile == "" {
+			genInputFile = cp.Config.InputFile
+		}
+		if genSchema == "" {
+			genSchema = cp.Config.Schema
+		}
+		if genProvider == "" {
+			genProvider = cp.Config.Provider
+		}
+		if genModel == "" {
+			genModel = cp.Config.Model
+		}
+
+		// Guardrails against accidentally resuming into a different run target.
+		if cmd.Flags().Changed("schema") && cp.Config.Schema != "" && genSchema != cp.Config.Schema {
+			return fmt.Errorf("resume schema mismatch: checkpoint=%s current=%s", cp.Config.Schema, genSchema)
+		}
+		if cmd.Flags().Changed("provider") && cp.Config.Provider != "" && genProvider != cp.Config.Provider {
+			return fmt.Errorf("resume provider mismatch: checkpoint=%s current=%s", cp.Config.Provider, genProvider)
+		}
+		if cmd.Flags().Changed("model") && cp.Config.Model != "" && genModel != cp.Config.Model {
+			return fmt.Errorf("resume model mismatch: checkpoint=%s current=%s", cp.Config.Model, genModel)
+		}
+		if cmd.Flags().Changed("input") && cp.Config.InputFile != "" && genInputFile != cp.Config.InputFile {
+			return fmt.Errorf("resume input mismatch: checkpoint=%s current=%s", cp.Config.InputFile, genInputFile)
+		}
+		if cmd.Flags().Changed("output") && cp.Config.OutputPath != "" {
+			sameOutput, err := pathsEqual(genOutput, cp.Config.OutputPath)
+			if err != nil {
+				return fmt.Errorf("failed to compare output path with checkpoint output path: %w", err)
+			}
+			if !sameOutput {
+				return fmt.Errorf("resume output mismatch: checkpoint=%s current=%s", cp.Config.OutputPath, genOutput)
+			}
+		}
+	}
+
+	if genInputFile == "" {
+		return fmt.Errorf("input file is required (use -i/--input or --resume with a checkpoint)")
+	}
+	if genOutput == "" {
+		return fmt.Errorf("output path is required (use -o/--output or --resume with a checkpoint)")
+	}
+
+	workers := genWorkers
+	if cfg != nil && !cmd.Flags().Changed("workers") && cfg.Global.Concurrency > 0 {
+		workers = cfg.Global.Concurrency
+	}
+	if workers <= 0 {
+		return fmt.Errorf("--workers must be >= 1, got %d", workers)
+	}
+	if cfg == nil || secrets == nil {
+		return fmt.Errorf("configuration not loaded")
+	}
+
+	// Handle seed (optional)
+	// Supports: empty (no seed), "random" (different random per request), or a specific number (fixed seed)
+	var seedPtr *int64
+	var randomSeed bool
+	if cmd.Flags().Changed("seed") || genSeed != "" {
+		if genSeed == "random" {
+			randomSeed = true
+		} else if genSeed != "" {
+			parsedSeed, err := strconv.ParseInt(genSeed, 10, 64)
+			if err != nil {
+				return fmt.Errorf("invalid seed value %q: must be 'random' or a number", genSeed)
+			}
+			seedPtr = &parsedSeed
+		}
 	}
 
 	// Get provider name from flag or config
@@ -135,6 +207,15 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	schemaName := genSchema
 	if schemaName == "" {
 		schemaName = cfg.Global.Schema
+	}
+
+	outputPath := genOutput
+	useOutputDirDefault := !(resumeCheckpoint != nil && !cmd.Flags().Changed("output"))
+	if useOutputDirDefault && !filepath.IsAbs(outputPath) && cfg.Global.OutputDir != "" && cfg.Global.OutputDir != "." {
+		outputPath = filepath.Join(cfg.Global.OutputDir, outputPath)
+	}
+	if hasParentPathTraversal(outputPath) {
+		return fmt.Errorf("output path must not contain '..': %s", outputPath)
 	}
 
 	// Resolve output format
@@ -173,9 +254,9 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		fmt.Printf("  Provider:    %s\n", providerName)
 		fmt.Printf("  Model:       %s\n", model)
 		fmt.Printf("  Count:       %d\n", genCount)
-		fmt.Printf("  Output:      %s\n", genOutput)
+		fmt.Printf("  Output:      %s\n", outputPath)
 		fmt.Printf("  Format:      %s\n", genFormat)
-		fmt.Printf("  Workers:     %d\n", genWorkers)
+		fmt.Printf("  Workers:     %d\n", workers)
 		fmt.Printf("  Temperature: %.2f\n", genTemp)
 		if genInputFile != "" {
 			fmt.Printf("  Input file:  %s\n", genInputFile)
@@ -200,6 +281,9 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		Timeout:    providerCfg.Timeout.Duration,
 		RateLimit:  providerCfg.RateLimit.RequestsPerMinute,
 	}
+	if provCfg.Timeout <= 0 && cfg.Global.Timeout.Duration > 0 {
+		provCfg.Timeout = cfg.Global.Timeout.Duration
+	}
 
 	// Create provider
 	prov, err := provider.GetOrCreate(provCfg)
@@ -216,35 +300,24 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		fmt.Println("✓ Loaded context from kothaset.yaml")
 	}
 
-	// Handle seed (optional)
-	// Supports: empty (no seed), "random" (different random per request), or a specific number (fixed seed)
-	var seedPtr *int64
-	var randomSeed bool
-	if cmd.Flags().Changed("seed") || genSeed != "" {
-		if genSeed == "random" {
-			randomSeed = true
-		} else if genSeed != "" {
-			// Parse as int64 - fixed seed to be sent to AI
-			var parsedSeed int64
-			_, err := fmt.Sscanf(genSeed, "%d", &parsedSeed)
-			if err != nil {
-				return fmt.Errorf("invalid seed value %q: must be 'random' or a number", genSeed)
-			}
-			seedPtr = &parsedSeed
-		}
-	}
-
 	// Determine checkpoint interval (flag > global config > default)
 	checkpointEvery := cfg.Global.CheckpointEvery
 	if checkpointEvery <= 0 {
 		checkpointEvery = 10 // fallback default
+	}
+	cacheDir := cfg.Global.CacheDir
+	if cacheDir == "" {
+		cacheDir = ".kothaset"
+	}
+	if resumeCheckpoint != nil && resumeCheckpoint.Config.CacheDir != "" {
+		cacheDir = resumeCheckpoint.Config.CacheDir
 	}
 
 	// Build generator config
 	genCfg := generator.Config{
 		NumSamples:      genCount,
 		Schema:          schemaName,
-		OutputPath:      genOutput,
+		OutputPath:      outputPath,
 		OutputFormat:    genFormat,
 		Provider:        providerName,
 		Model:           model,
@@ -253,11 +326,12 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		MaxTokens:       genMaxTokens,
 		Seed:            seedPtr,    // Fixed seed sent to AI (nil if not specified)
 		RandomSeed:      randomSeed, // When true, generates new random seed per request
-		Workers:         genWorkers,
+		Workers:         workers,
 		RateLimit:       providerCfg.RateLimit.RequestsPerMinute,
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,
 		CheckpointEvery: checkpointEvery,
+		CacheDir:        cacheDir,
 		ResumeFrom:      genResume,
 		InputFile:       genInputFile,
 		UserContext:     userContext,
@@ -275,7 +349,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	gen.SetWriter(writer)
 
 	// Setup sampler from input file (mandatory)
-	// Now supports inline strings too
+	// Supports both file input and inline topic input.
 	sampler, err := generator.NewSampler(genInputFile)
 	if err != nil {
 		return fmt.Errorf("failed to load input (file or inline) %q: %w", genInputFile, err)
@@ -332,10 +406,13 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	gen.SetProgressCallback(func(p generator.Progress) {
 		bar.Set(p.Completed)
 	})
+	if resumeCheckpoint != nil && resumeCheckpoint.Completed > 0 {
+		_ = bar.Set(resumeCheckpoint.Completed)
+	}
 
 	// Print generation info
 	fmt.Printf("🚀 Generating %d samples using %s (%s)\n", genCount, providerName, model)
-	fmt.Printf("   Schema: %s | Output: %s\n\n", schemaName, genOutput)
+	fmt.Printf("   Schema: %s | Output: %s\n\n", schemaName, outputPath)
 
 	// Run generation
 	result, err := gen.Run(ctx)
@@ -376,4 +453,16 @@ func hasParentPathTraversal(path string) bool {
 		}
 	}
 	return false
+}
+
+func pathsEqual(a, b string) (bool, error) {
+	aAbs, err := filepath.Abs(a)
+	if err != nil {
+		return false, err
+	}
+	bAbs, err := filepath.Abs(b)
+	if err != nil {
+		return false, err
+	}
+	return filepath.Clean(aAbs) == filepath.Clean(bAbs), nil
 }

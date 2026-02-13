@@ -2,7 +2,6 @@ package output
 
 import (
 	"bufio"
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -48,18 +47,12 @@ func (w *JSONLWriter) Write(sample *schema.Sample) error {
 	w.mu.Lock()
 	defer w.mu.Unlock()
 
-	data, err := json.Marshal(sample.Fields)
+	data, err := w.schema.ToJSONL(sample)
 	if err != nil {
 		return err
 	}
-
-	if _, err := w.writer.Write(data); err != nil {
-		return err
-	}
-	if _, err = w.writer.WriteString("\n"); err != nil {
-		return err
-	}
-	return nil
+	_, err = w.writer.Write(data)
+	return err
 }
 
 func (w *JSONLWriter) Flush() error {

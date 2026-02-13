@@ -29,7 +29,7 @@ kothaset generate -n 2000 -s chat -i conversations.txt -o conversations.jsonl
 
 Output:
 ```json
-{"conversations": [{"from": "human", "value": "..."}, {"from": "gpt", "value": "..."}]}
+{"conversations": [{"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
 ```
 
 ---

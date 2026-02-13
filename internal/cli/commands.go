@@ -11,6 +11,7 @@ import (
 	"text/tabwriter"
 	"time"
 
+	"github.com/shantoislamdev/kothaset/internal/config"
 	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
 	"github.com/spf13/cobra"
@@ -33,21 +34,36 @@ var validateConfigCmd = &cobra.Command{
 	Long: `Validate a KothaSet configuration file for correctness.
 
 If no path is provided, validates the default config resolution order.`,
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		if cfg == nil {
-			return fmt.Errorf("no configuration loaded")
+		var targetCfg *config.Config
+		switch {
+		case len(args) == 1:
+			loadedCfg, err := config.LoadPublicConfig(args[0])
+			if err != nil {
+				return fmt.Errorf("failed to load config %q: %w", args[0], err)
+			}
+			targetCfg = loadedCfg
+		case cfg != nil:
+			targetCfg = cfg
+		default:
+			loadedCfg, err := config.LoadPublicConfig(cfgFile)
+			if err != nil {
+				return fmt.Errorf("failed to load config: %w", err)
+			}
+			targetCfg = loadedCfg
 		}
 
-		if err := cfg.Validate(); err != nil {
+		if err := targetCfg.Validate(); err != nil {
 			fmt.Printf("✗ Configuration invalid: %v\n", err)
 			return err
 		}
 
 		fmt.Println("✓ Configuration is valid")
-		fmt.Printf("  Version:   %s\n", cfg.Version)
-		fmt.Printf("  Provider:  %s\n", cfg.Global.Provider)
-		fmt.Printf("  Schema:    %s\n", cfg.Global.Schema)
-		fmt.Printf("  Model:     %s\n", cfg.Global.Model)
+		fmt.Printf("  Version:   %s\n", targetCfg.Version)
+		fmt.Printf("  Provider:  %s\n", targetCfg.Global.Provider)
+		fmt.Printf("  Schema:    %s\n", targetCfg.Global.Schema)
+		fmt.Printf("  Model:     %s\n", targetCfg.Global.Model)
 
 		if secrets != nil {
 			fmt.Printf("  Configured providers: %d\n", len(secrets.Providers))
@@ -57,7 +73,7 @@ If no path is provided, validates the default config resolution order.`,
 }
 
 var validateSchemaCmd = &cobra.Command{
-	Use:   "schema <name|path>",
+	Use:   "schema <name>",
 	Short: "Validate a schema definition",
 	Args:  cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
@@ -340,11 +356,16 @@ var providerTestCmd = &cobra.Command{
 					if p.Timeout.Duration > 0 {
 						timeout = p.Timeout.Duration
 					}
+					model := ""
+					if cfg != nil {
+						model = cfg.Global.Model
+					}
 					providerCfg = &provider.Config{
 						Name:       p.Name,
 						Type:       p.Type,
 						BaseURL:    p.BaseURL,
 						APIKey:     p.APIKey,
+						Model:      model,
 						MaxRetries: p.MaxRetries,
 						Timeout:    timeout,
 						Headers:    p.Headers,
@@ -360,6 +381,9 @@ var providerTestCmd = &cobra.Command{
 
 		if providerCfg.APIKey == "" {
 			return fmt.Errorf("provider %s has no API key configured", providerName)
+		}
+		if providerCfg.Model == "" {
+			return fmt.Errorf("global.model is required to test provider %s", providerName)
 		}
 
 		fmt.Printf("Testing provider %s (%s)...\n", providerName, providerCfg.Type)
