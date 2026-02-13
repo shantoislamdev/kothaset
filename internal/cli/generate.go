@@ -248,6 +248,7 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 		Seed:            seedPtr,    // Fixed seed sent to AI (nil if not specified)
 		RandomSeed:      randomSeed, // When true, generates new random seed per request
 		Workers:         genWorkers,
+		RateLimit:       providerCfg.RateLimit.RequestsPerMinute,
 		MaxRetries:      3,
 		RetryDelay:      time.Second * 2,
 		CheckpointEvery: checkpointEvery,

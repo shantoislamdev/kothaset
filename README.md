@@ -101,6 +101,7 @@ instructions:
 
 ### 2. `.secrets.yaml` (Private)
 Contains sensitive provider credentials. **Add this to your `.gitignore`!**
+`kothaset init` creates this file with owner-only permissions (`0600` on Unix-like systems).
 
 ```yaml
 providers:
@@ -118,6 +119,8 @@ providers:
     base_url: http://localhost:8000/v1
     api_key: not-needed
 ```
+
+`rate_limit.requests_per_minute` is actively enforced during generation. Lower values reduce request throughput.
 
 ---
 

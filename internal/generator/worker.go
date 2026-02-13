@@ -1,5 +1,7 @@
 package generator
 
+import "context"
+
 // WorkerPool manages concurrent workers using a semaphore pattern
 type WorkerPool struct {
 	sem chan struct{}
@@ -15,9 +17,15 @@ func NewWorkerPool(size int) *WorkerPool {
 	}
 }
 
-// Acquire acquires a worker slot (blocks if pool is full)
-func (p *WorkerPool) Acquire() {
-	p.sem <- struct{}{}
+// Acquire acquires a worker slot (blocks if pool is full).
+// Returns when the context is canceled while waiting.
+func (p *WorkerPool) Acquire(ctx context.Context) error {
+	select {
+	case p.sem <- struct{}{}:
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 }
 
 // Release releases a worker slot

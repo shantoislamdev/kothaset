@@ -4,6 +4,7 @@ KothaSet supports OpenAI and any OpenAI-compatible API (DeepSeek, vLLM, Ollama, 
 
 Provider credentials are stored in **`.secrets.yaml`** (PRIVATE).
 The model selection is now global in **`kothaset.yaml`** (PUBLIC).
+`kothaset init` creates `.secrets.yaml` with owner-only permissions (`0600` on Unix-like systems).
 
 ## Configuration Format
 
@@ -19,6 +20,8 @@ providers:
     rate_limit:
       requests_per_minute: <int>
 ```
+
+`requests_per_minute` is enforced during generation. Set `0` (or omit) for unlimited request rate.
 
 ---
 

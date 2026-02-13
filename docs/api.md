@@ -142,6 +142,7 @@ kothaset init
 ```
 
 Creates `kothaset.yaml` (public) and `.secrets.yaml` (private) with default configuration.
+`.secrets.yaml` is created with owner-only permissions (`0600` on Unix-like systems).
 
 ---
 
@@ -222,6 +223,7 @@ Resume with: kothaset generate --resume .kothaset/<checkpoint-file>.checkpoint
 ## Retry and Write Durability Notes
 
 - Retry timing uses exponential backoff with jitter and respects provider retry-after hints when available.
+- Provider `rate_limit.requests_per_minute` is enforced during generation (`0` disables throttling).
 - JSONL writes are buffered for performance; durability is enforced at checkpoint sync boundaries and on normal close.
 
 ---

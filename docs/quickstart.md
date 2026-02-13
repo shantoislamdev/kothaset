@@ -34,6 +34,7 @@ kothaset init
 This creates:
 - `kothaset.yaml`: Public config (commit to git)
 - `.secrets.yaml`: Private config (add to .gitignore)
+  - Created with owner-only permissions (`0600` on Unix-like systems)
 
 Edit `kothaset.yaml` to customize your dataset generation settings.
 
@@ -50,6 +51,8 @@ kothaset generate -n 10 -s instruction -i topics.txt -o my_dataset.jsonl
 - `-s instruction` → Alpaca-style instruction/response pairs
 - `-i topics.txt` → Input file or inline topic (required)
 - `-o my_dataset.jsonl` → Output file
+
+If `.secrets.yaml` sets `rate_limit.requests_per_minute`, generation is throttled to that configured rate.
 
 > **Optional:** Add `--seed 42` for reproducible results.
 

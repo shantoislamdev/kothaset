@@ -59,6 +59,7 @@ Notes:
 ## 2. `.secrets.yaml` (Private)
 
 This file controls *how* you access LLMs.
+`kothaset init` creates this file with owner-only permissions (`0600` on Unix-like systems).
 
 ```yaml
 providers:
@@ -76,6 +77,8 @@ providers:
     base_url: http://localhost:8000/v1
     api_key: not-needed          # Use 'api_key' for non-sensitive values
 ```
+
+`rate_limit.requests_per_minute` is enforced by the generator. Set to `0` (or omit) to disable throttling.
 
 ### API Key Resolution Logic
 

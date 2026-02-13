@@ -1,6 +1,8 @@
 package generator
 
 import (
+	"context"
+	"errors"
 	"sync"
 	"sync/atomic"
 	"testing"
@@ -23,7 +25,9 @@ func TestWorkerPool(t *testing.T) {
 	totalTasks := 20
 
 	for i := 0; i < totalTasks; i++ {
-		pool.Acquire()
+		if err := pool.Acquire(context.Background()); err != nil {
+			t.Fatalf("unexpected acquire error: %v", err)
+		}
 		wg.Add(1)
 
 		go func() {
@@ -52,5 +56,30 @@ func TestWorkerPool(t *testing.T) {
 
 	if maxActive > int32(size) {
 		t.Errorf("Max active workers %d exceeded pool size %d", maxActive, size)
+	}
+}
+
+func TestWorkerPool_ContextCancellation(t *testing.T) {
+	pool := NewWorkerPool(1)
+	if err := pool.Acquire(context.Background()); err != nil {
+		t.Fatalf("unexpected acquire error: %v", err)
+	}
+	defer pool.Release()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	done := make(chan error, 1)
+	go func() {
+		done <- pool.Acquire(ctx)
+	}()
+
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("expected context.Canceled, got %v", err)
+		}
+	case <-time.After(500 * time.Millisecond):
+		t.Fatal("Acquire did not return after context cancellation")
 	}
 }

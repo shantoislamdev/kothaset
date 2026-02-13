@@ -64,6 +64,7 @@ type Config struct {
 	// Concurrency
 	Workers   int `yaml:"workers" json:"workers"`
 	BatchSize int `yaml:"batch_size" json:"batch_size"`
+	RateLimit int `yaml:"rate_limit" json:"rate_limit"`
 
 	// Resilience
 	MaxRetries      int           `yaml:"max_retries" json:"max_retries"`
@@ -132,6 +133,8 @@ type Generator struct {
 	provider provider.Provider
 	schema   schema.Schema
 	sampler  Sampler
+	// Request limiter used to enforce provider RPM limits.
+	rateLimiter *RateLimiter
 
 	// State - only store counts, not samples (to prevent memory leaks)
 	completed  int32
@@ -219,6 +222,8 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 
 	// Create worker pool
 	pool := NewWorkerPool(g.config.Workers)
+	g.rateLimiter = NewRateLimiter(g.config.RateLimit)
+	defer g.rateLimiter.Close()
 
 	// Submit work
 	resultBuffer := g.config.Workers * 2
@@ -276,15 +281,11 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 
 loop:
 	for i := 0; i < remaining; i++ {
-		select {
-		case <-ctx.Done():
-			break loop
-		default:
-		}
-
 		// Acquire a worker slot *before* spawning the goroutine
 		// This provides backpressure and prevents spawning millions of goroutines
-		pool.Acquire()
+		if err := pool.Acquire(ctx); err != nil {
+			break loop
+		}
 
 		wg.Add(1)
 		sampleIndex := baseCompleted + i
@@ -435,6 +436,10 @@ func (g *Generator) generateSample(ctx context.Context, index int) *workerResult
 				return &workerResult{err: ctx.Err()}
 			case <-time.After(delay):
 			}
+		}
+
+		if err := g.rateLimiter.Wait(ctx); err != nil {
+			return &workerResult{err: err}
 		}
 
 		resp, lastErr = g.provider.Generate(ctx, req)

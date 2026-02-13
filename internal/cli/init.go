@@ -94,7 +94,7 @@ providers:
 `
 
 	if _, err := os.Stat(secretsPath); os.IsNotExist(err) || initForce {
-		if err := os.WriteFile(secretsPath, []byte(secretsContent), 0644); err != nil {
+		if err := os.WriteFile(secretsPath, []byte(secretsContent), 0600); err != nil {
 			return fmt.Errorf("failed to write .secrets.yaml: %w", err)
 		}
 	}
