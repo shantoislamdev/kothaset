@@ -57,6 +57,7 @@ var (
 	genTemp         float64
 	genMaxTokens    int
 	genSystemPrompt string
+	genTimeout      string
 )
 
 func init() {
@@ -77,6 +78,7 @@ func init() {
 	generateCmd.Flags().Float64Var(&genTemp, "temperature", 0.7, "sampling temperature")
 	generateCmd.Flags().IntVar(&genMaxTokens, "max-tokens", 0, "maximum tokens per response (0 = default)")
 	generateCmd.Flags().StringVar(&genSystemPrompt, "system-prompt", "", "custom system prompt")
+	generateCmd.Flags().StringVar(&genTimeout, "timeout", "", "maximum total generation time (e.g. '30m', '2h')")
 
 	// Concurrency and workers
 	generateCmd.Flags().IntVarP(&genWorkers, "workers", "w", 4, "number of concurrent workers")
@@ -277,8 +279,18 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 	}
 	gen.SetSampler(sampler)
 
-	// Create cancellable context
-	ctx, cancel := context.WithCancel(context.Background())
+	// Create context with optional overall timeout
+	var ctx context.Context
+	var cancel context.CancelFunc
+	if genTimeout != "" {
+		dur, err := time.ParseDuration(genTimeout)
+		if err != nil {
+			return fmt.Errorf("invalid --timeout value %q: %w", genTimeout, err)
+		}
+		ctx, cancel = context.WithTimeout(context.Background(), dur)
+	} else {
+		ctx, cancel = context.WithCancel(context.Background())
+	}
 	defer cancel()
 
 	// Handle signals for graceful shutdown

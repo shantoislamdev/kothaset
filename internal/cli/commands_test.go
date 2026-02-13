@@ -31,8 +31,8 @@ func TestDetectFormat_CaseInsensitive(t *testing.T) {
 		want string
 	}{
 		{path: "sample.JSONL", want: "jsonl"},
-		{path: "sample.JsOn", want: "json"},
-		{path: "sample.CSV", want: "csv"},
+		{path: "sample.JsOn", want: ""},
+		{path: "sample.CSV", want: ""},
 		{path: "sample.txt", want: ""},
 	}
 

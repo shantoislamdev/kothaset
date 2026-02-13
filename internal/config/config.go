@@ -2,6 +2,7 @@
 package config
 
 import (
+	"fmt"
 	"time"
 )
 
@@ -117,16 +118,31 @@ type Duration struct {
 
 // UnmarshalYAML implements yaml.Unmarshaler
 func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
-	var s string
-	if err := unmarshal(&s); err != nil {
+	var raw interface{}
+	if err := unmarshal(&raw); err != nil {
 		return err
 	}
-	duration, err := time.ParseDuration(s)
-	if err != nil {
-		return err
+
+	switch v := raw.(type) {
+	case string:
+		duration, err := time.ParseDuration(v)
+		if err != nil {
+			return fmt.Errorf("invalid duration %q: %w", v, err)
+		}
+		d.Duration = duration
+		return nil
+	case int:
+		d.Duration = time.Duration(float64(v) * float64(time.Second))
+		return nil
+	case int64:
+		d.Duration = time.Duration(float64(v) * float64(time.Second))
+		return nil
+	case float64:
+		d.Duration = time.Duration(v * float64(time.Second))
+		return nil
+	default:
+		return fmt.Errorf("duration must be a string (e.g. '1m') or number of seconds")
 	}
-	d.Duration = duration
-	return nil
 }
 
 // MarshalYAML implements yaml.Marshaler

@@ -1,6 +1,7 @@
 package cli
 
 import (
+	"bufio"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -124,8 +125,8 @@ var validateDatasetCmd = &cobra.Command{
 
 		// Detect format from extension
 		format := detectFormat(filePath)
-		if format == "" {
-			return fmt.Errorf("unsupported format: %s\nSupported: .json, .jsonl, .csv", filePath)
+		if format != "jsonl" {
+			return fmt.Errorf("unsupported format: %s (only .jsonl is currently supported)", filePath)
 		}
 
 		fmt.Printf("Validating dataset: %s\n", filePath)
@@ -139,10 +140,6 @@ var validateDatasetCmd = &cobra.Command{
 		switch format {
 		case "jsonl":
 			rowCount, parseErr = validateJSONL(filePath)
-		case "json":
-			rowCount, parseErr = validateJSON(filePath)
-		case "csv":
-			rowCount, parseErr = validateCSV(filePath)
 		}
 
 		if parseErr != nil {
@@ -158,16 +155,10 @@ var validateDatasetCmd = &cobra.Command{
 
 // detectFormat returns the format string based on file extension
 func detectFormat(path string) string {
-	switch {
-	case hasExtension(path, ".jsonl"):
+	if hasExtension(path, ".jsonl") {
 		return "jsonl"
-	case hasExtension(path, ".json"):
-		return "json"
-	case hasExtension(path, ".csv"):
-		return "csv"
-	default:
-		return ""
 	}
+	return ""
 }
 
 // hasExtension checks if path ends with the given extension (case-insensitive)
@@ -177,88 +168,33 @@ func hasExtension(path, ext string) bool {
 
 // validateJSONL validates a JSONL file and returns row count
 func validateJSONL(path string) (int, error) {
-	data, err := os.ReadFile(path)
+	file, err := os.Open(path)
 	if err != nil {
 		return 0, err
 	}
+	defer file.Close()
 
-	lines := splitLines(string(data))
+	scanner := bufio.NewScanner(file)
+	// Allow long lines (up to 10MB per line for large JSON objects)
+	scanner.Buffer(make([]byte, 0, 1024*1024), 10*1024*1024)
 	count := 0
-	for i, line := range lines {
+	lineNum := 0
+	for scanner.Scan() {
+		lineNum++
+		line := strings.TrimSpace(scanner.Text())
 		if line == "" {
 			continue
 		}
 		var obj map[string]any
 		if err := json.Unmarshal([]byte(line), &obj); err != nil {
-			return count, fmt.Errorf("line %d: invalid JSON: %w", i+1, err)
+			return count, fmt.Errorf("line %d: invalid JSON: %w", lineNum, err)
 		}
 		count++
 	}
-	return count, nil
-}
-
-// validateJSON validates a JSON file and returns row count
-func validateJSON(path string) (int, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return 0, err
-	}
-
-	// Try array of objects
-	var arr []map[string]any
-	if err := json.Unmarshal(data, &arr); err == nil {
-		return len(arr), nil
-	}
-
-	// Try single object
-	var obj map[string]any
-	if err := json.Unmarshal(data, &obj); err == nil {
-		return 1, nil
-	}
-
-	return 0, fmt.Errorf("invalid JSON structure")
-}
-
-// validateCSV validates a CSV file and returns row count
-func validateCSV(path string) (int, error) {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return 0, err
-	}
-
-	lines := splitLines(string(data))
-	if len(lines) == 0 {
-		return 0, nil
-	}
-
-	// Count non-empty lines (minus header)
-	count := 0
-	for _, line := range lines[1:] {
-		if line != "" {
-			count++
-		}
+	if err := scanner.Err(); err != nil {
+		return count, fmt.Errorf("read error: %w", err)
 	}
 	return count, nil
-}
-
-// splitLines splits text into lines, handling both \n and \r\n
-func splitLines(text string) []string {
-	var lines []string
-	start := 0
-	for i := 0; i < len(text); i++ {
-		if text[i] == '\n' {
-			end := i
-			if i > 0 && text[i-1] == '\r' {
-				end = i - 1
-			}
-			lines = append(lines, text[start:end])
-			start = i + 1
-		}
-	}
-	if start < len(text) {
-		lines = append(lines, text[start:])
-	}
-	return lines
 }
 
 func init() {

@@ -5,6 +5,8 @@ import (
 	"path/filepath"
 	"testing"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 func TestDefaultConfig(t *testing.T) {
@@ -98,5 +100,27 @@ global:
 }
 
 func TestDuration_UnmarshalYAML(t *testing.T) {
-	// Implicitly tested in LoadPublicConfig via yaml decoding
+	t.Run("string duration", func(t *testing.T) {
+		var cfg struct {
+			Timeout Duration `yaml:"timeout"`
+		}
+		if err := yaml.Unmarshal([]byte("timeout: 90s\n"), &cfg); err != nil {
+			t.Fatalf("yaml.Unmarshal failed: %v", err)
+		}
+		if cfg.Timeout.Duration != 90*time.Second {
+			t.Fatalf("expected 90s, got %v", cfg.Timeout.Duration)
+		}
+	})
+
+	t.Run("numeric seconds", func(t *testing.T) {
+		var cfg struct {
+			Timeout Duration `yaml:"timeout"`
+		}
+		if err := yaml.Unmarshal([]byte("timeout: 60\n"), &cfg); err != nil {
+			t.Fatalf("yaml.Unmarshal failed: %v", err)
+		}
+		if cfg.Timeout.Duration != 60*time.Second {
+			t.Fatalf("expected 60s, got %v", cfg.Timeout.Duration)
+		}
+	})
 }

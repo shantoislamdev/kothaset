@@ -58,28 +58,7 @@ func NewOpenAIProvider(cfg *Config) (Provider, error) {
 func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*GenerationResponse, error) {
 	start := time.Now()
 
-	// Convert messages
-	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(req.Messages)+1)
-
-	// Add system prompt if provided
-	if req.SystemPrompt != "" {
-		messages = append(messages, openai.SystemMessage(req.SystemPrompt))
-	}
-
-	// Add conversation messages
-	for _, msg := range req.Messages {
-		role := strings.ToLower(msg.Role)
-		switch role {
-		case "system":
-			messages = append(messages, openai.SystemMessage(msg.Content))
-		case "user", "human":
-			messages = append(messages, openai.UserMessage(msg.Content))
-		case "assistant", "ai", "bot":
-			messages = append(messages, openai.AssistantMessage(msg.Content))
-		default:
-			messages = append(messages, openai.UserMessage(msg.Content))
-		}
-	}
+	messages := convertMessages(req)
 
 	// Build request parameters
 	params := openai.ChatCompletionNewParams{
@@ -142,26 +121,7 @@ func (p *OpenAIProvider) Generate(ctx context.Context, req GenerationRequest) (*
 
 // GenerateStream implements Provider.GenerateStream
 func (p *OpenAIProvider) GenerateStream(ctx context.Context, req GenerationRequest) (<-chan StreamChunk, error) {
-	// Convert messages
-	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(req.Messages)+1)
-
-	if req.SystemPrompt != "" {
-		messages = append(messages, openai.SystemMessage(req.SystemPrompt))
-	}
-
-	for _, msg := range req.Messages {
-		role := strings.ToLower(msg.Role)
-		switch role {
-		case "system":
-			messages = append(messages, openai.SystemMessage(msg.Content))
-		case "user", "human":
-			messages = append(messages, openai.UserMessage(msg.Content))
-		case "assistant", "ai", "bot":
-			messages = append(messages, openai.AssistantMessage(msg.Content))
-		default:
-			messages = append(messages, openai.UserMessage(msg.Content))
-		}
-	}
+	messages := convertMessages(req)
 
 	// Build request parameters
 	params := openai.ChatCompletionNewParams{
@@ -264,6 +224,30 @@ func (p *OpenAIProvider) HealthCheck(ctx context.Context) error {
 func (p *OpenAIProvider) Close() error {
 	// OpenAI client doesn't need explicit cleanup
 	return nil
+}
+
+func convertMessages(req GenerationRequest) []openai.ChatCompletionMessageParamUnion {
+	messages := make([]openai.ChatCompletionMessageParamUnion, 0, len(req.Messages)+1)
+
+	if req.SystemPrompt != "" {
+		messages = append(messages, openai.SystemMessage(req.SystemPrompt))
+	}
+
+	for _, msg := range req.Messages {
+		role := strings.ToLower(msg.Role)
+		switch role {
+		case "system":
+			messages = append(messages, openai.SystemMessage(msg.Content))
+		case "user", "human":
+			messages = append(messages, openai.UserMessage(msg.Content))
+		case "assistant", "ai", "bot":
+			messages = append(messages, openai.AssistantMessage(msg.Content))
+		default:
+			messages = append(messages, openai.UserMessage(msg.Content))
+		}
+	}
+
+	return messages
 }
 
 // convertError converts OpenAI SDK errors to ProviderError

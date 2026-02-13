@@ -48,6 +48,7 @@ Parent directories for `--output` are created automatically if they do not exist
 | `--temperature` | | float | `0.7` | Sampling temperature |
 | `--max-tokens` | | int | `0` | Max tokens (0 = default/config) |
 | `--system-prompt` | | string | | Custom system prompt |
+| `--timeout` | | string | | Maximum total generation time (for example, `30m`, `2h`) |
 | `--workers` | `-w` | int | `4` | Concurrent workers |
 | `--seed` | | string | | Random seed for reproducibility (number or "random") |
 | `--resume` | | string | | Resume from checkpoint |
@@ -86,9 +87,8 @@ kothaset generate -n 100 --seed 42 -i topics.txt -o reproducible.jsonl
 # With random seed per request (maximizes diversity)
 kothaset generate -n 100 --seed random -i topics.txt -o diverse.jsonl
 
-# Different output formats
-
-
+# Stop generation after an overall timeout
+kothaset generate -n 1000 -i topics.txt -o dataset.jsonl --timeout 30m
 
 # Resume interrupted generation (checkpoint stored in .kothaset/)
 # Use the exact checkpoint filename present in `.kothaset/`
@@ -246,7 +246,7 @@ kothaset validate [command]
 |---------|-------------|
 | `config` | Validate configuration file structure |
 | `schema` | Validate a schema definition |
-| `dataset` | Validate an existing dataset file |
+| `dataset` | Validate an existing `.jsonl` dataset file |
 
 ### Examples
 
@@ -270,6 +270,7 @@ kothaset validate dataset output.jsonl
 ```
 
 Extension matching for dataset validation is case-insensitive (for example, `DATASET.JSONL` is recognized as `jsonl`).
+Only `.jsonl` is currently supported for `validate dataset`.
 
 
 
