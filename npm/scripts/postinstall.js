@@ -105,19 +105,17 @@ function extract(archive, dest) {
   console.log('Extracting...');
   
   if (platform === 'windows') {
-    // Use PowerShell to extract zip on Windows
+    // Use PowerShell to extract zip on Windows safely using env vars
     execFileSync(
       'powershell',
       [
         '-Command',
-        'Expand-Archive',
-        '-Path',
-        archive,
-        '-DestinationPath',
-        dest,
-        '-Force'
+        'Expand-Archive -Path $env:KOTHA_ARCHIVE -DestinationPath $env:KOTHA_DEST -Force'
       ],
-      { stdio: 'inherit' }
+      {
+        stdio: 'inherit',
+        env: { ...process.env, KOTHA_ARCHIVE: archive, KOTHA_DEST: dest }
+      }
     );
   } else {
     // Use tar on Unix
