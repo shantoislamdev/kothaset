@@ -210,9 +210,8 @@ func validateJSONL(path string) (int, error) {
 		if line == "" {
 			continue
 		}
-		var obj map[string]any
-		if err := json.Unmarshal([]byte(line), &obj); err != nil {
-			return count, fmt.Errorf("line %d: invalid JSON: %w", lineNum, err)
+		if !json.Valid([]byte(line)) {
+			return count, fmt.Errorf("line %d: invalid JSON", lineNum)
 		}
 		count++
 	}
