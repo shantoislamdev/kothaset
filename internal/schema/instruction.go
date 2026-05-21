@@ -65,16 +65,16 @@ func (s *InstructionSchema) GeneratePrompt(ctx context.Context, opts PromptOptio
 
 	// Add topic/category context if provided
 	if opts.Topic != "" {
-		sb.WriteString(fmt.Sprintf("Topic/Seed: %s\n", opts.Topic))
+		fmt.Fprintf(&sb, "Topic/Seed: %s\n", opts.Topic)
 	}
 	if opts.Category != "" {
-		sb.WriteString(fmt.Sprintf("Category: %s\n", opts.Category))
+		fmt.Fprintf(&sb, "Category: %s\n", opts.Category)
 	}
 	if opts.Language != "" && opts.Language != "en" {
-		sb.WriteString(fmt.Sprintf("Language: %s\n", opts.Language))
+		fmt.Fprintf(&sb, "Language: %s\n", opts.Language)
 	}
 	if opts.Complexity > 0 {
-		sb.WriteString(fmt.Sprintf("Complexity level: %d/5\n", opts.Complexity))
+		fmt.Fprintf(&sb, "Complexity level: %d/5\n", opts.Complexity)
 	}
 
 	sb.WriteString("\n")
@@ -86,12 +86,12 @@ func (s *InstructionSchema) GeneratePrompt(ctx context.Context, opts PromptOptio
 			if i >= opts.NumExamples {
 				break
 			}
-			sb.WriteString(fmt.Sprintf("Example %d:\n", i+1))
-			sb.WriteString(fmt.Sprintf("Instruction: %s\n", example.GetString("instruction")))
+			fmt.Fprintf(&sb, "Example %d:\n", i+1)
+			fmt.Fprintf(&sb, "Instruction: %s\n", example.GetString("instruction"))
 			if input := example.GetString("input"); input != "" {
-				sb.WriteString(fmt.Sprintf("Input: %s\n", input))
+				fmt.Fprintf(&sb, "Input: %s\n", input)
 			}
-			sb.WriteString(fmt.Sprintf("Output: %s\n\n", example.GetString("output")))
+			fmt.Fprintf(&sb, "Output: %s\n\n", example.GetString("output"))
 		}
 	}
 
