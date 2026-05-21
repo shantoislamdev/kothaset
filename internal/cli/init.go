@@ -128,11 +128,20 @@ func handleGitignore() error {
 	if err != nil {
 		// File doesn't exist, create new .gitignore
 		if os.IsNotExist(err) {
-			content := "# KothaSet\n"
+			var sb strings.Builder
+
+			size := 11 // length of "# KothaSet\n"
 			for _, entry := range entries {
-				content += entry + "\n"
+				size += len(entry) + 1 // +1 for "\n"
 			}
-			if err := os.WriteFile(gitignorePath, []byte(content), 0644); err != nil {
+			sb.Grow(size)
+
+			sb.WriteString("# KothaSet\n")
+			for _, entry := range entries {
+				sb.WriteString(entry)
+				sb.WriteString("\n")
+			}
+			if err := os.WriteFile(gitignorePath, []byte(sb.String()), 0644); err != nil {
 				return fmt.Errorf("failed to create .gitignore: %w", err)
 			}
 			fmt.Println("✓ Created .gitignore")
