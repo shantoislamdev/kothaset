@@ -128,6 +128,12 @@ func TestRegistry_List(t *testing.T) {
 }
 
 func TestGlobalRegistry(t *testing.T) {
+	originalRegistry := globalRegistry
+	t.Cleanup(func() {
+		globalRegistry = originalRegistry
+	})
+	globalRegistry = NewRegistry()
+
 	mGlobal := &mockSchema{name: "global_mock"}
 
 	// Test Register
