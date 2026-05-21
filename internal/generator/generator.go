@@ -601,12 +601,20 @@ func SaveCheckpoint(cp *Checkpoint, path string) error {
 
 	// Write to a temporary file first.
 	tmpPath := path + ".tmp"
-	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+	tmpFile, err := os.OpenFile(tmpPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	if err != nil {
 		return err
 	}
-	if tmpFile, err := os.OpenFile(tmpPath, os.O_RDWR, 0); err == nil {
-		_ = tmpFile.Sync()
-		_ = tmpFile.Close()
+	if _, err := tmpFile.Write(data); err != nil {
+		tmpFile.Close()
+		return err
+	}
+	if err := tmpFile.Sync(); err != nil {
+		tmpFile.Close()
+		return err
+	}
+	if err := tmpFile.Close(); err != nil {
+		return err
 	}
 
 	// On Unix, rename replaces atomically. On Windows, rename fails if destination exists.
