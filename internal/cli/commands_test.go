@@ -69,3 +69,31 @@ global:
 		t.Fatalf("expected config path validation to pass, got: %v", err)
 	}
 }
+
+func BenchmarkValidateJSONL(b *testing.B) {
+	// Create a temporary JSONL file with 1000 lines
+	dir := b.TempDir()
+	path := filepath.Join(dir, "test.jsonl")
+	file, err := os.Create(path)
+	if err != nil {
+		b.Fatal(err)
+	}
+
+	jsonLine := `{"id": "12345", "name": "John Doe", "email": "john.doe@example.com", "isActive": true, "roles": ["admin", "user"], "metadata": {"created_at": "2023-01-01T00:00:00Z", "login_count": 42}}` + "\n"
+
+	for i := 0; i < 1000; i++ {
+		file.WriteString(jsonLine)
+	}
+	file.Close()
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		count, err := validateJSONL(path)
+		if err != nil {
+			b.Fatal(err)
+		}
+		if count != 1000 {
+			b.Fatalf("expected 1000 rows, got %d", count)
+		}
+	}
+}
