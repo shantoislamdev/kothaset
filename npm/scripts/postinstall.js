@@ -8,7 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 
 const PACKAGE = require('../package.json');
 const VERSION = PACKAGE.version;
@@ -106,13 +106,22 @@ function extract(archive, dest) {
   
   if (platform === 'windows') {
     // Use PowerShell to extract zip on Windows
-    execSync(
-      `powershell -Command "Expand-Archive -Path '${archive}' -DestinationPath '${dest}' -Force"`,
+    execFileSync(
+      'powershell',
+      [
+        '-Command',
+        'Expand-Archive',
+        '-Path',
+        archive,
+        '-DestinationPath',
+        dest,
+        '-Force'
+      ],
       { stdio: 'inherit' }
     );
   } else {
     // Use tar on Unix
-    execSync(`tar -xzf "${archive}" -C "${dest}"`, { stdio: 'inherit' });
+    execFileSync('tar', ['-xzf', archive, '-C', dest], { stdio: 'inherit' });
   }
 }
 
