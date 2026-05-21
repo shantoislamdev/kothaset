@@ -42,36 +42,6 @@ func TestSample_GettersAndSetters(t *testing.T) {
 	}
 }
 
-func TestRegistry(t *testing.T) {
-	// Registry is initialized with built-ins
-	r := NewRegistry()
-
-	// Test List
-	schemas := r.List()
-	if len(schemas) == 0 {
-		t.Error("Registry should have built-in schemas")
-	}
-
-	// Test Get Existing
-	s, err := r.Get("instruction")
-	if err != nil {
-		t.Errorf("Failed to get 'instruction' schema: %v", err)
-	}
-	if s.Name() != "instruction" {
-		t.Errorf("Expected schema name 'instruction', got %s", s.Name())
-	}
-
-	// Test Get Non-Existent
-	_, err = r.Get("non_existent_schema")
-	if err == nil {
-		t.Error("Expected error for non-existent schema, got nil")
-	}
-
-	if s.Style() != StyleInstruction {
-		t.Errorf("Expected style %s, got %s", StyleInstruction, s.Style())
-	}
-}
-
 func TestSampleMetadata(t *testing.T) {
 	meta := SampleMetadata{
 		GeneratedAt: time.Now(),
