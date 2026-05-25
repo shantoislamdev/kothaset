@@ -404,10 +404,14 @@ func runGenerate(cmd *cobra.Command, args []string) error {
 
 	// Set progress callback to update the bar
 	gen.SetProgressCallback(func(p generator.Progress) {
-		bar.Set(p.Completed)
+		if err := bar.Set(p.Completed); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to update progress bar: %v\n", err)
+		}
 	})
 	if resumeCheckpoint != nil && resumeCheckpoint.Completed > 0 {
-		_ = bar.Set(resumeCheckpoint.Completed)
+		if err := bar.Set(resumeCheckpoint.Completed); err != nil {
+			fmt.Fprintf(os.Stderr, "Warning: failed to set initial progress: %v\n", err)
+		}
 	}
 
 	// Print generation info
