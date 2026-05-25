@@ -374,9 +374,9 @@ type workerResult struct {
 // generateRandomSeed creates a cryptographically secure random seed
 func generateRandomSeed() int64 {
 	var b [8]byte
-	_, err := crand.Read(b[:])
-	if err != nil {
-		// Fallback to time-based seed if crypto/rand fails
+	n, err := crand.Read(b[:])
+	if err != nil || n != len(b) {
+		// Fallback to time-based seed if crypto/rand fails or read is incomplete
 		return time.Now().UnixNano()
 	}
 	return int64(binary.BigEndian.Uint64(b[:]))
