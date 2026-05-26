@@ -8,18 +8,20 @@ import (
 
 // resolveSecrets resolves all secret references in the secrets configuration
 func resolveSecrets(cfg *SecretsConfig) error {
+	var errs []string
 	for i := range cfg.Providers {
 		p := &cfg.Providers[i]
 
 		// Resolve API key
 		apiKey, err := resolveAPIKey(p)
 		if err != nil {
-			// Don't fail on missing API keys during config loading
-			// They will be validated when the provider is used
-			fmt.Fprintf(os.Stderr, "⚠ Provider '%s': %v (will validate later)\n", p.Name, err)
+			errs = append(errs, fmt.Sprintf("provider '%s': %v", p.Name, err))
 			continue
 		}
 		p.APIKey = apiKey
+	}
+	if len(errs) > 0 {
+		return fmt.Errorf("failed to resolve API keys:\n  %s", strings.Join(errs, "\n  "))
 	}
 	return nil
 }
