@@ -95,7 +95,7 @@ func init() {
 	generateCmd.Flags().BoolVar(&genDryRun, "dry-run", false, "validate configuration without generating")
 }
 
-func runGenerate(cmd *cobra.Command, args []string) error {
+func runGenerate(cmd *cobra.Command, _ []string) error {
 	// Validate generation parameters
 	if genCount <= 0 {
 		return fmt.Errorf("--count must be >= 1, got %d", genCount)
