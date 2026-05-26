@@ -155,14 +155,7 @@ var validateDatasetCmd = &cobra.Command{
 		fmt.Printf("  Format: %s\n", format)
 		fmt.Printf("  Size:   %d bytes\n", info.Size())
 
-		// Read and validate based on format
-		var rowCount int
-		var parseErr error
-
-		switch format {
-		case "jsonl":
-			rowCount, parseErr = validateJSONL(filePath)
-		}
+		rowCount, parseErr := validateJSONL(filePath)
 
 		if parseErr != nil {
 			fmt.Printf("✗ Validation failed: %v\n", parseErr)

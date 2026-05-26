@@ -69,12 +69,12 @@ func TestChatSchema_ParseResponse(t *testing.T) {
 func TestChatSchema_ValidateSample(t *testing.T) {
 	s := NewChatSchema()
 
-	// Valid sample
+	// Valid sample (using []any as JSON deserialization produces)
 	validSample := &Sample{
 		Fields: map[string]any{
-			"conversations": []ChatMessage{
-				{Role: "user", Content: "A"},
-				{Role: "assistant", Content: "B"},
+			"conversations": []any{
+				map[string]any{"role": "user", "content": "A"},
+				map[string]any{"role": "assistant", "content": "B"},
 			},
 		},
 	}
@@ -93,8 +93,8 @@ func TestChatSchema_ValidateSample(t *testing.T) {
 	// Invalid: not enough messages
 	shortSample := &Sample{
 		Fields: map[string]any{
-			"conversations": []ChatMessage{
-				{Role: "user", Content: "Only one"},
+			"conversations": []any{
+				map[string]any{"role": "user", "content": "Only one"},
 			},
 		},
 	}
