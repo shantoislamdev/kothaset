@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/shantoislamdev/kothaset/internal/fsutil"
 	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
@@ -205,7 +206,7 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 			return nil, fmt.Errorf("resume input mismatch: checkpoint=%s current=%s", checkpoint.Config.InputFile, g.config.InputFile)
 		}
 		if checkpoint.Config.OutputPath != "" && g.config.OutputPath != "" {
-			samePath, pathErr := pathsEqual(checkpoint.Config.OutputPath, g.config.OutputPath)
+			samePath, pathErr := fsutil.PathsEqual(checkpoint.Config.OutputPath, g.config.OutputPath)
 			if pathErr != nil {
 				return nil, fmt.Errorf("failed to compare checkpoint output path with current output path: %w", pathErr)
 			}
@@ -654,18 +655,6 @@ func LoadCheckpoint(path string) (*Checkpoint, error) {
 		return nil, err
 	}
 	return &cp, nil
-}
-
-func pathsEqual(a, b string) (bool, error) {
-	aAbs, err := filepath.Abs(a)
-	if err != nil {
-		return false, err
-	}
-	bAbs, err := filepath.Abs(b)
-	if err != nil {
-		return false, err
-	}
-	return filepath.Clean(aAbs) == filepath.Clean(bAbs), nil
 }
 
 func derefSeed(seed *int64) int64 {

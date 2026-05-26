@@ -14,6 +14,7 @@ import (
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 
+	"github.com/shantoislamdev/kothaset/internal/fsutil"
 	"github.com/shantoislamdev/kothaset/internal/generator"
 	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
@@ -147,7 +148,7 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 			return fmt.Errorf("resume input mismatch: checkpoint=%s current=%s", cp.Config.InputFile, genInputFile)
 		}
 		if cmd.Flags().Changed("output") && cp.Config.OutputPath != "" {
-			sameOutput, err := pathsEqual(genOutput, cp.Config.OutputPath)
+			sameOutput, err := fsutil.PathsEqual(genOutput, cp.Config.OutputPath)
 			if err != nil {
 				return fmt.Errorf("failed to compare output path with checkpoint output path: %w", err)
 			}
@@ -457,16 +458,4 @@ func hasParentPathTraversal(path string) bool {
 		}
 	}
 	return false
-}
-
-func pathsEqual(a, b string) (bool, error) {
-	aAbs, err := filepath.Abs(a)
-	if err != nil {
-		return false, err
-	}
-	bAbs, err := filepath.Abs(b)
-	if err != nil {
-		return false, err
-	}
-	return filepath.Clean(aAbs) == filepath.Clean(bAbs), nil
 }

@@ -131,30 +131,28 @@ func (s *ChatSchema) ValidateSample(sample *Sample) error {
 		return NewSchemaError(s.Name(), "conversations", "conversations is required")
 	}
 
-	convList, ok := convs.([]ChatMessage)
+	rawList, ok := convs.([]any)
 	if !ok {
-		// Try to convert from []any
-		if rawList, ok := convs.([]any); ok {
-			convList = make([]ChatMessage, 0, len(rawList))
-			for _, item := range rawList {
-				if m, ok := item.(map[string]any); ok {
-					cm := ChatMessage{
-						Role:    fmt.Sprint(m["role"]),
-						Content: fmt.Sprint(m["content"]),
-					}
-					convList = append(convList, cm)
-				}
-			}
-		} else {
-			return NewSchemaError(s.Name(), "conversations", "invalid conversations format")
+		return NewSchemaError(s.Name(), "conversations", "invalid conversations format: expected list")
+	}
+
+	convList := make([]ChatMessage, 0, len(rawList))
+	for i, item := range rawList {
+		m, ok := item.(map[string]any)
+		if !ok {
+			return NewSchemaError(s.Name(), "conversations",
+				fmt.Sprintf("invalid message at index %d: expected object", i))
 		}
+		convList = append(convList, ChatMessage{
+			Role:    fmt.Sprint(m["role"]),
+			Content: fmt.Sprint(m["content"]),
+		})
 	}
 
 	if len(convList) < 2 {
 		return NewSchemaError(s.Name(), "conversations", "at least 2 messages required")
 	}
 
-	// Validate alternating roles
 	for i, msg := range convList {
 		if msg.Role != "user" && msg.Role != "assistant" && msg.Role != "system" {
 			return NewSchemaError(s.Name(), "conversations", fmt.Sprintf("invalid role at index %d: %s", i, msg.Role))
