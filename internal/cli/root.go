@@ -27,9 +27,10 @@ var (
 	verbose  bool
 	quiet    bool
 
-	// Lazy secret resolution (sync.Once)
-	secretsOnce sync.Once
-	secretsErr  error
+	// Lazy secret resolution state
+	secretsMu     sync.Mutex
+	resolvedFor   *config.SecretsConfig // pointer that was last resolved
+	secretsErr    error
 )
 
 // rootCmd represents the base command when called without subcommands
@@ -106,14 +107,19 @@ func initConfig() error {
 	return nil
 }
 
-// ensureSecretsResolved resolves env-var references in .secrets.yaml on first call.
-// Subsequent calls return the cached error (or nil).
+// ensureSecretsResolved resolves env-var references in .secrets.yaml on first call
+// for the current secrets pointer. Re-resolves if secrets has been replaced by initConfig.
 func ensureSecretsResolved() error {
-	secretsOnce.Do(func() {
-		if secrets == nil {
-			return
-		}
-		secretsErr = config.ResolveSecrets(secrets)
-	})
+	secretsMu.Lock()
+	defer secretsMu.Unlock()
+
+	if secrets == nil {
+		return nil
+	}
+	if resolvedFor == secrets {
+		return secretsErr
+	}
+	secretsErr = config.ResolveSecrets(secrets)
+	resolvedFor = secrets
 	return secretsErr
 }
