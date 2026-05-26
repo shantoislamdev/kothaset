@@ -8,6 +8,7 @@
 const fs = require('fs');
 const path = require('path');
 const https = require('https');
+const crypto = require('crypto');
 const { execFileSync } = require('child_process');
 
 const PACKAGE = require('../package.json');
@@ -60,6 +61,25 @@ function download(url, dest) {
       if (response.statusCode === 302 || response.statusCode === 301) {
         file.close();
         fs.unlinkSync(dest);
+
+        // Validate redirect target
+        let redirectUrl;
+        try {
+          redirectUrl = new URL(response.headers.location);
+        } catch (e) {
+          reject(new Error(`Invalid redirect URL: ${response.headers.location}`));
+          return;
+        }
+        if (redirectUrl.protocol !== 'https:') {
+          reject(new Error('Redirect to non-HTTPS URL blocked'));
+          return;
+        }
+        const allowedHosts = ['github.com', 'objects.githubusercontent.com', 'releases.githubusercontent.com'];
+        if (!allowedHosts.some(h => redirectUrl.hostname === h || redirectUrl.hostname.endsWith('.' + h))) {
+          reject(new Error(`Redirect to untrusted host: ${redirectUrl.hostname}`));
+          return;
+        }
+
         download(response.headers.location, dest).then(resolve).catch(reject);
         return;
       }
@@ -97,6 +117,39 @@ function download(url, dest) {
       reject(err);
     });
   });
+}
+
+function verifyChecksum(filePath, expectedHash) {
+  return new Promise((resolve, reject) => {
+    const hash = crypto.createHash('sha256');
+    const stream = fs.createReadStream(filePath);
+    stream.on('data', (data) => hash.update(data));
+    stream.on('end', () => {
+      const actual = hash.digest('hex');
+      if (actual !== expectedHash) {
+        reject(new Error(`Checksum mismatch: expected ${expectedHash}, got ${actual}`));
+      } else {
+        resolve();
+      }
+    });
+    stream.on('error', reject);
+  });
+}
+
+async function downloadChecksums(version) {
+  const url = `https://github.com/${REPO}/releases/download/v${version}/checksums.txt`;
+  const tmpFile = path.join(require('os').tmpdir(), `kothaset-checksums-${version}.txt`);
+  await download(url, tmpFile);
+  const content = fs.readFileSync(tmpFile, 'utf8');
+  fs.unlinkSync(tmpFile);
+  const map = {};
+  for (const line of content.split('\n')) {
+    const parts = line.trim().split(/\s+/);
+    if (parts.length === 2 && parts[0] && parts[1]) {
+      map[parts[1]] = parts[0];
+    }
+  }
+  return map;
 }
 
 function extract(archive, dest) {
@@ -139,6 +192,21 @@ async function main() {
     // Download archive
     const url = getDownloadUrl();
     await download(url, archivePath);
+
+    // Verify checksum
+    try {
+      const checksums = await downloadChecksums(VERSION);
+      const archiveName = path.basename(archivePath);
+      const expectedHash = checksums[archiveName];
+      if (expectedHash) {
+        await verifyChecksum(archivePath, expectedHash);
+        console.log('Checksum verified.');
+      } else {
+        console.warn(`Warning: no checksum found for ${archiveName}`);
+      }
+    } catch (checksumErr) {
+      console.warn(`Warning: checksum verification skipped: ${checksumErr.message}`);
+    }
 
     // Extract
     extract(archivePath, BIN_DIR);
