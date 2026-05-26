@@ -1,0 +1,23 @@
+run:
+  timeout: 5m
+
+linters:
+  enable:
+    - errcheck
+    - staticcheck
+    - gosimple
+    - ineffassign
+    - unused
+    - gofmt
+    - govet
+    - misspell
+
+linters-settings:
+  errcheck:
+    check-type-assertions: true
+
+issues:
+  exclude-dirs:
+    - website
+    - npm
+    - pip

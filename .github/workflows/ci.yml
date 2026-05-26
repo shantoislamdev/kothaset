@@ -26,8 +26,18 @@ jobs:
       - name: Download dependencies
         run: go mod download
 
+      - name: Check go mod tidy
+        run: |
+          go mod tidy
+          git diff --exit-code go.mod go.sum
+
       - name: Run vet
         run: go vet ./...
+
+      - name: Run golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
 
       - name: Run vulnerability check
         run: |
