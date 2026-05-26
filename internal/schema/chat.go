@@ -131,22 +131,26 @@ func (s *ChatSchema) ValidateSample(sample *Sample) error {
 		return NewSchemaError(s.Name(), "conversations", "conversations is required")
 	}
 
-	rawList, ok := convs.([]any)
-	if !ok {
-		return NewSchemaError(s.Name(), "conversations", "invalid conversations format: expected list")
-	}
+	var convList []ChatMessage
 
-	convList := make([]ChatMessage, 0, len(rawList))
-	for i, item := range rawList {
-		m, ok := item.(map[string]any)
-		if !ok {
-			return NewSchemaError(s.Name(), "conversations",
-				fmt.Sprintf("invalid message at index %d: expected object", i))
+	switch v := convs.(type) {
+	case []ChatMessage:
+		convList = v
+	case []any:
+		convList = make([]ChatMessage, 0, len(v))
+		for i, item := range v {
+			m, ok := item.(map[string]any)
+			if !ok {
+				return NewSchemaError(s.Name(), "conversations",
+					fmt.Sprintf("invalid message at index %d: expected object", i))
+			}
+			convList = append(convList, ChatMessage{
+				Role:    fmt.Sprint(m["role"]),
+				Content: fmt.Sprint(m["content"]),
+			})
 		}
-		convList = append(convList, ChatMessage{
-			Role:    fmt.Sprint(m["role"]),
-			Content: fmt.Sprint(m["content"]),
-		})
+	default:
+		return NewSchemaError(s.Name(), "conversations", "invalid conversations format: expected list")
 	}
 
 	if len(convList) < 2 {
