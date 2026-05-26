@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"slices"
 	"sort"
 	"strings"
 	"text/tabwriter"
@@ -107,13 +108,9 @@ var validateSchemaCmd = &cobra.Command{
 		// Check required fields
 		requiredFields := sch.RequiredFields()
 		for _, reqField := range requiredFields {
-			found := false
-			for _, f := range fields {
-				if f.Name == reqField {
-					found = true
-					break
-				}
-			}
+			found := slices.ContainsFunc(fields, func(f schema.FieldDefinition) bool {
+				return f.Name == reqField
+			})
 			if !found {
 				issues = append(issues, fmt.Sprintf("required field '%s' not in field definitions", reqField))
 			}
