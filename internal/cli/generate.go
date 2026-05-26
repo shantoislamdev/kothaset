@@ -199,6 +199,11 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 		providerName = cfg.Global.Provider
 	}
 
+	// Resolve secret references (env vars) before accessing provider credentials
+	if err := ensureSecretsResolved(); err != nil {
+		return fmt.Errorf("provider credentials: %w", err)
+	}
+
 	// Get provider config from secrets
 	providerCfg, err := secrets.GetProvider(providerName)
 	if err != nil {

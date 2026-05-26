@@ -133,6 +133,10 @@ providers:
 		t.Fatalf("Expected 1 provider, got %d", len(secrets.Providers))
 	}
 
+	if err := ResolveSecrets(secrets); err != nil {
+		t.Fatalf("ResolveSecrets failed: %v", err)
+	}
+
 	if secrets.Providers[0].APIKey != "my-secret-key" {
 		t.Errorf("Expected api_key 'my-secret-key', got '%s'", secrets.Providers[0].APIKey)
 	}
