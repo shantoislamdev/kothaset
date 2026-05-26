@@ -30,7 +30,7 @@ func init() {
 	initCmd.Flags().BoolVar(&initForce, "force", false, "overwrite existing files")
 }
 
-func runInit(cmd *cobra.Command, args []string) error {
+func runInit(_ *cobra.Command, _ []string) error {
 	// Create kothaset.yaml (public config)
 	publicPath := "kothaset.yaml"
 	if _, err := os.Stat(publicPath); err == nil && !initForce {
