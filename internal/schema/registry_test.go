@@ -10,17 +10,19 @@ type mockSchema struct {
 	name string
 }
 
-func (m *mockSchema) Name() string { return m.name }
-func (m *mockSchema) Style() DatasetStyle { return StyleInstruction }
-func (m *mockSchema) Description() string { return "Mock Schema" }
-func (m *mockSchema) Version() string { return "1.0" }
+func (m *mockSchema) Name() string              { return m.name }
+func (m *mockSchema) Style() DatasetStyle       { return StyleInstruction }
+func (m *mockSchema) Description() string       { return "Mock Schema" }
+func (m *mockSchema) Version() string           { return "1.0" }
 func (m *mockSchema) Fields() []FieldDefinition { return nil }
-func (m *mockSchema) RequiredFields() []string { return nil }
-func (m *mockSchema) GeneratePrompt(ctx context.Context, opts PromptOptions) (string, error) { return "", nil }
+func (m *mockSchema) RequiredFields() []string  { return nil }
+func (m *mockSchema) GeneratePrompt(ctx context.Context, opts PromptOptions) (string, error) {
+	return "", nil
+}
 func (m *mockSchema) ParseResponse(raw string) (*Sample, error) { return nil, nil }
-func (m *mockSchema) ValidateSample(sample *Sample) error { return nil }
-func (m *mockSchema) ToJSON(sample *Sample) ([]byte, error) { return nil, nil }
-func (m *mockSchema) ToJSONL(sample *Sample) ([]byte, error) { return nil, nil }
+func (m *mockSchema) ValidateSample(sample *Sample) error       { return nil }
+func (m *mockSchema) ToJSON(sample *Sample) ([]byte, error)     { return nil, nil }
+func (m *mockSchema) ToJSONL(sample *Sample) ([]byte, error)    { return nil, nil }
 
 func TestNewRegistry(t *testing.T) {
 	r := NewRegistry()
