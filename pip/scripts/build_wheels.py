@@ -107,8 +107,32 @@ def download_archive(version: str, goos: str, goarch: str, ext: str, dest: Path)
     dest_path = dest / filename
 
     print(f"  Downloading: {url}")
-    urllib.request.urlretrieve(url, dest_path)
+    req = urllib.request.Request(url)
+    with urllib.request.urlopen(req, timeout=300) as resp:
+        with open(dest_path, "wb") as f:
+            while True:
+                chunk = resp.read(8192)
+                if not chunk:
+                    break
+                f.write(chunk)
     return dest_path
+
+
+def download_checksums(version: str, dest: Path) -> dict:
+    """Download and parse the checksums.txt file from a GitHub Release."""
+    url = f"https://github.com/{REPO}/releases/download/v{version}/checksums.txt"
+    dest_path = dest / "checksums.txt"
+    req = urllib.request.Request(url)
+    with urllib.request.urlopen(req, timeout=60) as resp:
+        with open(dest_path, "wb") as f:
+            f.write(resp.read())
+    checksums = {}
+    with open(dest_path) as f:
+        for line in f:
+            parts = line.strip().split()
+            if len(parts) == 2:
+                checksums[parts[1]] = parts[0]
+    return checksums
 
 
 def extract_binary(archive_path: Path, binary_name: str, dest_dir: Path) -> Path:
@@ -354,6 +378,16 @@ def main():
 
     built_wheels = []
 
+    # Download checksums for verification (when downloading from GitHub)
+    checksums = {}
+    if not args.binaries_dir and not args.dry_run:
+        try:
+            print("Downloading checksums for verification...")
+            checksums = download_checksums(args.version, args.output_dir)
+            print(f"   Loaded {len(checksums)} checksums\n")
+        except Exception as e:
+            print(f"   Warning: could not download checksums: {e}\n")
+
     with tempfile.TemporaryDirectory() as tmpdir:
         tmp = Path(tmpdir)
 
@@ -391,6 +425,21 @@ def main():
                         args.version, goos, goarch,
                         target["archive_ext"], tmp,
                     )
+
+                    # Verify checksum
+                    if checksums:
+                        expected = checksums.get(archive_path.name)
+                        if expected:
+                            actual = sha256_digest(archive_path)
+                            if actual != expected:
+                                raise RuntimeError(
+                                    f"Checksum mismatch for {archive_path.name}: "
+                                    f"expected {expected}, got {actual}"
+                                )
+                            print(f"  Checksum verified for {archive_path.name}")
+                        else:
+                            print(f"  Warning: no checksum for {archive_path.name}")
+
                     binary_path = extract_binary(
                         archive_path, target["binary_name"], binary_dir,
                     )
