@@ -90,6 +90,20 @@ func TestChatSchema_ValidateSample(t *testing.T) {
 		t.Error("ValidateSample should fail for missing conversations")
 	}
 
+	// Valid: ParseResponse produces []ChatMessage, ValidateSample must accept it
+	parseSample, err := s.ParseResponse(`{
+		"conversations": [
+			{"role": "user", "content": "Hello"},
+			{"role": "assistant", "content": "Hi there"}
+		]
+	}`)
+	if err != nil {
+		t.Fatalf("ParseResponse failed: %v", err)
+	}
+	if err := s.ValidateSample(parseSample); err != nil {
+		t.Errorf("ValidateSample failed for ParseResponse output: %v", err)
+	}
+
 	// Invalid: not enough messages
 	shortSample := &Sample{
 		Fields: map[string]any{
