@@ -140,11 +140,6 @@ func LoadSecretsConfig(secretsPath string) (*SecretsConfig, error) {
 		}
 	}
 
-	// Resolve any secret references (env vars)
-	if err := resolveSecrets(secrets); err != nil {
-		return nil, fmt.Errorf("failed to resolve secrets: %w", err)
-	}
-
 	return secrets, nil
 }
 

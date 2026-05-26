@@ -337,6 +337,11 @@ var providerTestCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		providerName := args[0]
 
+		// Resolve secret references (env vars) before accessing provider credentials
+		if err := ensureSecretsResolved(); err != nil {
+			return fmt.Errorf("provider credentials: %w", err)
+		}
+
 		// Find provider config by name
 		var providerCfg *provider.Config
 		if secrets != nil {

@@ -6,8 +6,9 @@ import (
 	"strings"
 )
 
-// resolveSecrets resolves all secret references in the secrets configuration
-func resolveSecrets(cfg *SecretsConfig) error {
+// ResolveSecrets resolves all secret references in the secrets configuration.
+// This is exported so callers can defer resolution until credentials are actually needed.
+func ResolveSecrets(cfg *SecretsConfig) error {
 	var errs []string
 	for i := range cfg.Providers {
 		p := &cfg.Providers[i]

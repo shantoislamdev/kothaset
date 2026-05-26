@@ -4,6 +4,7 @@ package cli
 import (
 	"fmt"
 	"log/slog"
+	"sync"
 
 	"github.com/spf13/cobra"
 
@@ -25,6 +26,10 @@ var (
 	cfgFile  string
 	verbose  bool
 	quiet    bool
+
+	// Lazy secret resolution (sync.Once)
+	secretsOnce sync.Once
+	secretsErr  error
 )
 
 // rootCmd represents the base command when called without subcommands
@@ -99,4 +104,16 @@ func initConfig() error {
 	}
 
 	return nil
+}
+
+// ensureSecretsResolved resolves env-var references in .secrets.yaml on first call.
+// Subsequent calls return the cached error (or nil).
+func ensureSecretsResolved() error {
+	secretsOnce.Do(func() {
+		if secrets == nil {
+			return
+		}
+		secretsErr = config.ResolveSecrets(secrets)
+	})
+	return secretsErr
 }

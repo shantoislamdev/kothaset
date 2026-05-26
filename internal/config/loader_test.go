@@ -21,12 +21,17 @@ providers:
 		t.Fatalf("failed to write secrets file: %v", err)
 	}
 
-	_, loadErr := LoadSecretsConfig(secretsPath)
-	if loadErr == nil {
-		t.Fatal("LoadSecretsConfig should return error for missing env var")
+	cfg, loadErr := LoadSecretsConfig(secretsPath)
+	if loadErr != nil {
+		t.Fatalf("LoadSecretsConfig should not fail before resolution: %v", loadErr)
 	}
 
-	errText := loadErr.Error()
+	resolveErr := ResolveSecrets(cfg)
+	if resolveErr == nil {
+		t.Fatal("ResolveSecrets should return error for missing env var")
+	}
+
+	errText := resolveErr.Error()
 	if !strings.Contains(errText, "missing-env") {
 		t.Errorf("expected provider name in error, got: %q", errText)
 	}
