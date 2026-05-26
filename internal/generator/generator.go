@@ -18,6 +18,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/shantoislamdev/kothaset/internal/fsutil"
+	"github.com/shantoislamdev/kothaset/internal/log"
 	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
@@ -275,12 +276,12 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 			if result.err != nil {
 				atomic.AddInt64(&g.failed, 1)
 				// Log the error so failures are not silently swallowed
-				fmt.Fprintf(os.Stderr, "⚠ Sample failed: %v\n", result.err)
+				log.Warn("sample failed", "error", result.err)
 			} else {
 				// Write to output immediately - don't store in memory to prevent memory leaks
 				if err := g.writer.Write(result.sample); err != nil {
 					atomic.AddInt64(&g.failed, 1)
-					fmt.Fprintf(os.Stderr, "⚠ Write failed: %v\n", err)
+					log.Warn("write failed", "error", err)
 					if writeErr == nil {
 						writeErr = err
 						cancel()
@@ -300,11 +301,11 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 			if g.config.CheckpointEvery > 0 && checkpointCounter >= g.config.CheckpointEvery {
 				// Sync to physical storage before checkpointing for crash-safe durability
 				if err := g.writer.Sync(); err != nil {
-					fmt.Fprintf(os.Stderr, "Warning: failed to sync output: %v\n", err)
+					log.Warn("failed to sync output", "error", err)
 				}
 				if err := g.saveCheckpoint(); err != nil {
 					// Log but don't fail
-					fmt.Fprintf(os.Stderr, "Warning: failed to save checkpoint: %v\n", err)
+					log.Warn("failed to save checkpoint", "error", err)
 				}
 				checkpointCounter = 0
 			}
@@ -342,7 +343,7 @@ loop:
 
 	// Final checkpoint
 	if err := g.saveCheckpoint(); err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: failed to save final checkpoint: %v\n", err)
+		log.Warn("failed to save final checkpoint", "error", err)
 	}
 
 	duration := time.Since(startTime)

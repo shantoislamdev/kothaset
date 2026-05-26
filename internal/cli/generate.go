@@ -16,6 +16,7 @@ import (
 
 	"github.com/shantoislamdev/kothaset/internal/fsutil"
 	"github.com/shantoislamdev/kothaset/internal/generator"
+	log "github.com/shantoislamdev/kothaset/internal/log"
 	"github.com/shantoislamdev/kothaset/internal/output"
 	"github.com/shantoislamdev/kothaset/internal/provider"
 	"github.com/shantoislamdev/kothaset/internal/schema"
@@ -378,7 +379,7 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 	go func() {
 		select {
 		case <-sigCh:
-			fmt.Println("\n⚠ Received interrupt, saving checkpoint...")
+			log.Warn("received interrupt, saving checkpoint")
 			cancel()
 		case <-ctx.Done():
 			// Generation finished normally or was cancelled.
@@ -406,12 +407,12 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 	// Set progress callback to update the bar
 	gen.SetProgressCallback(func(p generator.Progress) {
 		if err := bar.Set(p.Completed); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to update progress bar: %v\n", err)
+			log.Warn("failed to update progress bar", "error", err)
 		}
 	})
 	if resumeCheckpoint != nil && resumeCheckpoint.Completed > 0 {
 		if err := bar.Set(resumeCheckpoint.Completed); err != nil {
-			fmt.Fprintf(os.Stderr, "Warning: failed to set initial progress: %v\n", err)
+			log.Warn("failed to set initial progress", "error", err)
 		}
 	}
 
