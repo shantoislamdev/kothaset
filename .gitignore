@@ -50,9 +50,10 @@ pip/src/*.egg-info
 .kothaset/
 
 # Test coverage
-coverage
-coverage.out
-coverage.html
+coverage/
+*.out
+*.coverprofile
+*.html
 
 # Examples (Allow tracking)
 !examples/*.txt

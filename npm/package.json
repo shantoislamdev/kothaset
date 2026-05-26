@@ -30,7 +30,7 @@
     "postinstall": "node scripts/postinstall.js"
   },
   "engines": {
-    "node": ">=14"
+    "node": ">=18"
   },
   "os": [
     "darwin",
