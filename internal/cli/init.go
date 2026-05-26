@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
+
+	log "github.com/shantoislamdev/kothaset/internal/log"
 )
 
 var initCmd = &cobra.Command{
@@ -103,7 +105,7 @@ providers:
 	// Handle .gitignore
 	if err := handleGitignore(); err != nil {
 		// Non-fatal error, just log it
-		fmt.Fprintf(os.Stderr, "Warning: could not update .gitignore: %v\n", err)
+		log.Warn("could not update .gitignore", "error", err)
 	}
 
 	absPath, err := filepath.Abs(publicPath)

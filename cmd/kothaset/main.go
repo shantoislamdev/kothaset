@@ -1,15 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"os"
 
 	"github.com/shantoislamdev/kothaset/internal/cli"
+	"github.com/shantoislamdev/kothaset/internal/log"
 )
 
 func main() {
 	if err := cli.Execute(); err != nil {
-		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		log.Error("command failed", "error", err)
 		os.Exit(1)
 	}
 }

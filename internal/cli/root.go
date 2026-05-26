@@ -3,10 +3,12 @@ package cli
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/spf13/cobra"
 
 	"github.com/shantoislamdev/kothaset/internal/config"
+	"github.com/shantoislamdev/kothaset/internal/log"
 )
 
 var (
@@ -20,7 +22,9 @@ var (
 	secrets *config.SecretsConfig
 
 	// Global flags
-	cfgFile string
+	cfgFile  string
+	verbose  bool
+	quiet    bool
 )
 
 // rootCmd represents the base command when called without subcommands
@@ -41,6 +45,13 @@ Features:
 Example:
   kothaset generate --schema instruction --count 1000 --output dataset.jsonl`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
+		// Configure log level
+		if verbose {
+			log.SetLevel(slog.LevelDebug)
+		} else if quiet {
+			log.SetLevel(slog.LevelWarn)
+		}
+
 		// Skip config loading for version and init commands
 		if cmd.Name() == "version" || cmd.Name() == "init" {
 			return nil
@@ -59,6 +70,8 @@ func Execute() error {
 func init() {
 	// Global flags
 	rootCmd.PersistentFlags().StringVarP(&cfgFile, "config", "c", "", "config file (default: kothaset.yaml)")
+	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable debug logging")
+	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "suppress non-error output")
 
 	// Register subcommands
 	rootCmd.AddCommand(versionCmd)
