@@ -138,10 +138,10 @@ type Generator struct {
 	rateLimiter *RateLimiter
 
 	// State - only store counts, not samples (to prevent memory leaks)
-	completed  int32
-	failed     int32
+	completed  int64
+	failed     int64
 	tokensUsed int64
-	inProgress int32
+	inProgress int64
 
 	// Callbacks
 	onProgress ProgressCallback
@@ -218,8 +218,8 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 			return nil, fmt.Errorf("resume count mismatch: checkpoint completed=%d exceeds requested num_samples=%d", checkpoint.Completed, g.config.NumSamples)
 		}
 		// Resume from checkpoint count - samples already written to output file
-		atomic.StoreInt32(&g.completed, int32(checkpoint.Completed))
-		atomic.StoreInt32(&g.failed, int32(checkpoint.Failed))
+		atomic.StoreInt64(&g.completed, int64(checkpoint.Completed))
+		atomic.StoreInt64(&g.failed, int64(checkpoint.Failed))
 		atomic.StoreInt64(&g.tokensUsed, int64(checkpoint.TokensUsed))
 	}
 
@@ -246,7 +246,7 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 	defer g.writer.Close()
 
 	// Calculate remaining samples from a stable base for this run
-	baseCompleted := int(atomic.LoadInt32(&g.completed))
+	baseCompleted := int(atomic.LoadInt64(&g.completed))
 	remaining := g.config.NumSamples - baseCompleted
 	if remaining < 0 {
 		return nil, fmt.Errorf("invalid generation state: completed=%d exceeds requested num_samples=%d", baseCompleted, g.config.NumSamples)
@@ -273,13 +273,13 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 		defer close(collectorDone)
 		for result := range results {
 			if result.err != nil {
-				atomic.AddInt32(&g.failed, 1)
+				atomic.AddInt64(&g.failed, 1)
 				// Log the error so failures are not silently swallowed
 				fmt.Fprintf(os.Stderr, "⚠ Sample failed: %v\n", result.err)
 			} else {
 				// Write to output immediately - don't store in memory to prevent memory leaks
 				if err := g.writer.Write(result.sample); err != nil {
-					atomic.AddInt32(&g.failed, 1)
+					atomic.AddInt64(&g.failed, 1)
 					fmt.Fprintf(os.Stderr, "⚠ Write failed: %v\n", err)
 					if writeErr == nil {
 						writeErr = err
@@ -288,7 +288,7 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 					continue
 				}
 
-				atomic.AddInt32(&g.completed, 1)
+				atomic.AddInt64(&g.completed, 1)
 				atomic.AddInt64(&g.tokensUsed, int64(result.tokens))
 			}
 
@@ -325,8 +325,8 @@ loop:
 		go func(idx int) {
 			defer wg.Done()
 			defer pool.Release()
-			atomic.AddInt32(&g.inProgress, 1)
-			defer atomic.AddInt32(&g.inProgress, -1)
+			atomic.AddInt64(&g.inProgress, 1)
+			defer atomic.AddInt64(&g.inProgress, -1)
 
 			result := g.generateSample(ctx, idx)
 			results <- result
@@ -350,8 +350,8 @@ loop:
 
 	result := &Result{
 		TotalSamples: g.config.NumSamples,
-		SuccessCount: int(atomic.LoadInt32(&g.completed)),
-		FailedCount:  int(atomic.LoadInt32(&g.failed)),
+		SuccessCount: int(atomic.LoadInt64(&g.completed)),
+		FailedCount:  int(atomic.LoadInt64(&g.failed)),
 		TotalTokens:  tokens,
 
 		Duration:       duration,
@@ -520,10 +520,10 @@ func (g *Generator) reportProgress(startTime time.Time) {
 		return
 	}
 
-	completed := int(atomic.LoadInt32(&g.completed))
-	failed := int(atomic.LoadInt32(&g.failed))
+	completed := int(atomic.LoadInt64(&g.completed))
+	failed := int(atomic.LoadInt64(&g.failed))
 	tokens := int(atomic.LoadInt64(&g.tokensUsed))
-	inProgress := int(atomic.LoadInt32(&g.inProgress))
+	inProgress := int(atomic.LoadInt64(&g.inProgress))
 
 	elapsed := time.Since(startTime)
 	var samplesPS float64
@@ -563,8 +563,8 @@ func (g *Generator) saveCheckpoint() error {
 		SchemaVersion: checkpointVersion,
 		Timestamp:     time.Now(),
 		Config:        g.config,
-		Completed:     int(atomic.LoadInt32(&g.completed)),
-		Failed:        int(atomic.LoadInt32(&g.failed)),
+		Completed:     int(atomic.LoadInt64(&g.completed)),
+		Failed:        int(atomic.LoadInt64(&g.failed)),
 		TokensUsed:    int(atomic.LoadInt64(&g.tokensUsed)),
 	}
 
@@ -591,7 +591,7 @@ func SaveCheckpoint(cp *Checkpoint, path string) error {
 		dir = defaultCacheDir
 		path = filepath.Join(dir, filepath.Base(path))
 	}
-	if err := os.MkdirAll(dir, 0755); err != nil {
+	if err := os.MkdirAll(dir, 0700); err != nil {
 		return fmt.Errorf("failed to create checkpoint directory: %w", err)
 	}
 
@@ -602,7 +602,7 @@ func SaveCheckpoint(cp *Checkpoint, path string) error {
 
 	// Write to a temporary file first.
 	tmpPath := path + ".tmp"
-	tmpFile, err := os.OpenFile(tmpPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+	tmpFile, err := os.OpenFile(tmpPath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0600)
 	if err != nil {
 		return err
 	}

@@ -1,7 +1,6 @@
 package config
 
 import (
-	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -22,34 +21,17 @@ providers:
 		t.Fatalf("failed to write secrets file: %v", err)
 	}
 
-	origStderr := os.Stderr
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("failed to create stderr pipe: %v", err)
-	}
-	os.Stderr = w
-
-	secrets, loadErr := LoadSecretsConfig(secretsPath)
-
-	_ = w.Close()
-	os.Stderr = origStderr
-
-	logged, _ := io.ReadAll(r)
-	_ = r.Close()
-
-	if loadErr != nil {
-		t.Fatalf("LoadSecretsConfig returned unexpected error: %v", loadErr)
-	}
-	if secrets == nil || len(secrets.Providers) != 1 {
-		t.Fatalf("expected one provider, got: %+v", secrets)
+	_, loadErr := LoadSecretsConfig(secretsPath)
+	if loadErr == nil {
+		t.Fatal("LoadSecretsConfig should return error for missing env var")
 	}
 
-	logText := string(logged)
-	if !strings.Contains(logText, "Provider 'missing-env'") {
-		t.Fatalf("expected provider warning, got: %q", logText)
+	errText := loadErr.Error()
+	if !strings.Contains(errText, "missing-env") {
+		t.Errorf("expected provider name in error, got: %q", errText)
 	}
-	if !strings.Contains(logText, "environment variable not set") {
-		t.Fatalf("expected missing env warning, got: %q", logText)
+	if !strings.Contains(errText, "environment variable not set") {
+		t.Errorf("expected missing env in error, got: %q", errText)
 	}
 }
 

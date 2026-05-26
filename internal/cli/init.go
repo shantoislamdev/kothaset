@@ -103,10 +103,13 @@ providers:
 	// Handle .gitignore
 	if err := handleGitignore(); err != nil {
 		// Non-fatal error, just log it
-		fmt.Printf("Warning: could not update .gitignore: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Warning: could not update .gitignore: %v\n", err)
 	}
 
-	absPath, _ := filepath.Abs(publicPath)
+	absPath, err := filepath.Abs(publicPath)
+	if err != nil {
+		absPath = publicPath
+	}
 	fmt.Printf("✓ Created %s (public config)\n", absPath)
 	fmt.Println("✓ Created .secrets.yaml (private - add your API key)")
 	fmt.Println("✓ Created .kothaset/ (cache directory)")
@@ -174,16 +177,22 @@ func handleGitignore() error {
 
 	// Add newline if file doesn't end with one
 	if len(content) > 0 && !strings.HasSuffix(content, "\n") {
-		f.WriteString("\n")
+		if _, err := f.WriteString("\n"); err != nil {
+			return fmt.Errorf("failed to write to .gitignore: %w", err)
+		}
 	}
 
 	// Check if we need to add a header
 	if !strings.Contains(content, "# KothaSet") {
-		f.WriteString("\n# KothaSet\n")
+		if _, err := f.WriteString("\n# KothaSet\n"); err != nil {
+			return fmt.Errorf("failed to write to .gitignore: %w", err)
+		}
 	}
 
 	for _, entry := range missingEntries {
-		f.WriteString(entry + "\n")
+		if _, err := f.WriteString(entry + "\n"); err != nil {
+			return fmt.Errorf("failed to write to .gitignore: %w", err)
+		}
 	}
 
 	fmt.Println("✓ Updated .gitignore")
