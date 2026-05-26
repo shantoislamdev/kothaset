@@ -55,7 +55,7 @@ Example:
 		if verbose {
 			log.SetLevel(slog.LevelDebug)
 		} else if quiet {
-			log.SetLevel(slog.LevelWarn)
+			log.SetLevel(slog.LevelError)
 		}
 
 		// Skip config loading for version and init commands
