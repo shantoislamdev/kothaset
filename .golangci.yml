@@ -1,23 +1,22 @@
-run:
-  timeout: 5m
+version: "2"
 
 linters:
   enable:
     - errcheck
     - staticcheck
-    - gosimple
     - ineffassign
     - unused
-    - gofmt
     - govet
     - misspell
+  settings:
+    errcheck:
+      check-type-assertions: true
+  exclusions:
+    paths:
+      - website
+      - npm
+      - pip
 
-linters-settings:
-  errcheck:
-    check-type-assertions: true
-
-issues:
-  exclude-dirs:
-    - website
-    - npm
-    - pip
+formatters:
+  enable:
+    - gofmt
