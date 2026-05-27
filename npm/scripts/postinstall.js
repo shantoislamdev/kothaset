@@ -198,12 +198,11 @@ async function main() {
       const checksums = await downloadChecksums(VERSION);
       const releaseName = path.basename(new URL(url).pathname);
       const expectedHash = checksums[releaseName];
-      if (expectedHash) {
-        await verifyChecksum(archivePath, expectedHash);
-        console.log('Checksum verified.');
-      } else {
-        console.warn(`Warning: no checksum found for ${releaseName}`);
+      if (!expectedHash) {
+        throw new Error(`no checksum entry for ${releaseName} in checksums.txt`);
       }
+      await verifyChecksum(archivePath, expectedHash);
+      console.log('Checksum verified.');
     } catch (checksumErr) {
       console.error(`Checksum verification failed: ${checksumErr.message}`);
       throw checksumErr;
