@@ -106,10 +106,6 @@ func initConfig() error {
 		return fmt.Errorf("failed to load .secrets.yaml: %w", err)
 	}
 
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("invalid configuration: %w", err)
-	}
-
 	return nil
 }
 
