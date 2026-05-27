@@ -71,7 +71,7 @@ func TestNewSampler_PermissionError(t *testing.T) {
 	if err := os.Chmod(restrictedDir, 0o000); err != nil {
 		t.Fatalf("failed to chmod dir: %v", err)
 	}
-	defer os.Chmod(restrictedDir, 0o755)
+	defer func() { _ = os.Chmod(restrictedDir, 0o755) }()
 
 	_, err := NewSampler(path)
 	if err == nil {
