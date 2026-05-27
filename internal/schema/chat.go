@@ -63,13 +63,13 @@ func (s *ChatSchema) GeneratePrompt(ctx context.Context, opts PromptOptions) (st
 	}
 
 	if opts.Topic != "" {
-		sb.WriteString(fmt.Sprintf("Topic/Context: %s\n", opts.Topic))
+		fmt.Fprintf(&sb, "Topic/Context: %s\n", opts.Topic)
 	}
 	if opts.Category != "" {
-		sb.WriteString(fmt.Sprintf("Category: %s\n", opts.Category))
+		fmt.Fprintf(&sb, "Category: %s\n", opts.Category)
 	}
 	if opts.Complexity > 0 {
-		sb.WriteString(fmt.Sprintf("Conversation depth: %d/5 (more turns for higher values)\n", opts.Complexity))
+		fmt.Fprintf(&sb, "Conversation depth: %d/5 (more turns for higher values)\n", opts.Complexity)
 	}
 
 	sb.WriteString("\n")

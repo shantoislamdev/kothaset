@@ -217,7 +217,7 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 	}
 
 	outputPath := genOutput
-	useOutputDirDefault := !(resumeCheckpoint != nil && !cmd.Flags().Changed("output"))
+	useOutputDirDefault := resumeCheckpoint == nil || cmd.Flags().Changed("output")
 	if useOutputDirDefault && !filepath.IsAbs(outputPath) && cfg.Global.OutputDir != "" && cfg.Global.OutputDir != "." {
 		outputPath = filepath.Join(cfg.Global.OutputDir, outputPath)
 	}
