@@ -69,7 +69,7 @@ func (s *ClassificationSchema) GeneratePrompt(ctx context.Context, opts PromptOp
 	}
 
 	if opts.Topic != "" {
-		sb.WriteString(fmt.Sprintf("Category/Domain: %s\n", opts.Topic))
+		fmt.Fprintf(&sb, "Category/Domain: %s\n", opts.Topic)
 	}
 
 	// Get labels from variables if provided
@@ -83,7 +83,7 @@ func (s *ClassificationSchema) GeneratePrompt(ctx context.Context, opts PromptOp
 	sb.WriteString("\n")
 
 	if len(labels) > 0 {
-		sb.WriteString(fmt.Sprintf("Available labels: %s\n\n", strings.Join(labels, ", ")))
+		fmt.Fprintf(&sb, "Available labels: %s\n\n", strings.Join(labels, ", "))
 		sb.WriteString(`Generate a text sample and assign the most appropriate label:
 
 {

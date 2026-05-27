@@ -63,10 +63,10 @@ func (s *PreferenceSchema) GeneratePrompt(ctx context.Context, opts PromptOption
 	}
 
 	if opts.Topic != "" {
-		sb.WriteString(fmt.Sprintf("Topic: %s\n", opts.Topic))
+		fmt.Fprintf(&sb, "Topic: %s\n", opts.Topic)
 	}
 	if opts.Category != "" {
-		sb.WriteString(fmt.Sprintf("Category: %s\n", opts.Category))
+		fmt.Fprintf(&sb, "Category: %s\n", opts.Category)
 	}
 
 	sb.WriteString("\n")
