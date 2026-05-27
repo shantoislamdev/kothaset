@@ -205,7 +205,8 @@ async function main() {
         console.warn(`Warning: no checksum found for ${releaseName}`);
       }
     } catch (checksumErr) {
-      console.warn(`Warning: checksum verification skipped: ${checksumErr.message}`);
+      console.error(`Checksum verification failed: ${checksumErr.message}`);
+      throw checksumErr;
     }
 
     // Extract

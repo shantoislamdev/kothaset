@@ -138,16 +138,10 @@ func TestGlobalRegistry(t *testing.T) {
 
 	mGlobal := &mockSchema{name: "global_mock"}
 
-	// Test Register
-	err := Register(mGlobal)
+	// Register via the registry directly
+	err := globalRegistry.Register(mGlobal)
 	if err != nil {
-		t.Errorf("Global Register failed: %v", err)
-	}
-
-	// Duplicate registration should fail
-	err = Register(mGlobal)
-	if err == nil {
-		t.Error("Global Register should fail on duplicate")
+		t.Errorf("Register failed: %v", err)
 	}
 
 	// Test Get

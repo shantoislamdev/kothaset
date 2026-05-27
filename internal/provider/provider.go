@@ -97,20 +97,4 @@ type TokenUsage struct {
 	TotalTokens      int `json:"total_tokens"`
 }
 
-// StreamChunk represents a piece of a streaming response
-type StreamChunk struct {
-	// Content is the text delta
-	Content string `json:"content"`
 
-	// Done indicates the stream is complete
-	Done bool `json:"done"`
-
-	// FinishReason when Done is true
-	FinishReason string `json:"finish_reason,omitempty"`
-
-	// Usage when Done is true
-	Usage *TokenUsage `json:"usage,omitempty"`
-
-	// Error if something went wrong
-	Error error `json:"error,omitempty"`
-}

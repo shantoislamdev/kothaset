@@ -12,11 +12,11 @@ const (
 	ErrKindValidation    ErrorKind = "validation"     // Invalid request parameters
 	ErrKindAuth          ErrorKind = "auth"           // Authentication failure
 	ErrKindRateLimit     ErrorKind = "rate_limit"     // Rate limit exceeded
-	ErrKindQuota         ErrorKind = "quota"          // Quota exceeded
+
 	ErrKindNetwork       ErrorKind = "network"        // Network connectivity issue
 	ErrKindTimeout       ErrorKind = "timeout"        // Request timeout
 	ErrKindServer        ErrorKind = "server"         // Provider server error
-	ErrKindContentFilter ErrorKind = "content_filter" // Content filtered
+
 	ErrKindContextLength ErrorKind = "context_length" // Context too long
 	ErrKindUnknown       ErrorKind = "unknown"        // Unknown error
 )

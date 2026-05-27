@@ -141,16 +141,6 @@ func (r *Registry) Close() error {
 
 // Global registry functions
 
-// RegisterFactory registers a factory in the global registry
-func RegisterFactory(providerType string, factory Factory) {
-	globalRegistry.RegisterFactory(providerType, factory)
-}
-
-// Register adds a provider to the global registry
-func Register(name string, provider Provider) error {
-	return globalRegistry.Register(name, provider)
-}
-
 // Get retrieves a provider from the global registry
 func Get(name string) (Provider, error) {
 	return globalRegistry.Get(name)

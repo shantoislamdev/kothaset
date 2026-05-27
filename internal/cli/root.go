@@ -79,6 +79,8 @@ func init() {
 	rootCmd.PersistentFlags().BoolVarP(&verbose, "verbose", "v", false, "enable debug logging")
 	rootCmd.PersistentFlags().BoolVarP(&quiet, "quiet", "q", false, "suppress non-error output")
 
+	rootCmd.MarkFlagsMutuallyExclusive("verbose", "quiet")
+
 	// Register subcommands
 	rootCmd.AddCommand(versionCmd)
 	rootCmd.AddCommand(initCmd)
@@ -102,6 +104,10 @@ func initConfig() error {
 	secrets, err = config.LoadSecretsConfig("")
 	if err != nil {
 		return fmt.Errorf("failed to load .secrets.yaml: %w", err)
+	}
+
+	if err := cfg.Validate(); err != nil {
+		return fmt.Errorf("invalid configuration: %w", err)
 	}
 
 	return nil

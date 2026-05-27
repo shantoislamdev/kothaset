@@ -78,11 +78,6 @@ func (r *Registry) List() []string {
 
 // Global registry functions
 
-// Register adds a schema to the global registry
-func Register(schema Schema) error {
-	return globalRegistry.Register(schema)
-}
-
 // Get retrieves a schema from the global registry
 func Get(name string) (Schema, error) {
 	return globalRegistry.Get(name)
