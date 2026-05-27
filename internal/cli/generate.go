@@ -297,7 +297,7 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("failed to create provider: %w", err)
 	}
-	defer provider.CloseAll()
+	defer func() { _ = provider.CloseAll() }()
 
 	// Context and instructions from kothaset.yaml
 	userContext := cfg.Context
@@ -427,7 +427,7 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 
 	// Run generation
 	result, err := gen.Run(ctx)
-	bar.Finish()
+	_ = bar.Finish()
 	fmt.Println() // New line after progress
 
 	if err != nil {

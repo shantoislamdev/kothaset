@@ -77,7 +77,7 @@ func TestRegistry_Get(t *testing.T) {
 	r := NewRegistry()
 
 	m1 := &mockSchema{name: "mock_get"}
-	r.Register(m1)
+	_ = r.Register(m1)
 
 	// Test existing schema
 	s, err := r.Get("mock_get")
@@ -107,9 +107,9 @@ func TestRegistry_List(t *testing.T) {
 	}
 
 	// Add some schemas
-	r.Register(&mockSchema{name: "a"})
-	r.Register(&mockSchema{name: "b"})
-	r.Register(&mockSchema{name: "c"})
+	_ = r.Register(&mockSchema{name: "a"})
+	_ = r.Register(&mockSchema{name: "b"})
+	_ = r.Register(&mockSchema{name: "c"})
 
 	names := r.List()
 	if len(names) != 3 {

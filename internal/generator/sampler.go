@@ -61,7 +61,7 @@ func NewFileSampler(path string) (*FileSampler, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	var topics []string
 	scanner := bufio.NewScanner(file)
