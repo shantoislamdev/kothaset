@@ -23,14 +23,14 @@ var (
 	secrets *config.SecretsConfig
 
 	// Global flags
-	cfgFile  string
-	verbose  bool
-	quiet    bool
+	cfgFile string
+	verbose bool
+	quiet   bool
 
 	// Lazy secret resolution state
-	secretsMu     sync.Mutex
-	resolvedFor   *config.SecretsConfig // pointer that was last resolved
-	secretsErr    error
+	secretsMu   sync.Mutex
+	resolvedFor *config.SecretsConfig // pointer that was last resolved
+	secretsErr  error
 )
 
 // rootCmd represents the base command when called without subcommands
