@@ -63,7 +63,7 @@ func TestChatSchema_ParseResponse(t *testing.T) {
 
 	// Test with markdown code blocks
 	markdownJSON := "```json\n" + validJSON + "\n```"
-	sample, err = s.ParseResponse(markdownJSON)
+	_, err = s.ParseResponse(markdownJSON)
 	if err != nil {
 		t.Fatalf("ParseResponse failed with markdown: %v", err)
 	}
