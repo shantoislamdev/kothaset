@@ -153,10 +153,6 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 		return fmt.Errorf("configuration not loaded")
 	}
 
-	if err := cfg.Validate(); err != nil {
-		return fmt.Errorf("invalid configuration: %w", err)
-	}
-
 	// Handle seed (optional)
 	// Supports: empty (no seed), "random" (different random per request), or a specific number (fixed seed)
 	var seedPtr *int64
