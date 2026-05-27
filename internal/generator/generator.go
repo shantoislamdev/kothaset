@@ -244,7 +244,7 @@ func (g *Generator) Run(ctx context.Context) (*Result, error) {
 			return nil, fmt.Errorf("failed to open output: %w", err)
 		}
 	}
-	defer g.writer.Close()
+	defer func() { _ = g.writer.Close() }()
 
 	// Calculate remaining samples from a stable base for this run
 	baseCompleted := int(atomic.LoadInt64(&g.completed))
@@ -608,11 +608,11 @@ func SaveCheckpoint(cp *Checkpoint, path string) error {
 		return err
 	}
 	if _, err := tmpFile.Write(data); err != nil {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return err
 	}
 	if err := tmpFile.Sync(); err != nil {
-		tmpFile.Close()
+		_ = tmpFile.Close()
 		return err
 	}
 	if err := tmpFile.Close(); err != nil {

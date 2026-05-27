@@ -187,7 +187,7 @@ func validateJSONL(path string) (int, error) {
 	if err != nil {
 		return 0, err
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	scanner := bufio.NewScanner(file)
 	// Allow long lines (up to 10MB per line for large JSON objects)
@@ -235,15 +235,15 @@ var schemaListCmd = &cobra.Command{
 		sort.Strings(names)
 
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tSTYLE\tDESCRIPTION")
+		_, _ = fmt.Fprintln(w, "NAME\tSTYLE\tDESCRIPTION")
 		for _, name := range names {
 			sch, err := schema.Get(name)
 			if err != nil {
 				continue
 			}
-			fmt.Fprintf(w, "%s\t%s\t%s\n", sch.Name(), sch.Style(), sch.Description())
+			_, _ = fmt.Fprintf(w, "%s\t%s\t%s\n", sch.Name(), sch.Style(), sch.Description())
 		}
-		w.Flush()
+		_ = w.Flush()
 		return nil
 	},
 }
@@ -274,15 +274,15 @@ var schemaShowCmd = &cobra.Command{
 		if len(fields) > 0 {
 			fmt.Println("\nFields:")
 			w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-			fmt.Fprintln(w, "  NAME\tTYPE\tREQUIRED")
+			_, _ = fmt.Fprintln(w, "  NAME\tTYPE\tREQUIRED")
 			for _, f := range fields {
 				required := "no"
 				if f.Required {
 					required = "yes"
 				}
-				fmt.Fprintf(w, "  %s\t%s\t%s\n", f.Name, f.Type, required)
+				_, _ = fmt.Fprintf(w, "  %s\t%s\t%s\n", f.Name, f.Type, required)
 			}
-			w.Flush()
+			_ = w.Flush()
 		}
 
 		// Display required fields summary
@@ -312,7 +312,7 @@ var providerListCmd = &cobra.Command{
 	Short: "List configured providers",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		w := tabwriter.NewWriter(os.Stdout, 0, 0, 2, ' ', 0)
-		fmt.Fprintln(w, "NAME\tTYPE\tSTATUS")
+		_, _ = fmt.Fprintln(w, "NAME\tTYPE\tSTATUS")
 
 		if secrets != nil && len(secrets.Providers) > 0 {
 			for _, p := range secrets.Providers {
@@ -320,12 +320,12 @@ var providerListCmd = &cobra.Command{
 				if p.APIKey == "" {
 					status = "no api key"
 				}
-				fmt.Fprintf(w, "%s\t%s\t%s\n", p.Name, p.Type, status)
+				_, _ = fmt.Fprintf(w, "%s\t%s\t%s\n", p.Name, p.Type, status)
 			}
 		} else {
-			fmt.Fprintln(w, "openai\topenai\tdefault")
+			_, _ = fmt.Fprintln(w, "openai\topenai\tdefault")
 		}
-		w.Flush()
+		_ = w.Flush()
 		return nil
 	},
 }

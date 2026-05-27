@@ -175,7 +175,7 @@ func handleGitignore() error {
 	if err != nil {
 		return fmt.Errorf("failed to open .gitignore for appending: %w", err)
 	}
-	defer f.Close()
+	defer func() { _ = f.Close() }()
 
 	// Add newline if file doesn't end with one
 	if len(content) > 0 && !strings.HasSuffix(content, "\n") {

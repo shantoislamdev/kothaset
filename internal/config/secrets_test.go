@@ -9,8 +9,7 @@ import (
 
 func TestResolveAPIKey(t *testing.T) {
 	// Set up env var
-	os.Setenv("TEST_API_KEY", "secret-value")
-	defer os.Unsetenv("TEST_API_KEY")
+	t.Setenv("TEST_API_KEY", "secret-value")
 
 	tests := []struct {
 		name       string
@@ -109,8 +108,7 @@ func TestResolveAPIKey(t *testing.T) {
 }
 
 func TestLoadSecretsConfig_WithEnv(t *testing.T) {
-	os.Setenv("TEST_KEY", "my-secret-key")
-	defer os.Unsetenv("TEST_KEY")
+	t.Setenv("TEST_KEY", "my-secret-key")
 
 	tmpDir := t.TempDir()
 	secretsPath := filepath.Join(tmpDir, ".secrets.yaml")

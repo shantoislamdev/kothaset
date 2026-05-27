@@ -119,7 +119,7 @@ func TestGenerator_ProgressCallback(t *testing.T) {
 		}
 	})
 
-	gen.Run(context.Background())
+	_, _ = gen.Run(context.Background())
 
 	if !called {
 		t.Error("Progress callback not called")

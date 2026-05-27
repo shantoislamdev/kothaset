@@ -71,11 +71,11 @@ func TestJSONLWriter_OpenAppend(t *testing.T) {
 	if err := w.Write(&schema.Sample{Fields: map[string]any{"b": 2}}); err != nil {
 		t.Fatalf("Write failed: %v", err)
 	}
-	w.Close()
+	_ = w.Close()
 
 	// Verify line count
 	file, _ := os.Open(outPath)
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 	scanner := bufio.NewScanner(file)
 	lines := 0
 	for scanner.Scan() {

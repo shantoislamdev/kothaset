@@ -53,7 +53,10 @@ func TestChatSchema_ParseResponse(t *testing.T) {
 		t.Error("Parsed incorrect system prompt")
 	}
 
-	convs := sample.Fields["conversations"].([]ChatMessage)
+	convs, ok := sample.Fields["conversations"].([]ChatMessage)
+	if !ok {
+		t.Fatal("conversations field is not []ChatMessage")
+	}
 	if len(convs) != 2 {
 		t.Errorf("Expected 2 messages, got %d", len(convs))
 	}
