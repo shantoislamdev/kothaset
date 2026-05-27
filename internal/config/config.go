@@ -130,11 +130,6 @@ func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 }
 
-// MarshalYAML implements yaml.Marshaler
-func (d Duration) MarshalYAML() (interface{}, error) {
-	return d.String(), nil
-}
-
 // DefaultConfig returns a configuration with sensible defaults
 func DefaultConfig() *Config {
 	return &Config{

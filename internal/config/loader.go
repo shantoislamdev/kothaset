@@ -135,9 +135,6 @@ func LoadSecretsConfig(secretsPath string) (*SecretsConfig, error) {
 		if p.Type == "" {
 			return nil, fmt.Errorf("provider %s type is required", p.Name)
 		}
-		if p.Type != "openai" {
-			return nil, fmt.Errorf("unsupported provider type: %s", p.Type)
-		}
 	}
 
 	return secrets, nil

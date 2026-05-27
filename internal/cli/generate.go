@@ -14,7 +14,6 @@ import (
 	"github.com/schollz/progressbar/v3"
 	"github.com/spf13/cobra"
 
-	"github.com/shantoislamdev/kothaset/internal/fsutil"
 	"github.com/shantoislamdev/kothaset/internal/generator"
 	log "github.com/shantoislamdev/kothaset/internal/log"
 	"github.com/shantoislamdev/kothaset/internal/output"
@@ -133,29 +132,6 @@ func runGenerate(cmd *cobra.Command, _ []string) error {
 		}
 		if genModel == "" {
 			genModel = cp.Config.Model
-		}
-
-		// Guardrails against accidentally resuming into a different run target.
-		if cmd.Flags().Changed("schema") && cp.Config.Schema != "" && genSchema != cp.Config.Schema {
-			return fmt.Errorf("resume schema mismatch: checkpoint=%s current=%s", cp.Config.Schema, genSchema)
-		}
-		if cmd.Flags().Changed("provider") && cp.Config.Provider != "" && genProvider != cp.Config.Provider {
-			return fmt.Errorf("resume provider mismatch: checkpoint=%s current=%s", cp.Config.Provider, genProvider)
-		}
-		if cmd.Flags().Changed("model") && cp.Config.Model != "" && genModel != cp.Config.Model {
-			return fmt.Errorf("resume model mismatch: checkpoint=%s current=%s", cp.Config.Model, genModel)
-		}
-		if cmd.Flags().Changed("input") && cp.Config.InputFile != "" && genInputFile != cp.Config.InputFile {
-			return fmt.Errorf("resume input mismatch: checkpoint=%s current=%s", cp.Config.InputFile, genInputFile)
-		}
-		if cmd.Flags().Changed("output") && cp.Config.OutputPath != "" {
-			sameOutput, err := fsutil.PathsEqual(genOutput, cp.Config.OutputPath)
-			if err != nil {
-				return fmt.Errorf("failed to compare output path with checkpoint output path: %w", err)
-			}
-			if !sameOutput {
-				return fmt.Errorf("resume output mismatch: checkpoint=%s current=%s", cp.Config.OutputPath, genOutput)
-			}
 		}
 	}
 

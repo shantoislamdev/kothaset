@@ -21,7 +21,3 @@ instructions:
   - Be creative and diverse in topics and approaches
   - Vary the style and complexity of responses
   - Use clear and concise language
-
-logging:
-  level: info
-  format: text
