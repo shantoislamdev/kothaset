@@ -130,8 +130,6 @@ func (d *Duration) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	}
 }
 
-
-
 // DefaultConfig returns a configuration with sensible defaults
 func DefaultConfig() *Config {
 	return &Config{
