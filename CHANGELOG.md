@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Released]
 
+## [1.3.0] - 2026-05-30
+
+### Added
+- **Structured Logging**: Added structured logging and expanded test coverage (`feat: add structured logging and test coverage`).
+
+### Changed
+- **Config Validation Deferred**: Moved premature configuration validation from the root startup command to the execution path of the `generate` command.
+
+### Fixed
+- **CLI Quiet Mode**: Suppressed warning-level logs when using the `--quiet` flag.
+- **Secret Resolution Cache**: Fixed a bug by resetting the secret-resolution cache when secrets pointers change, and deferred provider secret resolution.
+- **Schema & API Compatibility**: Accepted `[]ChatMessage` array types inside `ChatSchema.ValidateSample`.
+
+### Performance
+- **Gitignore Builder**: Optimized string construction when generating `.gitignore` files using `strings.Builder` and pre-allocating memory size via `sb.Grow()`, resulting in a ~56% speedup.
+- **Schema String Allocations**: Replaced inefficient `sb.WriteString(fmt.Sprintf(...))` calls with direct `fmt.Fprintf(&sb, ...)` allocations within schemas to eliminate intermediate allocations.
+
 ## [1.2.0] - 2026-02-13
 
 ### Added
