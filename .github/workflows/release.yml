@@ -40,6 +40,9 @@ jobs:
   npm-publish:
     needs: goreleaser
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,9 +69,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: npm
-        run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --provenance --access public
 
   pypi-build:
     needs: goreleaser
